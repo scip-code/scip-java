@@ -41,6 +41,7 @@ internal class SignatureRenderer(private val session: KaSession) {
                 declaration is KtClass && declaration.isEnum() -> "enum class"
                 declaration is KtClass && declaration.isAnnotation() -> "annotation class"
                 declaration is KtClass && declaration.isData() -> "data class"
+                declaration is KtClass && declaration.isInner() -> "inner class"
                 else -> "class"
             }
         val name = declaration.name ?: "Companion"
@@ -97,7 +98,7 @@ internal class SignatureRenderer(private val session: KaSession) {
             declaration.primaryConstructor?.valueParameters.orEmpty().joinToString(", ") {
                 "${it.name.orEmpty()}: ${it.typeReference?.text ?: "Any"} = ..."
             }
-        return "public final fun copy($parameters): ${declaration.name.orEmpty()}\n"
+        return "public final fun copy($parameters): ${ownerName(declaration)}\n"
     }
 
     fun dataComponentSignature(index: Int, parameter: KtParameter): String =
@@ -131,20 +132,24 @@ internal class SignatureRenderer(private val session: KaSession) {
     private fun annotationsPrefix(declaration: KtDeclaration): String =
         declaration.annotationEntries.joinToString("") { entry ->
             val name = entry.shortName?.asString().orEmpty()
-            if (entry.valueArgumentList != null) "@$name(...) " else "@$name "
+            val useSite = entry.useSiteTarget?.let { "${it.text}:" }.orEmpty()
+            val arguments = if (entry.valueArguments.isEmpty()) "()" else "(...)"
+            "$useSite@$name$arguments "
         }
 
     fun propertySignature(declaration: KtDeclaration): String {
         val name = (declaration as? org.jetbrains.kotlin.psi.KtNamedDeclaration)?.name.orEmpty()
+        val const = if (declaration.hasModifier(KtTokens.CONST_KEYWORD)) "const " else ""
+        val lateinit = if (declaration.hasModifier(KtTokens.LATEINIT_KEYWORD)) "lateinit " else ""
         val valOrVar = if (isVar(declaration)) "var" else "val"
         val type = explicitPropertyType(declaration) ?: renderedReturnType(declaration) ?: "Any"
-        return "${visibility(declaration)} ${memberModality(declaration)}$valOrVar $name: $type"
+        return "${visibility(declaration)} ${memberModality(declaration)}$const$lateinit$valOrVar $name: $type"
     }
 
     fun localVariableSignature(declaration: KtVariableDeclaration): String {
         val valOrVar = if (declaration.isVar) "var" else "val"
         val type = declaration.typeReference?.text ?: renderedReturnType(declaration) ?: "Any"
-        return "local $valOrVar ${declaration.name.orEmpty()}: $type"
+        return "${annotationsPrefix(declaration)}local $valOrVar ${declaration.name.orEmpty()}: $type"
     }
 
     fun accessorSignature(accessor: KtPropertyAccessor): String {

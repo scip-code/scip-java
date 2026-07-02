@@ -609,16 +609,33 @@ class KotlinAnalysisIndexer(
             // the symbol is derived from the destructured type and the entry position.
             val index = destructuring.entries.indexOf(declaration)
             destructuredClassId(destructuring)?.let { classId ->
-                addReference(
-                    Symbol.createGlobal(
-                        cache.classSymbol(classId),
-                        ScipSymbolDescriptor(
-                            ScipSymbolDescriptor.Kind.METHOD,
-                            "component${index + 1}",
-                        ),
-                    ),
-                    range,
-                )
+                val name = "component${index + 1}"
+                // `componentN` may be a member (data classes, Pair) or an extension
+                // (e.g. Map.Entry's componentN lives in kotlin.collections).
+                val isMember =
+                    with(session) {
+                        findClass(classId)
+                            ?.declaredMemberScope
+                            ?.callables(Name.identifier(name))
+                            ?.any() == true
+                    }
+                val symbol =
+                    if (isMember) {
+                        Symbol.createGlobal(
+                            cache.classSymbol(classId),
+                            ScipSymbolDescriptor(ScipSymbolDescriptor.Kind.METHOD, name),
+                        )
+                    } else {
+                        with(session) {
+                            findTopLevelCallables(classId.packageFqName, Name.identifier(name))
+                                .firstOrNull { extension ->
+                                    (extension.receiverParameter?.returnType as? KaClassType)
+                                        ?.classId == classId
+                                }
+                                ?.let { cache.symbolForReference(session, it) }
+                        } ?: Symbol.NONE
+                    }
+                addReference(symbol, range)
             }
             addReference(cache.syntheticLocalSymbol(destructuring), range)
         }
