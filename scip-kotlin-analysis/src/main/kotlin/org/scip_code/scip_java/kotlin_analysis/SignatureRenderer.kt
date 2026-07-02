@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
+import org.jetbrains.kotlin.psi.KtTypeAlias
 import org.jetbrains.kotlin.psi.KtVariableDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.types.Variance
@@ -38,36 +39,100 @@ internal class SignatureRenderer(private val session: KaSession) {
                 declaration is KtObjectDeclaration -> "object"
                 declaration is KtClass && declaration.isInterface() -> "interface"
                 declaration is KtClass && declaration.isEnum() -> "enum class"
+                declaration is KtClass && declaration.isAnnotation() -> "annotation class"
+                declaration is KtClass && declaration.isData() -> "data class"
                 else -> "class"
             }
         val name = declaration.name ?: "Companion"
-        return "${visibility(declaration)} ${classModality(declaration)} $keyword $name : " +
+        val typeParameters = (declaration as? KtClass)?.typeParameterList?.text.orEmpty()
+        return "${annotationsPrefix(declaration)}${visibility(declaration)} " +
+            "${classModality(declaration)} $keyword $name$typeParameters : " +
             superTypesText(declaration)
     }
 
     fun constructorSignature(constructor: KtConstructor<*>): String {
         val owner = constructor.containingClassOrObject
-        val visibility = explicitVisibility(constructor) ?: "public"
-        return "$visibility constructor(${parametersText(constructor.valueParameters)}): " +
-            ownerName(owner)
+        val visibility = explicitVisibility(constructor) ?: constructorVisibility(owner)
+        return "$visibility constructor${classTypeParameters(owner)}" +
+            "(${parametersText(constructor.valueParameters)}): " +
+            constructorReturnType(owner)
     }
 
     fun implicitConstructorSignature(declaration: KtClassOrObject): String {
-        val visibility = if (declaration is KtObjectDeclaration) "private" else "public"
-        return "$visibility constructor(): ${ownerName(declaration)}"
+        return "${constructorVisibility(declaration)} constructor(): ${ownerName(declaration)}"
     }
 
     fun functionSignature(declaration: KtNamedFunction): String {
         val returnType =
             declaration.typeReference?.text ?: renderedReturnType(declaration) ?: "Unit"
+        val typeParameters = declaration.typeParameterList?.text?.let { "$it " }.orEmpty()
         val signature =
-            "${visibility(declaration)} ${memberModality(declaration)}fun " +
+            "${annotationsPrefix(declaration)}${visibility(declaration)} " +
+                "${memberModality(declaration)}fun $typeParameters" +
                 "${declaration.name.orEmpty()}(${parametersText(declaration.valueParameters)}): " +
                 returnType
         // FirRenderer emitted a trailing newline for functions without a body
         // (see the Animal#sound() golden).
         return if (declaration.hasBody()) signature else signature + "\n"
     }
+
+    fun typeAliasSignature(declaration: KtTypeAlias): String =
+        "public final typealias ${declaration.name.orEmpty()} = " +
+            declaration.getTypeReference()?.text.orEmpty() +
+            "\n"
+
+    /** `values()` / `valueOf(value: String)` / `entries` signatures of an enum class. */
+    fun enumValuesSignature(name: String): String = "public final static fun values(): Array<$name>"
+
+    fun enumValueOfSignature(name: String): String =
+        "public final static fun valueOf(value: String): $name"
+
+    fun enumEntriesSignature(name: String): String =
+        "public final static val entries: EnumEntries<$name>"
+
+    fun enumGetEntriesSignature(name: String): String = "public get(): EnumEntries<$name>"
+
+    fun dataCopySignature(declaration: KtClass): String {
+        val parameters =
+            declaration.primaryConstructor?.valueParameters.orEmpty().joinToString(", ") {
+                "${it.name.orEmpty()}: ${it.typeReference?.text ?: "Any"} = ..."
+            }
+        return "public final fun copy($parameters): ${declaration.name.orEmpty()}\n"
+    }
+
+    fun dataComponentSignature(index: Int, parameter: KtParameter): String =
+        "public final operator fun component$index(): ${parameter.typeReference?.text ?: "Any"}\n"
+
+    fun dataCopyParameterSignature(parameter: KtParameter): String =
+        "${parameter.name.orEmpty()}: ${parameter.typeReference?.text ?: "Any"} = ..."
+
+    fun whenSubjectSignature(type: String): String = "local val <when-subject>: $type"
+
+    fun destructSignature(type: String, isParameter: Boolean): String =
+        if (isParameter) "<destruct>: $type" else "local val <destruct>: $type"
+
+    private fun constructorVisibility(declaration: KtClassOrObject?): String =
+        when {
+            declaration is KtObjectDeclaration -> "private"
+            declaration is KtClass && declaration.isEnum() -> "private"
+            else -> "public"
+        }
+
+    private fun classTypeParameters(declaration: KtClassOrObject?): String =
+        (declaration as? KtClass)?.typeParameterList?.text.orEmpty()
+
+    private fun constructorReturnType(declaration: KtClassOrObject?): String {
+        val name = ownerName(declaration)
+        val typeArguments =
+            (declaration as? KtClass)?.typeParameters?.mapNotNull { it.name }.orEmpty()
+        return if (typeArguments.isEmpty()) name else "$name<${typeArguments.joinToString(", ")}>"
+    }
+
+    private fun annotationsPrefix(declaration: KtDeclaration): String =
+        declaration.annotationEntries.joinToString("") { entry ->
+            val name = entry.shortName?.asString().orEmpty()
+            if (entry.valueArgumentList != null) "@$name(...) " else "@$name "
+        }
 
     fun propertySignature(declaration: KtDeclaration): String {
         val name = (declaration as? org.jetbrains.kotlin.psi.KtNamedDeclaration)?.name.orEmpty()
@@ -139,7 +204,12 @@ internal class SignatureRenderer(private val session: KaSession) {
 
     private fun superTypesText(declaration: KtClassOrObject): String {
         val entries = declaration.superTypeListEntries.mapNotNull { it.typeReference?.text }
-        return if (entries.isEmpty()) "Any" else entries.joinToString(", ")
+        if (entries.isNotEmpty()) return entries.joinToString(", ")
+        return when {
+            declaration is KtClass && declaration.isEnum() -> "Enum<${declaration.name.orEmpty()}>"
+            declaration is KtClass && declaration.isAnnotation() -> "Annotation"
+            else -> "Any"
+        }
     }
 
     private fun parametersText(parameters: List<KtParameter>): String =

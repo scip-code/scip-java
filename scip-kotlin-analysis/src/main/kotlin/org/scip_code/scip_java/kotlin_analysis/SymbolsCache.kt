@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.psi.KtParameterList
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtSecondaryConstructor
+import org.jetbrains.kotlin.psi.KtTypeAlias
 import org.jetbrains.kotlin.psi.KtTypeParameter
 import org.jetbrains.kotlin.psi.KtTypeParameterListOwner
 import org.jetbrains.kotlin.psi.KtVariableDeclaration
@@ -122,6 +123,24 @@ class SymbolsCache {
     /** The SCIP symbol of a class referenced by its (expanded) [ClassId]. */
     fun classSymbol(classId: ClassId): Symbol = classIdSymbol(classId)
 
+    /** Symbol of a compiler-generated member method (enum `values()`, data-class `copy()`, …). */
+    fun memberMethodSymbol(owner: KtClassOrObject, name: String): Symbol =
+        Symbol.createGlobal(symbolForDeclaration(owner), ScipSymbolDescriptor(Kind.METHOD, name))
+
+    /** Symbol of a compiler-generated member property (enum `entries`). */
+    fun memberTermSymbol(owner: KtClassOrObject, name: String): Symbol =
+        Symbol.createGlobal(symbolForDeclaration(owner), ScipSymbolDescriptor(Kind.TERM, name))
+
+    /** Symbol of a parameter of a compiler-generated method. */
+    fun methodParameterSymbol(method: Symbol, name: String): Symbol =
+        Symbol.createGlobal(method, ScipSymbolDescriptor(Kind.PARAMETER, name))
+
+    /**
+     * A per-document local symbol for a compiler-generated declaration without dedicated PSI
+     * (implicit `it`, `<when-subject>`, `<destruct>`), keyed by the surrounding element.
+     */
+    fun syntheticLocalSymbol(key: PsiElement): Symbol = locals.get(key) ?: locals.put(key)
+
     private fun propertyOwnerSymbol(property: KtDeclaration): Symbol =
         when (property) {
             is KtParameter ->
@@ -143,8 +162,7 @@ class SymbolsCache {
      * as the cache key; this cannot collide with the literal itself because anonymous functions
      * never cache a symbol.
      */
-    fun implicitItSymbol(literal: KtFunctionLiteral): Symbol =
-        locals.get(literal) ?: locals.put(literal)
+    fun implicitItSymbol(literal: KtFunctionLiteral): Symbol = syntheticLocalSymbol(literal)
 
     /** The SCIP symbol for the target of a resolved reference. */
     fun symbolForReference(session: KaSession, target: KaSymbol): Symbol {
@@ -158,6 +176,26 @@ class SymbolsCache {
             // The implicit `it` parameter's PSI is the enclosing function literal.
             if (psi is KtFunctionLiteral && target !is KaFunctionSymbol) {
                 return implicitItSymbol(psi)
+            }
+            // Source type aliases are expanded like library ones, matching scip-kotlinc.
+            if (psi is KtTypeAlias && target is KaTypeAliasSymbol) {
+                return with(session) { (target.expandedType as? KaClassType)?.classId }
+                    ?.let(::classIdSymbol) ?: symbolForDeclaration(psi)
+            }
+            // Compiler-generated callables (data-class componentN/copy, enum
+            // `entries`, …) resolve to PSI of the class or parameter they derive
+            // from; their symbol comes from the callable id instead.
+            if (
+                target is KaFunctionSymbol &&
+                    target !is KaConstructorSymbol &&
+                    psi !is KtNamedFunction &&
+                    psi !is KtPropertyAccessor &&
+                    psi !is KtFunctionLiteral
+            ) {
+                return externalCallableSymbol(session, target)
+            }
+            if (target is KaCallableSymbol && psi is KtClassOrObject) {
+                return externalCallableSymbol(session, target)
             }
             return symbolForDeclaration(psi)
         }
@@ -294,6 +332,8 @@ class SymbolsCache {
                     declaration.name.orEmpty(),
                     methodDisambiguator(declaration),
                 )
+            declaration is KtTypeAlias ->
+                ScipSymbolDescriptor(Kind.TYPE, declaration.name.orEmpty())
             declaration is KtTypeParameter ->
                 ScipSymbolDescriptor(Kind.TYPE_PARAMETER, declaration.name.orEmpty())
             declaration is KtParameter ->
