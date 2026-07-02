@@ -1,5 +1,9 @@
 package org.scip_code.scip_java.gradle;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -7,6 +11,7 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.initialization.Settings;
 import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.tasks.compile.JavaCompile;
@@ -190,22 +195,18 @@ public class ScipGradlePlugin implements Plugin<Project> {
             // Referring to KotlinCompile directly triggers NoClassDefFoundError -
             // the plugin classpath is murky and we deliberately don't bundle the
             // Kotlin Gradle plugin. So we commit the sins of reflection.
-            org.gradle.api.file.FileCollection libraries;
+            FileCollection libraries;
             try {
-              libraries =
-                  (org.gradle.api.file.FileCollection)
-                      task.getClass().getMethod("getLibraries").invoke(task);
+              libraries = (FileCollection) task.getClass().getMethod("getLibraries").invoke(task);
             } catch (ReflectiveOperationException exc) {
-              libraries =
-                  (org.gradle.api.file.FileCollection)
-                      task.getClass().getMethod("getClasspath").invoke(task);
+              libraries = (FileCollection) task.getClass().getMethod("getClasspath").invoke(task);
             }
-            for (java.io.File entry : libraries.getFiles()) {
+            for (File entry : libraries.getFiles()) {
               lines.add("classpath " + entry.getAbsolutePath());
             }
 
             int sources = 0;
-            for (java.io.File file : task.getInputs().getSourceFiles().getFiles()) {
+            for (File file : task.getInputs().getSourceFiles().getFiles()) {
               if (file.getName().endsWith(".kt") || file.getName().endsWith(".kts")) {
                 lines.add("source " + file.getAbsolutePath());
                 sources++;
@@ -215,10 +216,10 @@ public class ScipGradlePlugin implements Plugin<Project> {
               return;
             }
 
-            java.nio.file.Path configDir = java.nio.file.Paths.get(targetRoot, "kotlin-configs");
-            java.nio.file.Files.createDirectories(configDir);
+            Path configDir = Paths.get(targetRoot, "kotlin-configs");
+            Files.createDirectories(configDir);
             String fileName = task.getPath().replaceAll("[^A-Za-z0-9]", "-") + ".txt";
-            java.nio.file.Files.write(configDir.resolve(fileName), lines);
+            Files.write(configDir.resolve(fileName), lines);
           } catch (Exception exc) {
             throw new RuntimeException(
                 "scip-java: failed to extract Kotlin compile configuration for task '"
