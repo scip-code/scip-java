@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
 import org.jetbrains.kotlin.psi.KtEnumEntry
+import org.jetbrains.kotlin.psi.KtEnumEntrySuperclassReferenceExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtForExpression
@@ -191,6 +192,10 @@ class KotlinAnalysisIndexer(
             super.visitSimpleNameExpression(expression)
             val referencedName = expression.getReferencedName()
             if (referencedName == "this" || referencedName == "super") return
+            // The synthetic superclass reference of an enum entry initializer
+            // (`HEARTS('h')`) has no source token of its own: its "name element"
+            // is the whole enum class.
+            if (expression is KtEnumEntrySuperclassReferenceExpression) return
             val target = with(session) { expression.mainReference.resolveToSymbol() } ?: return
             val range = expression.getReferencedNameElement().textRange
 
@@ -922,9 +927,9 @@ internal class LineIndex(private val text: String) {
     }
 
     /**
-     * Occurrence anchors are always single-line, like in scip-kotlinc: multiline declarations are
-     * collapsed onto their start line with the end character measured from that line's start. The
-     * true extent lives in the enclosing range.
+     * Occurrence anchors are always single-line: multiline declarations are collapsed onto their
+     * start line, clamped to that line's end so the range stays within the source. The true extent
+     * lives in the enclosing range.
      */
     fun anchorRange(range: TextRange): ScipRange? {
         if (range.startOffset > text.length || range.endOffset > text.length) return null
@@ -933,11 +938,17 @@ internal class LineIndex(private val text: String) {
         if (startLine == endLine) {
             return ScipRange.singleLine(startLine, startCharacter, endCharacter)
         }
-        val flattenedEnd = range.endOffset - lineStart(startLine)
-        return ScipRange.singleLine(startLine, startCharacter, flattenedEnd)
+        return ScipRange.singleLine(startLine, startCharacter, lineLength(startLine))
     }
 
     private fun lineStart(line: Int): Int = lineStartOffsets[line]
+
+    /** Length of [line] excluding its trailing newline. */
+    private fun lineLength(line: Int): Int {
+        val end =
+            if (line + 1 < lineStartOffsets.size) lineStartOffsets[line + 1] - 1 else text.length
+        return end - lineStart(line)
+    }
 
     private fun position(offset: Int): Pair<Int, Int> {
         var line = Arrays.binarySearch(lineStartOffsets, offset)

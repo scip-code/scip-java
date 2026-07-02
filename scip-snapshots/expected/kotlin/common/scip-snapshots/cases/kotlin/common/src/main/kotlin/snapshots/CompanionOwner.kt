@@ -15,14 +15,14 @@
 //  ⌄ enclosing_range_start scip-java maven . . snapshots/CompanionOwner#Companion#
 //  ⌄ enclosing_range_start scip-java maven . . snapshots/CompanionOwner#Companion#`<init>`().
     companion object {
-//  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ definition scip-java maven . . snapshots/CompanionOwner#Companion#
-//                                                                             display_name Companion
-//                                                                             signature_documentation
-//                                                                             > public final companion object Companion : Any
-//  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ definition scip-java maven . . snapshots/CompanionOwner#Companion#`<init>`().
-//                                                                             display_name Companion
-//                                                                             signature_documentation
-//                                                                             > private constructor(): CompanionOwner.Companion
+//  ^^^^^^^^^^^^^^^^^^ definition scip-java maven . . snapshots/CompanionOwner#Companion#
+//                     display_name Companion
+//                     signature_documentation
+//                     > public final companion object Companion : Any
+//  ^^^^^^^^^^^^^^^^^^ definition scip-java maven . . snapshots/CompanionOwner#Companion#`<init>`().
+//                     display_name Companion
+//                     signature_documentation
+//                     > private constructor(): CompanionOwner.Companion
 //    ⌄ enclosing_range_start scip-java maven . . snapshots/CompanionOwner#Companion#create().
       fun create(): CompanionOwner = CompanionOwner()
 //        ^^^^^^ definition scip-java maven . . snapshots/CompanionOwner#Companion#create().
