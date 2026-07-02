@@ -3,7 +3,10 @@
   
 //⌄ enclosing_range_start scip-java maven . . snapshots/Tagged#
   @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
+// ^^^^^^ reference scip-java maven . . kotlin/annotation/Target#
+//        ^^^^^^^^^^^^^^^^ reference scip-java maven . . kotlin/annotation/AnnotationTarget#
 //                         ^^^^^ reference scip-java maven . . kotlin/annotation/AnnotationTarget#CLASS.
+//                                ^^^^^^^^^^^^^^^^ reference scip-java maven . . kotlin/annotation/AnnotationTarget#
 //                                                 ^^^^^^^^ reference scip-java maven . . kotlin/annotation/AnnotationTarget#FUNCTION.
 //                       ⌄ enclosing_range_start scip-java maven . . snapshots/Tagged#`<init>`().
 //                        ⌄ enclosing_range_start scip-java maven . . snapshots/Tagged#`<init>`().(tag)
@@ -42,6 +45,7 @@
 //⌄ enclosing_range_start scip-java maven . . snapshots/AnnotatedService#
 //⌄ enclosing_range_start scip-java maven . . snapshots/AnnotatedService#`<init>`().
   @Tagged("service")
+// ^^^^^^ reference scip-java maven . . snapshots/Tagged#
   class AnnotatedService {
 //      ^^^^^^^^^^^^^^^^ definition scip-java maven . . snapshots/AnnotatedService#
 //                       display_name AnnotatedService
@@ -53,6 +57,7 @@
 //                       > public constructor(): AnnotatedService
 //    ⌄ enclosing_range_start scip-java maven . . snapshots/AnnotatedService#run().
       @Tagged("run")
+//     ^^^^^^ reference scip-java maven . . snapshots/Tagged#
       fun run(): String = "running"
 //        ^^^ definition scip-java maven . . snapshots/AnnotatedService#run().
 //            display_name run

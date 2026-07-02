@@ -6,6 +6,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import org.scip_code.scip_java.Embedded
 import org.scip_code.scip_java.commands.IndexCommand
+import org.scip_code.scip_java.kotlin_analysis.KotlinAnalysisIndexer
 
 class GradleBuildTool(index: IndexCommand) : BuildTool("Gradle", index) {
 
@@ -89,19 +90,64 @@ This means our SCIP compiler plugin was not attached to one or more JavaCompile 
         cmd += "--no-daemon"
         cmd += "--init-script"
         cmd += script
-        cmd += "-Pkotlin.compiler.execution.strategy=in-process"
         cmd += "-Dscip.targetroot=${targetroot()}"
         cmd += index.finalBuildCommand(listOf("clean", "scipPrintDependencies", "scipCompileAll"))
 
         targetroot().toFile().deleteRecursively()
         val result = index.app.runProcess(cmd, env = mapOf("TERM" to "dumb"))
+        indexKotlinConfigs()
         return Embedded.reportUnexpectedJavacErrors(index.app.reporter, tmp) ?: result
+    }
+
+    /**
+     * The Gradle plugin dumps each Kotlin compile task's sources and classpath under
+     * `<targetroot>/kotlin-configs/`; index them with the standalone Analysis API indexer. The
+     * Kotlin version of the indexed build is irrelevant here — the indexer bundles its own analysis
+     * engine.
+     */
+    private fun indexKotlinConfigs() {
+        val configsDir = targetroot().resolve("kotlin-configs")
+        if (!Files.isDirectory(configsDir)) return
+        Files.list(configsDir).use { stream ->
+            for (config in stream.filter { it.fileName.toString().endsWith(".txt") }) {
+                try {
+                    indexKotlinConfig(config)
+                } catch (e: Exception) {
+                    index.app.reporter.error(
+                        RuntimeException("failed to index Kotlin sources from $config", e)
+                    )
+                }
+            }
+        }
+    }
+
+    private fun indexKotlinConfig(config: Path) {
+        var sourceroot: Path = index.workingDirectory
+        val classpath = mutableListOf<Path>()
+        val sources = mutableListOf<Path>()
+        for (line in Files.readAllLines(config)) {
+            val separator = line.indexOf(' ')
+            if (separator < 0) continue
+            val value = line.substring(separator + 1)
+            when (line.substring(0, separator)) {
+                "sourceroot" -> sourceroot = Paths.get(value)
+                "classpath" -> classpath.add(Paths.get(value))
+                "source" -> sources.add(Paths.get(value))
+            }
+        }
+        if (sources.isEmpty()) return
+        KotlinAnalysisIndexer(
+                sourceroot = sourceroot,
+                targetroot = targetroot(),
+                sourceRoots = sources,
+                classpath = classpath,
+            )
+            .run()
     }
 
     private fun initScript(tmp: Path): Path {
         val pluginpath = Embedded.scipJar(tmp)
         val gradlePluginPath = Embedded.gradlePluginJar(tmp)
-        val scipKotlincPath = Embedded.scipKotlincJar(tmp)
         val dependenciesPath = targetroot().resolve("dependencies.txt")
         Files.deleteIfExists(dependenciesPath)
 
@@ -119,7 +165,6 @@ This means our SCIP compiler plugin was not attached to one or more JavaCompile 
                project.ext["scipTarget"] = "${targetroot()}"
                project.ext["javacPluginJar"] = "$pluginpath"
                project.ext["dependenciesOut"] = "$dependenciesPath"
-               project.ext["scipKotlincJar"] = "$scipKotlincPath"
                apply plugin: ScipGradlePlugin
              }
             """

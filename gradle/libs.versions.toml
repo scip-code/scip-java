@@ -2,8 +2,6 @@
 clikt = "5.1.0"
 gradle-api = "8.11.1"
 junit-jupiter = "5.11.4"
-kctfork = "0.14.0"
-kotest = "6.2.6"
 kotlin = "2.4.21"
 # Kotlin Analysis API engine bundled by scip-kotlin-analysis. Independent from
 # the `kotlin` toolchain version: `-for-ide` artifacts are only published as
@@ -30,8 +28,6 @@ caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version = "2.9.3
 clikt-jvm = { module = "com.github.ajalt.clikt:clikt-jvm", version.ref = "clikt" }
 gradle-api = { module = "dev.gradleplugins:gradle-api", version.ref = "gradle-api" }
 gradle-test-kit = { module = "dev.gradleplugins:gradle-test-kit", version.ref = "gradle-api" }
-kctfork-core = { module = "dev.zacsweers.kctfork:core", version.ref = "kctfork" }
-kotest-assertions-core = { module = "io.kotest:kotest-assertions-core-jvm", version.ref = "kotest" }
 kotlin-analysis-api-api = { module = "org.jetbrains.kotlin:analysis-api-for-ide", version.ref = "kotlin-analysis-api" }
 kotlin-analysis-api-impl-base = { module = "org.jetbrains.kotlin:analysis-api-impl-base-for-ide", version.ref = "kotlin-analysis-api" }
 kotlin-analysis-api-k2 = { module = "org.jetbrains.kotlin:analysis-api-k2-for-ide", version.ref = "kotlin-analysis-api" }
@@ -40,12 +36,6 @@ kotlin-analysis-api-standalone = { module = "org.jetbrains.kotlin:analysis-api-s
 kotlin-analysis-compiler = { module = "org.jetbrains.kotlin:kotlin-compiler", version.ref = "kotlin-analysis-api" }
 kotlin-analysis-low-level-api-fir = { module = "org.jetbrains.kotlin:low-level-api-fir-for-ide", version.ref = "kotlin-analysis-api" }
 kotlin-analysis-symbol-light-classes = { module = "org.jetbrains.kotlin:symbol-light-classes-for-ide", version.ref = "kotlin-analysis-api" }
-kotlin-compiler-embeddable = { module = "org.jetbrains.kotlin:kotlin-compiler-embeddable", version.ref = "kotlin" }
-kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
-kotlin-scripting-common = { module = "org.jetbrains.kotlin:kotlin-scripting-common", version.ref = "kotlin" }
-kotlin-scripting-dependencies = { module = "org.jetbrains.kotlin:kotlin-scripting-dependencies", version.ref = "kotlin" }
-kotlin-scripting-dependencies-maven = { module = "org.jetbrains.kotlin:kotlin-scripting-dependencies-maven", version.ref = "kotlin" }
-kotlin-scripting-jvm = { module = "org.jetbrains.kotlin:kotlin-scripting-jvm", version.ref = "kotlin" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-test-junit5 = { module = "org.jetbrains.kotlin:kotlin-test-junit5", version.ref = "kotlin" }

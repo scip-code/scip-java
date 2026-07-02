@@ -6,13 +6,12 @@
 //⌄ enclosing_range_start scip-java maven . . snapshots/Suit#valueOf().
 //⌄ enclosing_range_start scip-java maven . . snapshots/Suit#valueOf().(value)
 //⌄ enclosing_range_start scip-java maven . . snapshots/Suit#entries.
-//⌄ enclosing_range_start scip-java maven . . snapshots/getEntries().
+//⌄ enclosing_range_start scip-java maven . . snapshots/Suit#getEntries().
 //               ⌄ enclosing_range_start scip-java maven . . snapshots/Suit#`<init>`().
 //                ⌄ enclosing_range_start scip-java maven . . snapshots/Suit#`<init>`().(symbol)
 //                ⌄ enclosing_range_start scip-java maven . . snapshots/Suit#symbol.
 //                ⌄ enclosing_range_start scip-java maven . . snapshots/Suit#getSymbol().
   enum class Suit(val symbol: Char) {
-//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ reference scip-java maven . . kotlin/Enum#
 //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ reference scip-java maven . . snapshots/Suit#
 //           ^^^^ definition scip-java maven . . snapshots/Suit#
 //                display_name Suit
@@ -39,7 +38,7 @@
 //                display_name entries
 //                signature_documentation
 //                > public final static val entries: EnumEntries<Suit>
-//           ^^^^ definition scip-java maven . . snapshots/getEntries().
+//           ^^^^ definition scip-java maven . . snapshots/Suit#getEntries().
 //                display_name entries
 //                signature_documentation
 //                > public get(): EnumEntries<Suit>
@@ -61,34 +60,20 @@
 //                               ⌃ enclosing_range_end scip-java maven . . snapshots/Suit#symbol.
 //                               ⌃ enclosing_range_end scip-java maven . . snapshots/Suit#getSymbol().
 //                                ⌃ enclosing_range_end scip-java maven . . snapshots/Suit#`<init>`().
-//    ⌄ enclosing_range_start scip-java maven . . snapshots/`<anonymous object at 59>`#
-//    ⌄ enclosing_range_start scip-java maven . . snapshots/`<anonymous object at 59>`#`<init>`().
+//    ⌄ enclosing_range_start scip-java maven . . snapshots/Suit#HEARTS.
       HEARTS('h'),
-//    ^^^^^^ definition scip-java maven . . snapshots/`<anonymous object at 59>`#
-//           display_name <anonymous>
-//           signature_documentation
-//           > object : Suit
-//           relationship scip-java maven . . snapshots/Suit# implementation
-//    ^^^^^^ definition scip-java maven . . snapshots/`<anonymous object at 59>`#`<init>`().
+//    ^^^^^^ definition scip-java maven . . snapshots/Suit#HEARTS.
 //           display_name HEARTS
 //           signature_documentation
-//           > private constructor(): <anonymous>
-//               ⌃ enclosing_range_end scip-java maven . . snapshots/`<anonymous object at 59>`#
-//               ⌃ enclosing_range_end scip-java maven . . snapshots/`<anonymous object at 59>`#`<init>`().
-//    ⌄ enclosing_range_start scip-java maven . . snapshots/`<anonymous object at 76>`#
-//    ⌄ enclosing_range_start scip-java maven . . snapshots/`<anonymous object at 76>`#`<init>`().
+//           > public final val HEARTS: Suit
+//               ⌃ enclosing_range_end scip-java maven . . snapshots/Suit#HEARTS.
+//    ⌄ enclosing_range_start scip-java maven . . snapshots/Suit#SPADES.
       SPADES('s');
-//    ^^^^^^ definition scip-java maven . . snapshots/`<anonymous object at 76>`#
-//           display_name <anonymous>
-//           signature_documentation
-//           > object : Suit
-//           relationship scip-java maven . . snapshots/Suit# implementation
-//    ^^^^^^ definition scip-java maven . . snapshots/`<anonymous object at 76>`#`<init>`().
+//    ^^^^^^ definition scip-java maven . . snapshots/Suit#SPADES.
 //           display_name SPADES
 //           signature_documentation
-//           > private constructor(): <anonymous>
-//               ⌃ enclosing_range_end scip-java maven . . snapshots/`<anonymous object at 76>`#
-//               ⌃ enclosing_range_end scip-java maven . . snapshots/`<anonymous object at 76>`#`<init>`().
+//           > public final val SPADES: Suit
+//               ⌃ enclosing_range_end scip-java maven . . snapshots/Suit#SPADES.
   
 //    ⌄ enclosing_range_start scip-java maven . . snapshots/Suit#isRed().
       fun isRed(): Boolean = symbol == 'h'
@@ -99,6 +84,7 @@
 //                 ^^^^^^^ reference scip-java maven . . kotlin/Boolean#
 //                           ^^^^^^ reference scip-java maven . . snapshots/Suit#symbol.
 //                           ^^^^^^ reference scip-java maven . . snapshots/Suit#getSymbol().
+//                                  ^^ reference scip-java maven . . kotlin/Char#equals().
 //                                       ⌃ enclosing_range_end scip-java maven . . snapshots/Suit#isRed().
   
 //    ⌄ enclosing_range_start scip-java maven . . snapshots/Suit#Companion#
@@ -125,9 +111,9 @@
 //                              signature_documentation
 //                              > symbol: Char
 //                               ^^^^ reference scip-java maven . . kotlin/Char#
-//                                      ^^^^^ reference scip-java maven . . snapshots/Suit#
+//                                      ^^^^ reference scip-java maven . . snapshots/Suit#
 //                                              ^^^^^^^ reference scip-java maven . . snapshots/Suit#entries.
-//                                              ^^^^^^^ reference scip-java maven . . snapshots/getEntries().
+//                                              ^^^^^^^ reference scip-java maven . . snapshots/Suit#getEntries().
 //                                                      ^^^^ reference scip-java maven . . kotlin/collections/find(+9).
 //                                                           ^^^^^^^^^^^^^^^^^^^^^^^ definition local 0
 //                                                                                   display_name it
@@ -136,6 +122,7 @@
 //                                                             ^^ reference local 0
 //                                                                ^^^^^^ reference scip-java maven . . snapshots/Suit#symbol.
 //                                                                ^^^^^^ reference scip-java maven . . snapshots/Suit#getSymbol().
+//                                                                       ^^ reference scip-java maven . . kotlin/Char#equals().
 //                                                                          ^^^^^^ reference scip-java maven . . snapshots/Suit#Companion#fromSymbol().(symbol)
 //                                  ⌃ enclosing_range_end scip-java maven . . snapshots/Suit#Companion#fromSymbol().(symbol)
 //                                                                                 ⌃ enclosing_range_end scip-java maven . . snapshots/Suit#Companion#fromSymbol().
@@ -149,7 +136,7 @@
 //⌃ enclosing_range_end scip-java maven . . snapshots/Suit#valueOf().
 //⌃ enclosing_range_end scip-java maven . . snapshots/Suit#valueOf().(value)
 //⌃ enclosing_range_end scip-java maven . . snapshots/Suit#entries.
-//⌃ enclosing_range_end scip-java maven . . snapshots/getEntries().
+//⌃ enclosing_range_end scip-java maven . . snapshots/Suit#getEntries().
   
 //⌄ enclosing_range_start scip-java maven . . snapshots/describe().
 //             ⌄ enclosing_range_start scip-java maven . . snapshots/describe().(suit)
@@ -174,8 +161,10 @@
 //          ^^^^ reference scip-java maven . . snapshots/describe().(suit)
 //             ⌃ enclosing_range_end local 1
           Suit.HEARTS -> "red"
+//        ^^^^ reference scip-java maven . . snapshots/Suit#
 //             ^^^^^^ reference scip-java maven . . snapshots/Suit#HEARTS.
           Suit.SPADES -> "black"
+//        ^^^^ reference scip-java maven . . snapshots/Suit#
 //             ^^^^^^ reference scip-java maven . . snapshots/Suit#SPADES.
       }
 //    ⌃ enclosing_range_end scip-java maven . . snapshots/describe().

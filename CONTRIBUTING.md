@@ -54,7 +54,7 @@ These are the main components of the project.
 | ------------------------------------------------------- | -------- | ----------------------------------------------------------------------- |
 | `gradle test --no-daemon`                               | terminal | Run all Gradle tests.                                                    |
 | `gradle :scip-java:test --no-daemon`                    | terminal | Run CLI build-tool integration tests (Gradle, Maven, SCIP config).       |
-| `gradle :scip-kotlinc:test --no-daemon`                 | terminal | Run Kotlin compiler-plugin tests.                                        |
+| `gradle :scip-kotlin-analysis:test --no-daemon`                 | terminal | Run Kotlin indexer tests.                                        |
 | `gradle :scip-snapshots:test --no-daemon`               | terminal | Compare Java and Kotlin snapshot goldens.                                |
 | `gradle :scip-snapshots:saveSnapshots --no-daemon`      | terminal | Regenerate Java and Kotlin snapshot goldens.                             |
 | `gradle :scip-java:installDist --no-daemon`             | terminal | Build a local `scip-java` distribution under `scip-java/build/install/`. |
