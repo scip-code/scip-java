@@ -17,6 +17,9 @@ object ScipJava {
     @JvmStatic
     fun main(args: Array<String>) {
         app.runAndExitIfNonZero(args.toList())
+        // The Kotlin Analysis API indexer leaves non-daemon threads behind; exit
+        // explicitly instead of waiting on them.
+        kotlin.system.exitProcess(0)
     }
 
     fun printHelp(out: PrintStream) {

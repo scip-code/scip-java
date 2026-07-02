@@ -2,26 +2,33 @@ package org.scip_code.scip_java.kotlin_analysis
 
 import com.intellij.psi.PsiElement
 import java.lang.System.err
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtAnonymousInitializer
+import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtClassBody
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtParameterList
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtSecondaryConstructor
 import org.jetbrains.kotlin.psi.KtTypeParameter
@@ -73,17 +80,84 @@ class SymbolsCache {
         return symbol
     }
 
+    /**
+     * The SCIP symbol of the implicit primary constructor of [classOrObject], which has no PSI of
+     * its own. Explicit constructors go through [symbolForDeclaration].
+     */
+    fun implicitConstructorSymbol(classOrObject: KtClassOrObject): Symbol =
+        Symbol.createGlobal(
+            symbolForDeclaration(classOrObject),
+            ScipSymbolDescriptor(Kind.METHOD, "<init>"),
+        )
+
+    /**
+     * The SCIP symbol of the synthetic getter/setter of a property (or `val`/`var` constructor
+     * parameter) that has no explicit accessor PSI. Accessors are owned by the property's container
+     * (`Class#getBanana().`), not by the constructor that declares the parameter.
+     */
+    fun syntheticAccessorSymbol(property: KtDeclaration, setter: Boolean): Symbol {
+        val name = (property as? KtNamedDeclaration)?.name.orEmpty()
+        return Symbol.createGlobal(propertyOwnerSymbol(property), accessorDescriptor(name, setter))
+    }
+
+    /** The property symbol declared by a `val`/`var` constructor parameter (`Class#banana.`). */
+    fun parameterPropertySymbol(parameter: KtParameter): Symbol =
+        Symbol.createGlobal(
+            propertyOwnerSymbol(parameter),
+            ScipSymbolDescriptor(Kind.TERM, parameter.name.orEmpty()),
+        )
+
+    /** The class symbol owning a constructor reference (`class Seagull : Bird()` → `Bird#`). */
+    fun constructorOwnerSymbol(session: KaSession, target: KaConstructorSymbol): Symbol {
+        when (val psi = target.psi) {
+            is KtClassOrObject -> return symbolForDeclaration(psi)
+            is KtConstructor<*> ->
+                psi.containingClassOrObject?.let {
+                    return symbolForDeclaration(it)
+                }
+        }
+        return target.containingClassId?.let(::classSymbol) ?: Symbol.NONE
+    }
+
+    /** The SCIP symbol of a class referenced by its (expanded) [ClassId]. */
+    fun classSymbol(classId: ClassId): Symbol = classIdSymbol(classId)
+
+    private fun propertyOwnerSymbol(property: KtDeclaration): Symbol =
+        when (property) {
+            is KtParameter ->
+                (ownerDeclarationOfParameter(property) as? KtConstructor<*>)
+                    ?.containingClassOrObject
+                    ?.let { symbolForDeclaration(it) } ?: Symbol.NONE
+            else -> ownerSymbol(property)
+        }
+
+    /** The `(value)` parameter symbol of a synthetic setter. */
+    fun syntheticSetterValueSymbol(property: KtDeclaration): Symbol =
+        Symbol.createGlobal(
+            syntheticAccessorSymbol(property, setter = true),
+            ScipSymbolDescriptor(Kind.PARAMETER, "value"),
+        )
+
+    /**
+     * The SCIP symbol of the implicit `it` parameter of a lambda. The function literal PSI is used
+     * as the cache key; this cannot collide with the literal itself because anonymous functions
+     * never cache a symbol.
+     */
+    fun implicitItSymbol(literal: KtFunctionLiteral): Symbol =
+        locals.get(literal) ?: locals.put(literal)
+
     /** The SCIP symbol for the target of a resolved reference. */
-    fun symbolForReference(target: KaSymbol): Symbol {
+    fun symbolForReference(session: KaSession, target: KaSymbol): Symbol {
         val psi = target.psi
         if (psi is KtDeclaration) {
             // A constructor symbol whose PSI is the class itself is an implicit
             // primary constructor.
             if (target is KaConstructorSymbol && psi is KtClassOrObject) {
-                return Symbol.createGlobal(
-                    symbolForDeclaration(psi),
-                    ScipSymbolDescriptor(Kind.METHOD, "<init>"),
-                )
+                return implicitConstructorSymbol(psi)
+            }
+            // The implicit `it` parameter's PSI is the enclosing function literal.
+            if (psi is KtFunctionLiteral && target !is KaFunctionSymbol) {
+                return implicitItSymbol(psi)
             }
             return symbolForDeclaration(psi)
         }
@@ -96,17 +170,53 @@ class SymbolsCache {
                         ScipSymbolDescriptor(Kind.METHOD, "<init>"),
                     )
                 } ?: Symbol.NONE
+            // Library type aliases are expanded to the aliased class, matching the
+            // FIR indexer (`AutoCloseable` → `java/lang/AutoCloseable#`) and
+            // keeping Kotlin and Java references to the same class unified.
+            is KaTypeAliasSymbol ->
+                with(session) { (target.expandedType as? KaClassType)?.classId }
+                    ?.let(::classIdSymbol) ?: target.classId?.let(::classIdSymbol) ?: Symbol.NONE
             is KaClassLikeSymbol -> target.classId?.let(::classIdSymbol) ?: Symbol.NONE
-            is KaCallableSymbol -> externalCallableSymbol(target)
+            is KaCallableSymbol -> externalCallableSymbol(session, target)
             else -> Symbol.NONE
         }
     }
+
+    /** The getter/setter symbol of an external (classpath) property reference. */
+    fun externalAccessorSymbol(
+        session: KaSession,
+        target: KaCallableSymbol,
+        setter: Boolean,
+    ): Symbol {
+        val callableId = target.callableId ?: return Symbol.NONE
+        val owner =
+            callableId.classId?.let(::classIdSymbol) ?: packageSymbol(callableId.packageName)
+        return Symbol.createGlobal(
+            owner,
+            accessorDescriptor(callableId.callableName.asString(), setter),
+        )
+    }
+
+    private fun accessorDescriptor(propertyName: String, setter: Boolean): ScipSymbolDescriptor =
+        ScipSymbolDescriptor(
+            Kind.METHOD,
+            (if (setter) "set" else "get") + propertyName.capitalizeAsciiOnly(),
+        )
 
     private fun uncachedSymbol(declaration: KtDeclaration): Symbol {
         // Anonymous functions and lambdas have no symbol of their own, mirroring
         // the FIR indexer which returned NONE for FirAnonymousFunctionSymbol.
         if (declaration is KtFunctionLiteral) return Symbol.NONE
         if (declaration is KtNamedFunction && declaration.name == null) return Symbol.NONE
+
+        // Anonymous objects are global symbols owned by the file's package,
+        // mirroring FIR where getContainingDeclaration returns null for them.
+        if (declaration is KtObjectDeclaration && declaration.isObjectLiteral()) {
+            return Symbol.createGlobal(
+                packageSymbol(declaration.containingKtFile.packageFqName),
+                scipDescriptor(declaration),
+            )
+        }
 
         if (isLocalMember(declaration)) return locals.put(declaration)
 
@@ -116,18 +226,31 @@ class SymbolsCache {
         return Symbol.createGlobal(owner, scipDescriptor(declaration))
     }
 
-    // Port of FIR's `isLocalMember`: only functions, variables and classes can be
-    // local members; everything else is classified through its owner.
-    private fun isLocalMember(declaration: KtDeclaration): Boolean =
+    /**
+     * Port of FIR's `isLocalMember`: functions, variables and classes declared in code bodies are
+     * local. Members of any class-like container — including anonymous objects — are not: locality
+     * is decided by the nearest scope owner, not by syntactic nesting.
+     */
+    private fun isLocalMember(declaration: KtDeclaration): Boolean {
         when (declaration) {
             is KtNamedFunction,
             is KtVariableDeclaration,
-            is KtClassOrObject ->
-                declaration.parents
-                    .takeWhile { it !is KtFile }
-                    .any { it !is KtClassBody && it !is KtClassOrObject }
-            else -> false
+            is KtClassOrObject -> {}
+            else -> return false
         }
+        for (parent in declaration.parents) {
+            when (parent) {
+                is KtClassBody,
+                is KtFile -> return false
+                is KtBlockExpression,
+                is KtFunction,
+                is KtPropertyAccessor,
+                is KtProperty,
+                is KtAnonymousInitializer -> return true
+            }
+        }
+        return false
+    }
 
     private fun ownerSymbol(declaration: KtDeclaration): Symbol =
         when (declaration) {
@@ -160,15 +283,9 @@ class SymbolsCache {
             declaration is KtClassOrObject ->
                 ScipSymbolDescriptor(Kind.TYPE, declaration.name.orEmpty())
             declaration is KtPropertyAccessor && declaration.isSetter ->
-                ScipSymbolDescriptor(
-                    Kind.METHOD,
-                    "set" + declaration.property.name.orEmpty().capitalizeAsciiOnly(),
-                )
+                accessorDescriptor(declaration.property.name.orEmpty(), setter = true)
             declaration is KtPropertyAccessor ->
-                ScipSymbolDescriptor(
-                    Kind.METHOD,
-                    "get" + declaration.property.name.orEmpty().capitalizeAsciiOnly(),
-                )
+                accessorDescriptor(declaration.property.name.orEmpty(), setter = false)
             declaration is KtConstructor<*> ->
                 ScipSymbolDescriptor(Kind.METHOD, "<init>", constructorDisambiguator(declaration))
             declaration is KtNamedFunction ->
@@ -236,17 +353,43 @@ class SymbolsCache {
     internal fun isDeclarationParameter(parameter: KtParameter): Boolean =
         ownerDeclarationOfParameter(parameter) != null
 
-    private fun externalCallableSymbol(target: KaCallableSymbol): Symbol {
+    /**
+     * External (classpath/JDK) callables, disambiguated by their position among the same-named
+     * callables of their container — mirroring FIR, which consulted the class's declared members or
+     * the top-level symbol provider (e.g. `kotlin/collections/forEachIndexed(+9).`).
+     */
+    private fun externalCallableSymbol(session: KaSession, target: KaCallableSymbol): Symbol {
         val callableId = target.callableId ?: return Symbol.NONE
         val owner =
             callableId.classId?.let(::classIdSymbol) ?: packageSymbol(callableId.packageName)
         val name = callableId.callableName.asString()
         val descriptor =
             when (target) {
-                is KaFunctionSymbol -> ScipSymbolDescriptor(Kind.METHOD, name)
+                is KaFunctionSymbol ->
+                    ScipSymbolDescriptor(
+                        Kind.METHOD,
+                        name,
+                        externalMethodDisambiguator(session, target),
+                    )
                 else -> ScipSymbolDescriptor(Kind.TERM, name)
             }
         return Symbol.createGlobal(owner, descriptor)
+    }
+
+    private fun externalMethodDisambiguator(session: KaSession, target: KaCallableSymbol): String {
+        val callableId = target.callableId ?: return "()"
+        val overloads: List<KaCallableSymbol> =
+            with(session) {
+                val classId = callableId.classId
+                if (classId == null) {
+                    findTopLevelCallables(callableId.packageName, callableId.callableName).toList()
+                } else {
+                    val classSymbol = findClass(classId) ?: return "()"
+                    classSymbol.declaredMemberScope.callables(callableId.callableName).toList()
+                }
+            }
+        val index = overloads.indexOfFirst { it == target }
+        return if (index <= 0) "()" else "(+$index)"
     }
 
     private fun classIdSymbol(classId: ClassId): Symbol {
