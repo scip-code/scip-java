@@ -33,12 +33,14 @@ import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtParameterList
 import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtSecondaryConstructor
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
+import org.jetbrains.kotlin.psi.KtTypeAlias
 import org.jetbrains.kotlin.psi.KtTypeParameter
 import org.jetbrains.kotlin.psi.KtVariableDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -148,6 +150,7 @@ class KotlinAnalysisIndexer(
         }
     }
 
+    @OptIn(org.jetbrains.kotlin.analysis.api.KaExperimentalApi::class)
     private class IndexingVisitor(
         private val session: KaSession,
         private val cache: SymbolsCache,
@@ -157,7 +160,9 @@ class KotlinAnalysisIndexer(
         private val signatures = SignatureRenderer(session)
 
         override fun visitDeclaration(dcl: KtDeclaration) {
-            super.visitDeclaration(dcl)
+            // Definitions are emitted before visiting children so that same-range
+            // occurrence order and local-symbol numbering match scip-kotlinc,
+            // which processed declarations before their bodies.
             when (dcl) {
                 is KtEnumEntry -> emitEnumEntry(dcl)
                 is KtClassOrObject -> emitClassLike(dcl)
@@ -167,9 +172,11 @@ class KotlinAnalysisIndexer(
                 is KtParameter -> emitParameter(dcl)
                 is KtPropertyAccessor -> emitExplicitAccessor(dcl)
                 is KtTypeParameter -> emitTypeParameter(dcl)
-                is KtDestructuringDeclarationEntry -> emitLocalVariable(dcl)
+                is KtTypeAlias -> emitTypeAlias(dcl)
+                is KtDestructuringDeclarationEntry -> emitDestructuringEntry(dcl)
                 else -> {}
             }
+            super.visitDeclaration(dcl)
         }
 
         override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
@@ -242,9 +249,13 @@ class KotlinAnalysisIndexer(
                 relationships = superTypeRelationships(declaration),
             )
             // Classes and objects (but not interfaces) declare an implicit primary
-            // constructor when no explicit one is present in source.
+            // constructor when no explicit one is present in source. A primary
+            // constructor without the `constructor` keyword also anchors at the class
+            // identifier and is emitted here so the class definition stays first at
+            // that range (matching scip-kotlinc's order); emitConstructor skips it.
             val isInterface = declaration is KtClass && declaration.isInterface()
-            if (!isInterface && declaration.primaryConstructor == null) {
+            val primaryConstructor = declaration.primaryConstructor
+            if (!isInterface && primaryConstructor == null) {
                 emitDefinition(
                     symbol = cache.implicitConstructorSymbol(declaration),
                     range = range,
@@ -253,7 +264,85 @@ class KotlinAnalysisIndexer(
                     signatureText = signatures.implicitConstructorSignature(declaration),
                     documentation = docComment(declaration),
                 )
+            } else if (
+                primaryConstructor != null && primaryConstructor.getConstructorKeyword() == null
+            ) {
+                emitDefinition(
+                    symbol = cache.symbolForDeclaration(primaryConstructor),
+                    range = range,
+                    enclosing = primaryConstructor.textRange,
+                    displayName = displayName,
+                    signatureText = signatures.constructorSignature(primaryConstructor),
+                    documentation = docComment(primaryConstructor),
+                )
             }
+            if (declaration is KtClass && declaration.isEnum()) {
+                emitEnumSynthetics(declaration, range)
+            }
+            if (declaration is KtClass && declaration.isData()) {
+                declaration.primaryConstructor?.let { constructor ->
+                    emitDefinition(
+                        symbol = cache.memberMethodSymbol(declaration, "copy"),
+                        range = constructor.textRange,
+                        enclosing = constructor.textRange,
+                        displayName = "copy",
+                        signatureText = signatures.dataCopySignature(declaration),
+                        documentation = null,
+                    )
+                }
+            }
+        }
+
+        /**
+         * Compiler-generated enum members: `values()`, `valueOf(value)` and `entries` (plus its
+         * getter), all anchored at the enum class identifier like in scip-kotlinc. Unlike
+         * scip-kotlinc, the entries getter is owned by the enum class instead of the package — the
+         * old symbol (`snapshots/getEntries().`) was a bug.
+         */
+        private fun emitEnumSynthetics(declaration: KtClass, range: TextRange) {
+            val name = declaration.name.orEmpty()
+            val enclosing = declaration.textRange
+            emitDefinition(
+                symbol = cache.memberMethodSymbol(declaration, "values"),
+                range = range,
+                enclosing = enclosing,
+                displayName = "values",
+                signatureText = signatures.enumValuesSignature(name),
+                documentation = null,
+            )
+            val valueOf = cache.memberMethodSymbol(declaration, "valueOf")
+            emitDefinition(
+                symbol = valueOf,
+                range = range,
+                enclosing = enclosing,
+                displayName = "valueOf",
+                signatureText = signatures.enumValueOfSignature(name),
+                documentation = null,
+            )
+            emitDefinition(
+                symbol = cache.methodParameterSymbol(valueOf, "value"),
+                range = range,
+                enclosing = enclosing,
+                displayName = "value",
+                signatureText = "value: String",
+                documentation = null,
+            )
+            emitDefinition(
+                symbol = cache.memberTermSymbol(declaration, "entries"),
+                range = range,
+                enclosing = enclosing,
+                displayName = "entries",
+                signatureText = signatures.enumEntriesSignature(name),
+                documentation = null,
+            )
+            emitDefinition(
+                symbol = cache.memberMethodSymbol(declaration, "getEntries"),
+                range = range,
+                enclosing = enclosing,
+                displayName = "entries",
+                signatureText = signatures.enumGetEntriesSignature(name),
+                documentation = null,
+            )
         }
 
         private fun emitEnumEntry(declaration: KtEnumEntry) {
@@ -271,10 +360,9 @@ class KotlinAnalysisIndexer(
         private fun emitConstructor(declaration: KtConstructor<*>) {
             val range =
                 when (declaration) {
+                    // Keyword-less primary constructors are emitted by emitClassLike.
                     is KtPrimaryConstructor ->
-                        declaration.getConstructorKeyword()?.textRange
-                            ?: declaration.containingClassOrObject?.nameIdentifier?.textRange
-                            ?: return
+                        declaration.getConstructorKeyword()?.textRange ?: return
                     is KtSecondaryConstructor -> declaration.textRange
                     else -> return
                 }
@@ -341,8 +429,42 @@ class KotlinAnalysisIndexer(
         }
 
         private fun emitParameter(declaration: KtParameter) {
-            // Parameters of function types, catch clauses and for loops are not
-            // declarations of their own.
+            val loopOrCatchIdentifier = declaration.nameIdentifier
+            // `for` loop variables and `catch` parameters are local declarations,
+            // mirroring the FIR indexer (which also assigned their local numbers at
+            // the declaration site).
+            if (loopOrCatchIdentifier != null) {
+                if (declaration.parent is org.jetbrains.kotlin.psi.KtForExpression) {
+                    val type =
+                        declaration.typeReference?.text
+                            ?: renderedParameterType(declaration)
+                            ?: "Any"
+                    emitDefinition(
+                        symbol = cache.symbolForDeclaration(declaration),
+                        range = loopOrCatchIdentifier.textRange,
+                        enclosing = declaration.textRange,
+                        displayName = declaration.name.orEmpty(),
+                        signatureText = "local val ${declaration.name.orEmpty()}: $type",
+                        documentation = null,
+                    )
+                    return
+                }
+                if (
+                    (declaration.parent as? KtParameterList)?.parent
+                        is org.jetbrains.kotlin.psi.KtCatchClause
+                ) {
+                    emitDefinition(
+                        symbol = cache.symbolForDeclaration(declaration),
+                        range = loopOrCatchIdentifier.textRange,
+                        enclosing = declaration.textRange,
+                        displayName = declaration.name.orEmpty(),
+                        signatureText = signatures.parameterSignature(declaration),
+                        documentation = null,
+                    )
+                    return
+                }
+            }
+            // Parameters of function types are not declarations of their own.
             if (!cache.isDeclarationParameter(declaration)) return
             val identifier = declaration.nameIdentifier ?: return
             val symbol = cache.symbolForDeclaration(declaration)
@@ -376,8 +498,165 @@ class KotlinAnalysisIndexer(
                     hasExplicitSetter = false,
                     isVar = declaration.isMutable,
                 )
+                emitDataClassParameterSynthetics(declaration, identifier.textRange)
             }
         }
+
+        /**
+         * A data-class constructor parameter additionally declares `componentN()` and a `copy()`
+         * parameter, and the generated `copy()` default value reads the property — all anchored at
+         * the parameter identifier, mirroring scip-kotlinc.
+         */
+        private fun emitDataClassParameterSynthetics(declaration: KtParameter, range: TextRange) {
+            val constructor = declaration.parent?.parent as? KtPrimaryConstructor ?: return
+            val containingClass = constructor.containingClassOrObject as? KtClass ?: return
+            if (!containingClass.isData()) return
+            val index = constructor.valueParameters.indexOf(declaration)
+            if (index < 0) return
+            emitDefinition(
+                symbol = cache.memberMethodSymbol(containingClass, "component${index + 1}"),
+                range = range,
+                enclosing = declaration.textRange,
+                displayName = "component${index + 1}",
+                signatureText = signatures.dataComponentSignature(index + 1, declaration),
+                documentation = null,
+            )
+            emitDefinition(
+                symbol =
+                    cache.methodParameterSymbol(
+                        cache.memberMethodSymbol(containingClass, "copy"),
+                        declaration.name.orEmpty(),
+                    ),
+                range = range,
+                enclosing = declaration.textRange,
+                displayName = declaration.name.orEmpty(),
+                signatureText = signatures.dataCopyParameterSignature(declaration),
+                documentation = null,
+            )
+            addReference(cache.parameterPropertySymbol(declaration), range)
+            addReference(cache.syntheticAccessorSymbol(declaration, setter = false), range)
+            if (declaration.isMutable) {
+                addReference(cache.syntheticAccessorSymbol(declaration, setter = true), range)
+            }
+        }
+
+        private fun emitTypeAlias(declaration: KtTypeAlias) {
+            val identifier = declaration.nameIdentifier ?: return
+            emitDefinition(
+                symbol = cache.symbolForDeclaration(declaration),
+                range = identifier.textRange,
+                enclosing = declaration.textRange,
+                displayName = declaration.name.orEmpty(),
+                signatureText = signatures.typeAliasSignature(declaration),
+                documentation = docComment(declaration),
+            )
+        }
+
+        /**
+         * `when (subject)` introduces a synthetic `<when-subject>` local in the FIR desugaring;
+         * scip-kotlinc emitted a definition for it at the subject expression. Emitted before
+         * visiting children so local numbering matches.
+         */
+        override fun visitWhenExpression(expression: org.jetbrains.kotlin.psi.KtWhenExpression) {
+            val subject = expression.subjectExpression
+            if (subject != null && expression.subjectVariable == null) {
+                emitDefinition(
+                    symbol = cache.syntheticLocalSymbol(expression),
+                    range = subject.textRange,
+                    enclosing = subject.textRange,
+                    displayName = "<when-subject>",
+                    signatureText =
+                        signatures.whenSubjectSignature(renderedExpressionType(subject)),
+                    documentation = null,
+                )
+            }
+            super.visitWhenExpression(expression)
+        }
+
+        /**
+         * Destructuring introduces a synthetic `<destruct>` local holding the destructured value;
+         * each entry references its `componentN()` function and the `<destruct>` local. Emitted
+         * before visiting children so local numbering matches.
+         */
+        override fun visitDestructuringDeclaration(
+            destructuringDeclaration: org.jetbrains.kotlin.psi.KtDestructuringDeclaration
+        ) {
+            val isParameter = destructuringDeclaration.parent is KtParameter
+            val type =
+                destructuringDeclaration.initializer?.let { renderedExpressionType(it) }
+                    ?: (destructuringDeclaration.parent as? KtParameter)?.let {
+                        renderedParameterType(it)
+                    }
+                    ?: "Any"
+            emitDefinition(
+                symbol = cache.syntheticLocalSymbol(destructuringDeclaration),
+                range = destructuringDeclaration.textRange,
+                enclosing = destructuringDeclaration.textRange,
+                displayName = "<destruct>",
+                signatureText = signatures.destructSignature(type, isParameter),
+                documentation = null,
+            )
+            super.visitDestructuringDeclaration(destructuringDeclaration)
+        }
+
+        private fun emitDestructuringEntry(declaration: KtDestructuringDeclarationEntry) {
+            emitLocalVariable(declaration)
+            val range = declaration.nameIdentifier?.textRange ?: return
+            val destructuring =
+                declaration.parent as? org.jetbrains.kotlin.psi.KtDestructuringDeclaration ?: return
+            // Each entry desugars to a `componentN()` call on the destructured value.
+            // Standalone analysis does not resolve destructuring-entry references, so
+            // the symbol is derived from the destructured type and the entry position.
+            val index = destructuring.entries.indexOf(declaration)
+            destructuredClassId(destructuring)?.let { classId ->
+                addReference(
+                    Symbol.createGlobal(
+                        cache.classSymbol(classId),
+                        ScipSymbolDescriptor(
+                            ScipSymbolDescriptor.Kind.METHOD,
+                            "component${index + 1}",
+                        ),
+                    ),
+                    range,
+                )
+            }
+            addReference(cache.syntheticLocalSymbol(destructuring), range)
+        }
+
+        private fun destructuredClassId(
+            destructuring: org.jetbrains.kotlin.psi.KtDestructuringDeclaration
+        ): ClassId? =
+            with(session) {
+                val type =
+                    destructuring.initializer?.expressionType
+                        ?: (destructuring.parent as? KtParameter)?.let {
+                            (it.symbol as? KaCallableSymbol)?.returnType
+                        }
+                (type as? KaClassType)?.classId
+            }
+
+        private fun renderedExpressionType(
+            expression: org.jetbrains.kotlin.psi.KtExpression
+        ): String =
+            with(session) {
+                expression.expressionType?.render(
+                    org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+                        .WITH_SHORT_NAMES,
+                    position = org.jetbrains.kotlin.types.Variance.INVARIANT,
+                )
+            } ?: "Any"
+
+        private fun renderedParameterType(parameter: KtParameter): String? =
+            with(session) {
+                (parameter.symbol as? KaCallableSymbol)
+                    ?.returnType
+                    ?.render(
+                        org.jetbrains.kotlin.analysis.api.renderer.types.impl
+                            .KaTypeRendererForSource
+                            .WITH_SHORT_NAMES,
+                        position = org.jetbrains.kotlin.types.Variance.INVARIANT,
+                    )
+            }
 
         private fun emitSyntheticAccessors(
             property: KtDeclaration,
