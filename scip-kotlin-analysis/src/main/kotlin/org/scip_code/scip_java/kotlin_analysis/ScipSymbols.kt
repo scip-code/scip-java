@@ -2,19 +2,14 @@ package org.scip_code.scip_java.kotlin_analysis
 
 import org.scip_code.scip_java.shared.ScipSymbols as SharedSymbols
 
-// Ported from scip-kotlinc's ScipSymbols.kt so that the Analysis-API-based indexer
-// produces byte-identical SCIP symbol strings. scip-kotlinc is deleted once this
-// indexer reaches parity, at which point this file is the only copy.
 @JvmInline
 value class Symbol(private val symbol: String) {
     companion object {
         val NONE = Symbol(SharedSymbols.NONE)
         val ROOT_PACKAGE = Symbol(SharedSymbols.ROOT_PACKAGE)
 
-        // Note: this intentionally diverges from `SharedSymbols.global` when
-        // `desc == NONE` — Java returns `NONE`, Kotlin returns the owner.
-        // SymbolsCache relies on this behavior; do not delegate without first
-        // updating those call sites.
+        // Diverges from `SharedSymbols.global` when `desc == NONE`: that returns
+        // NONE, this returns the owner — SymbolsCache relies on it.
         fun createGlobal(owner: Symbol, desc: ScipSymbolDescriptor): Symbol =
             when {
                 desc == ScipSymbolDescriptor.NONE -> owner
@@ -32,14 +27,11 @@ value class Symbol(private val symbol: String) {
     override fun toString(): String = symbol
 }
 
-fun String.symbol(): Symbol = Symbol(this)
-
 data class ScipSymbolDescriptor(
     val kind: Kind,
     val name: String,
-    // Default differs from `SharedSymbols.Descriptor` (which is "") because
-    // Kotlin call sites — getters/setters in particular — rely on the no-arg
-    // overload producing `name().` rather than `name.` for METHOD kinds.
+    // Defaults to "()" (`SharedSymbols.Descriptor` defaults to ""): call sites
+    // rely on the no-arg form producing `name().` for METHOD kinds.
     val disambiguator: String = "()",
 ) {
     companion object {

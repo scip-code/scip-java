@@ -100,10 +100,8 @@ This means our SCIP compiler plugin was not attached to one or more JavaCompile 
     }
 
     /**
-     * The Gradle plugin dumps each Kotlin compile task's sources and classpath under
-     * `<targetroot>/kotlin-configs/`; index them with the standalone Analysis API indexer. The
-     * Kotlin version of the indexed build is irrelevant here — the indexer bundles its own analysis
-     * engine.
+     * Indexes the sources/classpath dumps the Gradle plugin wrote to `<targetroot>/kotlin-configs/`
+     * after each Kotlin compile task.
      */
     private fun indexKotlinConfigs() {
         val configsDir = targetroot().resolve("kotlin-configs")

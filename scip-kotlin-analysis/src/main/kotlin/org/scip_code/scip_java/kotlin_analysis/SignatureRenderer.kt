@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
@@ -20,10 +21,9 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.types.Variance
 
 /**
- * Renders hover signatures in the exact textual format that scip-kotlinc's FirRenderer setup
- * produced (see the goldens under scip-snapshots/expected/kotlin), so that migrating the indexer
- * does not churn signature documentation. Explicitly written type annotations are taken verbatim
- * from source; inferred types are rendered with short names via the Analysis API.
+ * Renders hover signatures in the textual format of scip-kotlinc's FirRenderer setup (see the
+ * goldens under scip-snapshots/expected/kotlin). Explicit type annotations are taken verbatim from
+ * source; inferred types are rendered with short names via the Analysis API.
  */
 @OptIn(KaExperimentalApi::class)
 internal class SignatureRenderer(private val session: KaSession) {
@@ -82,7 +82,6 @@ internal class SignatureRenderer(private val session: KaSession) {
             declaration.getTypeReference()?.text.orEmpty() +
             "\n"
 
-    /** `values()` / `valueOf(value: String)` / `entries` signatures of an enum class. */
     fun enumValuesSignature(name: String): String = "public final static fun values(): Array<$name>"
 
     fun enumValueOfSignature(name: String): String =
@@ -138,7 +137,7 @@ internal class SignatureRenderer(private val session: KaSession) {
         }
 
     fun propertySignature(declaration: KtDeclaration): String {
-        val name = (declaration as? org.jetbrains.kotlin.psi.KtNamedDeclaration)?.name.orEmpty()
+        val name = (declaration as? KtNamedDeclaration)?.name.orEmpty()
         val const = if (declaration.hasModifier(KtTokens.CONST_KEYWORD)) "const " else ""
         val lateinit = if (declaration.hasModifier(KtTokens.LATEINIT_KEYWORD)) "lateinit " else ""
         val valOrVar = if (isVar(declaration)) "var" else "val"
@@ -265,7 +264,7 @@ internal class SignatureRenderer(private val session: KaSession) {
             else -> "final"
         }
 
-    /** Modality + `override`, with a trailing space; empty for abstract-less contexts. */
+    /** Modality plus `override`, with a trailing space. */
     private fun memberModality(declaration: KtDeclaration): String {
         val containingInterface =
             (declaration.containingClassOrObject as? KtClass)?.isInterface() == true

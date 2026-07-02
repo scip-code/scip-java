@@ -175,11 +175,9 @@ public class ScipGradlePlugin implements Plugin<Project> {
   }
 
   /**
-   * Kotlin sources are no longer indexed inside kotlinc: after each Kotlin compile task runs, its
-   * sources and classpath are dumped to {@code <targetroot>/kotlin-configs/<task>.txt}, and the
-   * scip-java CLI indexes them with the standalone Analysis API indexer after the build. This
-   * removes any binary-compatibility coupling with the Kotlin compiler version of the build being
-   * indexed.
+   * Kotlin sources are not indexed inside kotlinc: after each Kotlin compile task runs, its sources
+   * and classpath are dumped to {@code <targetroot>/kotlin-configs/<task>.txt} for the scip-java
+   * CLI to index after the build, decoupling indexing from the build's Kotlin compiler version.
    */
   private static void configureKotlinCompileTask(Task task, String sourceRoot, String targetRoot) {
     if (!task.getClass().getSimpleName().contains("KotlinCompile")) {
