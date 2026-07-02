@@ -45,10 +45,9 @@ import org.scip_code.scip_java.shared.LocalSymbolsCache as SharedLocalSymbolsCac
 /**
  * Computes SCIP symbol strings for Kotlin declarations and resolved references.
  *
- * This is a PSI-driven port of the FIR-based `SymbolsCache` in scip-kotlinc. Declarations with
- * Kotlin source are classified from their PSI structure, which keeps the version-sensitive Analysis
- * API surface minimal. References that resolve to declarations without Kotlin source (classpath or
- * JDK symbols) fall back to `ClassId`/`CallableId`-derived symbols.
+ * Declarations with Kotlin source are classified from their PSI structure, which keeps the
+ * version-sensitive Analysis API surface minimal. References that resolve to declarations without
+ * Kotlin source (classpath or JDK symbols) fall back to `ClassId`/`CallableId`-derived symbols.
  *
  * Instantiate one cache per indexed file: local symbols are numbered per SCIP document.
  */
@@ -92,9 +91,9 @@ class SymbolsCache {
         )
 
     /**
-     * The SCIP symbol of the synthetic getter/setter of a property (or `val`/`var` constructor
-     * parameter) that has no explicit accessor PSI. Accessors are owned by the property's container
-     * (`Class#getBanana().`), not by the constructor that declares the parameter.
+     * The synthetic getter/setter of a property (or `val`/`var` constructor parameter) without
+     * explicit accessor PSI. Owned by the property's container (`Class#getBanana().`), not by the
+     * constructor declaring the parameter.
      */
     fun syntheticAccessorSymbol(property: KtDeclaration, setter: Boolean): Symbol {
         val name = (property as? KtNamedDeclaration)?.name.orEmpty()
@@ -121,7 +120,14 @@ class SymbolsCache {
     }
 
     /** The SCIP symbol of a class referenced by its (expanded) [ClassId]. */
-    fun classSymbol(classId: ClassId): Symbol = classIdSymbol(classId)
+    fun classSymbol(classId: ClassId): Symbol {
+        var symbol = packageSymbol(classId.packageFqName)
+        for (segment in classId.relativeClassName.pathSegments()) {
+            symbol =
+                Symbol.createGlobal(symbol, ScipSymbolDescriptor(Kind.TYPE, segment.asString()))
+        }
+        return symbol
+    }
 
     /** Symbol of a compiler-generated member method (enum `values()`, data-class `copy()`, …). */
     fun memberMethodSymbol(owner: KtClassOrObject, name: String): Symbol =
@@ -158,9 +164,8 @@ class SymbolsCache {
         )
 
     /**
-     * The SCIP symbol of the implicit `it` parameter of a lambda. The function literal PSI is used
-     * as the cache key; this cannot collide with the literal itself because anonymous functions
-     * never cache a symbol.
+     * The implicit `it` parameter of a lambda, keyed by the function literal PSI — safe because
+     * anonymous functions never cache a symbol of their own.
      */
     fun implicitItSymbol(literal: KtFunctionLiteral): Symbol = syntheticLocalSymbol(literal)
 
@@ -168,8 +173,7 @@ class SymbolsCache {
     fun symbolForReference(session: KaSession, target: KaSymbol): Symbol {
         val psi = target.psi
         if (psi is KtDeclaration) {
-            // A constructor symbol whose PSI is the class itself is an implicit
-            // primary constructor.
+            // A constructor symbol whose PSI is the class itself is an implicit primary.
             if (target is KaConstructorSymbol && psi is KtClassOrObject) {
                 return implicitConstructorSymbol(psi)
             }
@@ -180,7 +184,7 @@ class SymbolsCache {
             // Source type aliases are expanded like library ones, matching scip-kotlinc.
             if (psi is KtTypeAlias && target is KaTypeAliasSymbol) {
                 return with(session) { (target.expandedType as? KaClassType)?.classId }
-                    ?.let(::classIdSymbol) ?: symbolForDeclaration(psi)
+                    ?.let(::classSymbol) ?: symbolForDeclaration(psi)
             }
             // Compiler-generated callables (data-class componentN/copy, enum
             // `entries`, …) resolve to PSI of the class or parameter they derive
@@ -204,17 +208,17 @@ class SymbolsCache {
             is KaConstructorSymbol ->
                 target.containingClassId?.let { classId ->
                     Symbol.createGlobal(
-                        classIdSymbol(classId),
+                        classSymbol(classId),
                         ScipSymbolDescriptor(Kind.METHOD, "<init>"),
                     )
                 } ?: Symbol.NONE
-            // Library type aliases are expanded to the aliased class, matching the
-            // FIR indexer (`AutoCloseable` → `java/lang/AutoCloseable#`) and
-            // keeping Kotlin and Java references to the same class unified.
+            // Library type aliases are expanded to the aliased class (`AutoCloseable`
+            // → `java/lang/AutoCloseable#`), unifying Kotlin and Java references.
             is KaTypeAliasSymbol ->
-                with(session) { (target.expandedType as? KaClassType)?.classId }
-                    ?.let(::classIdSymbol) ?: target.classId?.let(::classIdSymbol) ?: Symbol.NONE
-            is KaClassLikeSymbol -> target.classId?.let(::classIdSymbol) ?: Symbol.NONE
+                with(session) { (target.expandedType as? KaClassType)?.classId }?.let(::classSymbol)
+                    ?: target.classId?.let(::classSymbol)
+                    ?: Symbol.NONE
+            is KaClassLikeSymbol -> target.classId?.let(::classSymbol) ?: Symbol.NONE
             is KaCallableSymbol -> externalCallableSymbol(session, target)
             else -> Symbol.NONE
         }
@@ -227,8 +231,7 @@ class SymbolsCache {
         setter: Boolean,
     ): Symbol {
         val callableId = target.callableId ?: return Symbol.NONE
-        val owner =
-            callableId.classId?.let(::classIdSymbol) ?: packageSymbol(callableId.packageName)
+        val owner = callableId.classId?.let(::classSymbol) ?: packageSymbol(callableId.packageName)
         return Symbol.createGlobal(
             owner,
             accessorDescriptor(callableId.callableName.asString(), setter),
@@ -242,13 +245,11 @@ class SymbolsCache {
         )
 
     private fun uncachedSymbol(declaration: KtDeclaration): Symbol {
-        // Anonymous functions and lambdas have no symbol of their own, mirroring
-        // the FIR indexer which returned NONE for FirAnonymousFunctionSymbol.
+        // Anonymous functions and lambdas have no symbol of their own, mirroring FIR.
         if (declaration is KtFunctionLiteral) return Symbol.NONE
         if (declaration is KtNamedFunction && declaration.name == null) return Symbol.NONE
 
-        // Anonymous objects are global symbols owned by the file's package,
-        // mirroring FIR where getContainingDeclaration returns null for them.
+        // Anonymous objects are global symbols owned by the file's package, mirroring FIR.
         if (declaration is KtObjectDeclaration && declaration.isObjectLiteral()) {
             return Symbol.createGlobal(
                 packageSymbol(declaration.containingKtFile.packageFqName),
@@ -400,8 +401,7 @@ class SymbolsCache {
      */
     private fun externalCallableSymbol(session: KaSession, target: KaCallableSymbol): Symbol {
         val callableId = target.callableId ?: return Symbol.NONE
-        val owner =
-            callableId.classId?.let(::classIdSymbol) ?: packageSymbol(callableId.packageName)
+        val owner = callableId.classId?.let(::classSymbol) ?: packageSymbol(callableId.packageName)
         val name = callableId.callableName.asString()
         val descriptor =
             when (target) {
@@ -430,14 +430,5 @@ class SymbolsCache {
             }
         val index = overloads.indexOfFirst { it == target }
         return if (index <= 0) "()" else "(+$index)"
-    }
-
-    private fun classIdSymbol(classId: ClassId): Symbol {
-        var symbol = packageSymbol(classId.packageFqName)
-        for (segment in classId.relativeClassName.pathSegments()) {
-            symbol =
-                Symbol.createGlobal(symbol, ScipSymbolDescriptor(Kind.TYPE, segment.asString()))
-        }
-        return symbol
     }
 }

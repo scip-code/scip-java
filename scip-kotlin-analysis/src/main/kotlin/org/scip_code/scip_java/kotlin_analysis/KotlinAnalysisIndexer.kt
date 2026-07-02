@@ -4,8 +4,11 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.Arrays
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.standalone.buildStandaloneAnalysisAPISession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -17,18 +20,23 @@ import org.jetbrains.kotlin.analysis.project.structure.builder.buildKtLibraryMod
 import org.jetbrains.kotlin.analysis.project.structure.builder.buildKtSdkModule
 import org.jetbrains.kotlin.analysis.project.structure.builder.buildKtSourceModule
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.psi.KtCatchClause
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtConstructorCalleeExpression
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
 import org.jetbrains.kotlin.psi.KtEnumEntry
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
@@ -43,8 +51,10 @@ import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.KtTypeAlias
 import org.jetbrains.kotlin.psi.KtTypeParameter
 import org.jetbrains.kotlin.psi.KtVariableDeclaration
+import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.types.Variance
 import org.scip_code.scip.Document
 import org.scip_code.scip.Occurrence
 import org.scip_code.scip.SymbolRole
@@ -59,13 +69,12 @@ import org.scip_code.scip_java.shared.ScipShardWriter
 /**
  * Indexes Kotlin sources into SCIP documents using the Kotlin Analysis API in standalone mode.
  *
- * Unlike scip-kotlinc, this indexer does not run inside the user's kotlinc process: it bundles its
- * own analysis engine, so the Kotlin version of the indexed project only matters as a
- * language-version setting, never as a binary compatibility constraint.
+ * The indexer bundles its own analysis engine, so the Kotlin version of the indexed project only
+ * matters as a language-version setting, never as a binary-compatibility constraint.
  *
  * One SCIP shard is written per source file under
- * `<targetroot>/META-INF/scip/<relative-source-path>.scip`, matching the layout produced by the
- * scip-javac and scip-kotlinc compiler plugins.
+ * `<targetroot>/META-INF/scip/<relative-source-path>.scip`, the layout produced by the scip-javac
+ * compiler plugin.
  */
 class KotlinAnalysisIndexer(
     private val sourceroot: Path,
@@ -150,7 +159,7 @@ class KotlinAnalysisIndexer(
         }
     }
 
-    @OptIn(org.jetbrains.kotlin.analysis.api.KaExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     private class IndexingVisitor(
         private val session: KaSession,
         private val cache: SymbolsCache,
@@ -160,9 +169,8 @@ class KotlinAnalysisIndexer(
         private val signatures = SignatureRenderer(session)
 
         override fun visitDeclaration(dcl: KtDeclaration) {
-            // Definitions are emitted before visiting children so that same-range
-            // occurrence order and local-symbol numbering match scip-kotlinc,
-            // which processed declarations before their bodies.
+            // Emit before visiting children so same-range occurrence order and
+            // local-symbol numbering match scip-kotlinc.
             when (dcl) {
                 is KtEnumEntry -> emitEnumEntry(dcl)
                 is KtClassOrObject -> emitClassLike(dcl)
@@ -186,9 +194,6 @@ class KotlinAnalysisIndexer(
             val target = with(session) { expression.mainReference.resolveToSymbol() } ?: return
             val range = expression.getReferencedNameElement().textRange
 
-            // The implicit `it` lambda parameter has no declaration PSI; its
-            // definition is anchored at the whole lambda literal, emitted at the
-            // first reference.
             val targetPsi = target.psi
             if (
                 targetPsi is KtFunctionLiteral &&
@@ -212,9 +217,8 @@ class KotlinAnalysisIndexer(
                 return
             }
 
-            // Property references fan out to the property and its accessors,
-            // e.g. `banana` yields `Class#banana.`, `Class#getBanana().` and
-            // `Class#setBanana().`.
+            // Property references fan out to the property and its accessors
+            // (`banana` → `Class#banana.`, `Class#getBanana().`, `Class#setBanana().`).
             if (target is KaPropertySymbol) {
                 propertyReferenceSymbols(target).forEach { addReference(it, range) }
                 return
@@ -223,18 +227,13 @@ class KotlinAnalysisIndexer(
             addReference(cache.symbolForReference(session, target), range)
         }
 
-        // ---------------------------------------------------------------
-        // Declarations
-        // ---------------------------------------------------------------
-
         private fun emitClassLike(declaration: KtClassOrObject) {
             val isAnonymous = declaration is KtObjectDeclaration && declaration.isObjectLiteral()
             val range =
                 when {
                     declaration.nameIdentifier != null -> declaration.nameIdentifier!!.textRange
                     isAnonymous ->
-                        (declaration as KtObjectDeclaration).getObjectKeyword()?.textRange
-                            ?: declaration.textRange
+                        declaration.getObjectKeyword()?.textRange ?: declaration.textRange
                     else -> declaration.textRange // unnamed companion object
                 }
             val displayName = if (isAnonymous) "<anonymous>" else declaration.name ?: "Companion"
@@ -248,11 +247,10 @@ class KotlinAnalysisIndexer(
                 documentation = docComment(declaration),
                 relationships = superTypeRelationships(declaration),
             )
-            // Classes and objects (but not interfaces) declare an implicit primary
-            // constructor when no explicit one is present in source. A primary
-            // constructor without the `constructor` keyword also anchors at the class
-            // identifier and is emitted here so the class definition stays first at
-            // that range (matching scip-kotlinc's order); emitConstructor skips it.
+            // Classes and objects (not interfaces) get an implicit primary constructor
+            // when none is present. A keyword-less primary constructor also anchors at
+            // the class identifier; both are emitted here so the class definition stays
+            // first at that range (emitConstructor skips the keyword-less case).
             val isInterface = declaration is KtClass && declaration.isInterface()
             val primaryConstructor = declaration.primaryConstructor
             if (!isInterface && primaryConstructor == null) {
@@ -270,9 +268,9 @@ class KotlinAnalysisIndexer(
                 emitDefinition(
                     symbol = cache.symbolForDeclaration(primaryConstructor),
                     range = range,
-                    // Span from the class identifier (the definition anchor) through the
-                    // parameter list, so the enclosing range contains its own anchor —
-                    // scip-kotlinc used the parameter list alone, which did not.
+                    // Span from the definition anchor through the parameter list so the
+                    // enclosing range contains its own anchor (scip-kotlinc's
+                    // parameter-list-only range did not).
                     enclosing =
                         TextRange(range.startOffset, primaryConstructor.textRange.endOffset),
                     displayName = displayName,
@@ -298,10 +296,9 @@ class KotlinAnalysisIndexer(
         }
 
         /**
-         * Compiler-generated enum members: `values()`, `valueOf(value)` and `entries` (plus its
-         * getter), all anchored at the enum class identifier like in scip-kotlinc. Unlike
-         * scip-kotlinc, the entries getter is owned by the enum class instead of the package — the
-         * old symbol (`snapshots/getEntries().`) was a bug.
+         * Compiler-generated enum members — `values()`, `valueOf(value)`, `entries` and its getter
+         * — anchored at the enum class identifier. Unlike scip-kotlinc, the entries getter is owned
+         * by the enum class; the old package-owned symbol was a bug.
          */
         private fun emitEnumSynthetics(declaration: KtClass, range: TextRange) {
             val name = declaration.name.orEmpty()
@@ -383,7 +380,7 @@ class KotlinAnalysisIndexer(
         private fun emitFunction(declaration: KtNamedFunction) {
             val identifier = declaration.nameIdentifier ?: return
             val relationships =
-                if (declaration.hasModifier(org.jetbrains.kotlin.lexer.KtTokens.OVERRIDE_KEYWORD)) {
+                if (declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
                     overriddenSymbols(declaration)
                 } else {
                     emptyList()
@@ -435,10 +432,9 @@ class KotlinAnalysisIndexer(
         private fun emitParameter(declaration: KtParameter) {
             val loopOrCatchIdentifier = declaration.nameIdentifier
             // `for` loop variables and `catch` parameters are local declarations,
-            // mirroring the FIR indexer (which also assigned their local numbers at
-            // the declaration site).
+            // numbered at the declaration site like in the FIR indexer.
             if (loopOrCatchIdentifier != null) {
-                if (declaration.parent is org.jetbrains.kotlin.psi.KtForExpression) {
+                if (declaration.parent is KtForExpression) {
                     val type =
                         declaration.typeReference?.text
                             ?: renderedParameterType(declaration)
@@ -453,10 +449,7 @@ class KotlinAnalysisIndexer(
                     )
                     return
                 }
-                if (
-                    (declaration.parent as? KtParameterList)?.parent
-                        is org.jetbrains.kotlin.psi.KtCatchClause
-                ) {
+                if ((declaration.parent as? KtParameterList)?.parent is KtCatchClause) {
                     emitDefinition(
                         symbol = cache.symbolForDeclaration(declaration),
                         range = loopOrCatchIdentifier.textRange,
@@ -480,9 +473,9 @@ class KotlinAnalysisIndexer(
                 signatureText = signatures.parameterSignature(declaration),
                 documentation = null,
             )
-            // A `val`/`var` constructor parameter also declares a property: the
-            // property initializer references the parameter at the same range, and
-            // the property plus its synthetic accessors are all anchored there.
+            // A `val`/`var` constructor parameter also declares a property; it and
+            // its synthetic accessors are all anchored at the parameter identifier,
+            // which the property initializer also references.
             if (declaration.hasValOrVar()) {
                 emitDefinition(
                     symbol = cache.parameterPropertySymbol(declaration),
@@ -557,11 +550,11 @@ class KotlinAnalysisIndexer(
         }
 
         /**
-         * `when (subject)` introduces a synthetic `<when-subject>` local in the FIR desugaring;
-         * scip-kotlinc emitted a definition for it at the subject expression. Emitted before
-         * visiting children so local numbering matches.
+         * `when (subject)` introduces a synthetic `<when-subject>` local in the FIR desugaring,
+         * defined at the subject expression. Emitted before visiting children so local numbering
+         * matches.
          */
-        override fun visitWhenExpression(expression: org.jetbrains.kotlin.psi.KtWhenExpression) {
+        override fun visitWhenExpression(expression: KtWhenExpression) {
             val subject = expression.subjectExpression
             if (subject != null && expression.subjectVariable == null) {
                 emitDefinition(
@@ -583,7 +576,7 @@ class KotlinAnalysisIndexer(
          * before visiting children so local numbering matches.
          */
         override fun visitDestructuringDeclaration(
-            destructuringDeclaration: org.jetbrains.kotlin.psi.KtDestructuringDeclaration
+            destructuringDeclaration: KtDestructuringDeclaration
         ) {
             val isParameter = destructuringDeclaration.parent is KtParameter
             val type =
@@ -606,11 +599,10 @@ class KotlinAnalysisIndexer(
         private fun emitDestructuringEntry(declaration: KtDestructuringDeclarationEntry) {
             emitLocalVariable(declaration)
             val range = declaration.nameIdentifier?.textRange ?: return
-            val destructuring =
-                declaration.parent as? org.jetbrains.kotlin.psi.KtDestructuringDeclaration ?: return
-            // Each entry desugars to a `componentN()` call on the destructured value.
+            val destructuring = declaration.parent as? KtDestructuringDeclaration ?: return
+            // Entries desugar to `componentN()` calls on the destructured value.
             // Standalone analysis does not resolve destructuring-entry references, so
-            // the symbol is derived from the destructured type and the entry position.
+            // the symbol is derived from the destructured type and entry position.
             val index = destructuring.entries.indexOf(declaration)
             destructuredClassId(destructuring)?.let { classId ->
                 val name = "component${index + 1}"
@@ -644,9 +636,7 @@ class KotlinAnalysisIndexer(
             addReference(cache.syntheticLocalSymbol(destructuring), range)
         }
 
-        private fun destructuredClassId(
-            destructuring: org.jetbrains.kotlin.psi.KtDestructuringDeclaration
-        ): ClassId? =
+        private fun destructuredClassId(destructuring: KtDestructuringDeclaration): ClassId? =
             with(session) {
                 val type =
                     destructuring.initializer?.expressionType
@@ -656,14 +646,11 @@ class KotlinAnalysisIndexer(
                 (type as? KaClassType)?.classId
             }
 
-        private fun renderedExpressionType(
-            expression: org.jetbrains.kotlin.psi.KtExpression
-        ): String =
+        private fun renderedExpressionType(expression: KtExpression): String =
             with(session) {
                 expression.expressionType?.render(
-                    org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-                        .WITH_SHORT_NAMES,
-                    position = org.jetbrains.kotlin.types.Variance.INVARIANT,
+                    KaTypeRendererForSource.WITH_SHORT_NAMES,
+                    position = Variance.INVARIANT,
                 )
             } ?: "Any"
 
@@ -672,10 +659,8 @@ class KotlinAnalysisIndexer(
                 (parameter.symbol as? KaCallableSymbol)
                     ?.returnType
                     ?.render(
-                        org.jetbrains.kotlin.analysis.api.renderer.types.impl
-                            .KaTypeRendererForSource
-                            .WITH_SHORT_NAMES,
-                        position = org.jetbrains.kotlin.types.Variance.INVARIANT,
+                        KaTypeRendererForSource.WITH_SHORT_NAMES,
+                        position = Variance.INVARIANT,
                     )
             }
 
@@ -756,8 +741,8 @@ class KotlinAnalysisIndexer(
         private val emittedItParameters = HashSet<KtFunctionLiteral>()
 
         /**
-         * A lambda with a single implicit `it` parameter declares it without any PSI: the FIR
-         * indexer anchored its definition at the whole lambda literal.
+         * The implicit `it` parameter has no declaration PSI: its definition is anchored at the
+         * whole lambda literal and emitted at the first reference.
          */
         private fun emitImplicitItDefinition(literal: KtFunctionLiteral, target: KaCallableSymbol) {
             if (!emittedItParameters.add(literal)) return
@@ -771,14 +756,9 @@ class KotlinAnalysisIndexer(
             )
         }
 
-        // ---------------------------------------------------------------
-        // Symbol helpers
-        // ---------------------------------------------------------------
-
         private fun propertyReferenceSymbols(target: KaPropertySymbol): List<Symbol> {
-            val psi = target.psi
-            return when {
-                psi is KtProperty -> {
+            return when (val psi = target.psi) {
+                is KtProperty -> {
                     val property = cache.symbolForDeclaration(psi)
                     if (property.isLocal()) return listOf(property)
                     buildList {
@@ -791,7 +771,7 @@ class KotlinAnalysisIndexer(
                         }
                     }
                 }
-                psi is KtParameter ->
+                is KtParameter ->
                     buildList {
                         add(cache.parameterPropertySymbol(psi))
                         add(cache.syntheticAccessorSymbol(psi, setter = false))
@@ -828,10 +808,6 @@ class KotlinAnalysisIndexer(
                     .filter { it != Symbol.NONE }
                     .toList()
             }
-
-        // ---------------------------------------------------------------
-        // Emission
-        // ---------------------------------------------------------------
 
         private fun emitDefinition(
             symbol: Symbol,
@@ -946,11 +922,9 @@ internal class LineIndex(private val text: String) {
     }
 
     /**
-     * Occurrence anchor ranges are always single-line in the scip-kotlinc output: multiline
-     * declarations (unnamed companion objects, multiline secondary constructors) were collapsed
-     * onto their start line with the end character measured from that line's start. The true extent
-     * lives in the enclosing range. Reproduced here so anchors stay byte-identical and renderable
-     * by `scip snapshot`.
+     * Occurrence anchors are always single-line, like in scip-kotlinc: multiline declarations are
+     * collapsed onto their start line with the end character measured from that line's start. The
+     * true extent lives in the enclosing range.
      */
     fun anchorRange(range: TextRange): ScipRange? {
         if (range.startOffset > text.length || range.endOffset > text.length) return null
@@ -966,7 +940,7 @@ internal class LineIndex(private val text: String) {
     private fun lineStart(line: Int): Int = lineStartOffsets[line]
 
     private fun position(offset: Int): Pair<Int, Int> {
-        var line = java.util.Arrays.binarySearch(lineStartOffsets, offset)
+        var line = Arrays.binarySearch(lineStartOffsets, offset)
         if (line < 0) line = -line - 2
         return line to (offset - lineStartOffsets[line])
     }

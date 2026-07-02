@@ -153,9 +153,9 @@ class ScipBuildTool(index: IndexCommand) : BuildTool("SCIP", index) {
         val classpath = config.classpath.map { sourceroot.resolve(it).normalize() }
         val jdkHome =
             config.javaHome?.let { Paths.get(it) } ?: Paths.get(System.getProperty("java.home"))
-        // Unlike the old scip-kotlinc compiler plugin, the Analysis API indexer does
-        // not compile the sources: unresolved code degrades individual occurrences
-        // instead of failing the build, so only indexer crashes surface as errors.
+        // The Analysis API indexer does not compile the sources: unresolved code
+        // degrades individual occurrences instead of failing the build, so only
+        // indexer crashes surface as errors.
         return try {
             KotlinAnalysisIndexer(
                     sourceroot = sourceroot,
