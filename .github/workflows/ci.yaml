@@ -22,9 +22,9 @@ jobs:
 
       - run: gradle spotlessCheck --no-daemon
 
-  kotlin_plugin:
+  kotlin_indexer:
     runs-on: ubuntu-latest
-    name: scip-kotlinc
+    name: scip-kotlin-analysis
     steps:
       - uses: actions/checkout@v7
 
@@ -37,8 +37,8 @@ jobs:
         with:
           gradle-version: 9.8.2
 
-      - name: scip-kotlinc tests
-        run: gradle :scip-kotlinc:test --no-daemon
+      - name: scip-kotlin-analysis tests
+        run: gradle :scip-kotlin-analysis:test --no-daemon
 
   docker_test:
     runs-on: ubuntu-latest
@@ -69,7 +69,7 @@ jobs:
 
   ci-pass:
     if: always()
-    needs: [format, kotlin_plugin, docker_test]
+    needs: [format, kotlin_indexer, docker_test]
     runs-on: ubuntu-latest
     name: CI pass
     steps:

@@ -17,9 +17,11 @@
 //                signature_documentation
 //                > public constructor<T : Comparable<T>>(items: MutableList<T>): Container<T>
 //                ^ definition scip-java maven . . snapshots/Container#[T]
-//                  display_name FirTypeParameterSymbol T
+//                  display_name T
 //                  signature_documentation
 //                  > T : Comparable<T>
+//                    ^^^^^^^^^^ reference scip-java maven . . kotlin/Comparable#
+//                               ^ reference scip-java maven . . snapshots/Container#[T]
 //                                               ^^^^^ definition scip-java maven . . snapshots/Container#`<init>`().(items)
 //                                                     display_name items
 //                                                     signature_documentation
@@ -33,7 +35,8 @@
 //                                                     display_name items
 //                                                     signature_documentation
 //                                                     > private get(): MutableList<T>
-//                                                      ^^^^^^^^^^^^^^ reference scip-java maven . . kotlin/collections/MutableList#
+//                                                      ^^^^^^^^^^^ reference scip-java maven . . kotlin/collections/MutableList#
+//                                                                  ^ reference scip-java maven . . snapshots/Container#[T]
 //                                ⌃ enclosing_range_end scip-java maven . . snapshots/Container#[T]
 //                                                                   ⌃ enclosing_range_end scip-java maven . . snapshots/Container#`<init>`().(items)
 //                                                                   ⌃ enclosing_range_end scip-java maven . . snapshots/Container#items.
@@ -50,7 +53,9 @@
 //                 display_name item
 //                 signature_documentation
 //                 > item: T
-//                      ^^^^^^^^^^^^ reference scip-java maven . . snapshots/Container#
+//                  ^ reference scip-java maven . . snapshots/Container#[T]
+//                      ^^^^^^^^^ reference scip-java maven . . snapshots/Container#
+//                                ^ reference scip-java maven . . snapshots/Container#[T]
 //                  ⌃ enclosing_range_end scip-java maven . . snapshots/Container#add().(item)
           items.add(item)
 //        ^^^^^ reference scip-java maven . . snapshots/Container#items.
@@ -66,9 +71,10 @@
 //                           ⌄ enclosing_range_start scip-java maven . . snapshots/Container#mapItems().(transform)
       fun <R : Any> mapItems(transform: (T) -> R?): List<R> = items.mapNotNull(transform)
 //         ^ definition scip-java maven . . snapshots/Container#mapItems().[R]
-//           display_name FirTypeParameterSymbol R
+//           display_name R
 //           signature_documentation
 //           > R : Any
+//             ^^^ reference scip-java maven . . kotlin/Any#
 //                  ^^^^^^^^ definition scip-java maven . . snapshots/Container#mapItems().
 //                           display_name mapItems
 //                           signature_documentation
@@ -77,8 +83,10 @@
 //                                     display_name transform
 //                                     signature_documentation
 //                                     > transform: (T) -> R?
-//                                      ^^^^^^^^^ reference scip-java maven . . kotlin/Function1#
-//                                                  ^^^^^^^ reference scip-java maven . . kotlin/collections/List#
+//                                       ^ reference scip-java maven . . snapshots/Container#[T]
+//                                             ^ reference scip-java maven . . snapshots/Container#mapItems().[R]
+//                                                  ^^^^ reference scip-java maven . . kotlin/collections/List#
+//                                                       ^ reference scip-java maven . . snapshots/Container#mapItems().[R]
 //                                                            ^^^^^ reference scip-java maven . . snapshots/Container#items.
 //                                                            ^^^^^ reference scip-java maven . . snapshots/Container#getItems().
 //                                                                  ^^^^^^^^^^ reference scip-java maven . . kotlin/collections/mapNotNull(+1).
@@ -95,7 +103,7 @@
 //                                    ⌄ enclosing_range_start scip-java maven . . snapshots/firstOrSelf().(fallback)
   fun <T> firstOrSelf(items: List<T>, fallback: T): T = items.firstOrNull() ?: fallback
 //     ^ definition scip-java maven . . snapshots/firstOrSelf().[T]
-//       display_name FirTypeParameterSymbol T
+//       display_name T
 //       signature_documentation
 //       > T
 //        ^^^^^^^^^^^ definition scip-java maven . . snapshots/firstOrSelf().
@@ -106,11 +114,14 @@
 //                          display_name items
 //                          signature_documentation
 //                          > items: List<T>
-//                           ^^^^^^^ reference scip-java maven . . kotlin/collections/List#
+//                           ^^^^ reference scip-java maven . . kotlin/collections/List#
+//                                ^ reference scip-java maven . . snapshots/firstOrSelf().[T]
 //                                    ^^^^^^^^ definition scip-java maven . . snapshots/firstOrSelf().(fallback)
 //                                             display_name fallback
 //                                             signature_documentation
 //                                             > fallback: T
+//                                              ^ reference scip-java maven . . snapshots/firstOrSelf().[T]
+//                                                  ^ reference scip-java maven . . snapshots/firstOrSelf().[T]
 //                                                      ^^^^^ reference scip-java maven . . snapshots/firstOrSelf().(items)
 //                                                            ^^^^^^^^^^^ reference scip-java maven . . kotlin/collections/firstOrNull(+19).
 //                                                                             ^^^^^^^^ reference scip-java maven . . snapshots/firstOrSelf().(fallback)
@@ -122,10 +133,12 @@
 //⌄ enclosing_range_start scip-java maven . . snapshots/StringContainer#
   typealias StringContainer = Container<String>
 //          ^^^^^^^^^^^^^^^ definition scip-java maven . . snapshots/StringContainer#
-//                          display_name FirTypeAliasSymbol snapshots/StringContainer
+//                          display_name StringContainer
 //                          signature_documentation
 //                          > public final typealias StringContainer = Container<String>
 //                          > 
+//                            ^^^^^^^^^ reference scip-java maven . . snapshots/Container#
+//                                      ^^^^^^ reference scip-java maven . . kotlin/String#
 //                                            ⌃ enclosing_range_end scip-java maven . . snapshots/StringContainer#
   
 //⌄ enclosing_range_start scip-java maven . . snapshots/useContainer().
@@ -134,11 +147,11 @@
 //    ^^^^^^^^^^^^ definition scip-java maven . . snapshots/useContainer().
 //                 display_name useContainer
 //                 signature_documentation
-//                 > public final fun useContainer(container: {snapshots/StringContainer=} Container<String>): {snapshots/StringContainer=} Container<String>
+//                 > public final fun useContainer(container: StringContainer): StringContainer
 //                 ^^^^^^^^^ definition scip-java maven . . snapshots/useContainer().(container)
 //                           display_name container
 //                           signature_documentation
-//                           > container: {snapshots/StringContainer=} Container<String>
+//                           > container: StringContainer
 //                            ^^^^^^^^^^^^^^^ reference scip-java maven . . snapshots/Container#
 //                                              ^^^^^^^^^^^^^^^ reference scip-java maven . . snapshots/Container#
 //                                                                ^^^^^^^^^ reference scip-java maven . . snapshots/useContainer().(container)

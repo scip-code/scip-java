@@ -4,7 +4,6 @@ import java.io.File
 import org.gradle.api.Task
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.Directory
-import org.gradle.api.file.FileSystemLocation
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.compile.JavaCompile
 
@@ -26,29 +25,6 @@ fun JavaCompile.useScipJavac(
     options.forkOptions.jvmArgs =
         (options.forkOptions.jvmArgs ?: emptyList()) + JavacInternals.jvmOptions(rootDir)
 }
-
-/**
- * Builds the `kotlinc` arguments that load the scip-kotlinc compiler plugin from [pluginClasspath]
- * (the resolved shaded jar) and point it at [sourceroot]/[targetroot].
- *
- * The mapping lives here, in compiled build logic, rather than in a build script: a `.map {}`
- * lambda declared in a `.gradle.kts` file captures a hidden reference to the script object, which
- * the configuration cache cannot serialize.
- */
-fun scipKotlincPluginArgs(
-    pluginClasspath: Provider<Set<FileSystemLocation>>,
-    sourceroot: String,
-    targetroot: String,
-): Provider<List<String>> =
-    pluginClasspath.map { locations ->
-        listOf(
-            "-Xplugin=${locations.single().asFile.absolutePath}",
-            "-P",
-            "plugin:scip-kotlinc:sourceroot=$sourceroot",
-            "-P",
-            "plugin:scip-kotlinc:targetroot=$targetroot",
-        )
-    }
 
 /**
  * Registers a `doFirst` action that empties [dir] (deletes then recreates it) before the task runs.

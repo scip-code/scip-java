@@ -23,7 +23,6 @@ rootProject.name = "scip-java"
 include(
     "scip-shared",
     "scip-javac",
-    "scip-kotlinc",
     "scip-kotlin-analysis",
     "scip-aggregator",
     "scip-maven-plugin",
