@@ -12,7 +12,6 @@
 //                ⌄ enclosing_range_start scip-java maven . . snapshots/Suit#symbol.
 //                ⌄ enclosing_range_start scip-java maven . . snapshots/Suit#getSymbol().
   enum class Suit(val symbol: Char) {
-//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ reference scip-java maven . . snapshots/Suit#
 //           ^^^^ definition scip-java maven . . snapshots/Suit#
 //                display_name Suit
 //                signature_documentation
@@ -90,14 +89,14 @@
 //    ⌄ enclosing_range_start scip-java maven . . snapshots/Suit#Companion#
 //    ⌄ enclosing_range_start scip-java maven . . snapshots/Suit#Companion#`<init>`().
       companion object {
-//    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ definition scip-java maven . . snapshots/Suit#Companion#
-//                                                                                                                display_name Companion
-//                                                                                                                signature_documentation
-//                                                                                                                > public final companion object Companion : Any
-//    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ definition scip-java maven . . snapshots/Suit#Companion#`<init>`().
-//                                                                                                                display_name Companion
-//                                                                                                                signature_documentation
-//                                                                                                                > private constructor(): Suit.Companion
+//    ^^^^^^^^^^^^^^^^^^ definition scip-java maven . . snapshots/Suit#Companion#
+//                       display_name Companion
+//                       signature_documentation
+//                       > public final companion object Companion : Any
+//    ^^^^^^^^^^^^^^^^^^ definition scip-java maven . . snapshots/Suit#Companion#`<init>`().
+//                       display_name Companion
+//                       signature_documentation
+//                       > private constructor(): Suit.Companion
 //        ⌄ enclosing_range_start scip-java maven . . snapshots/Suit#Companion#fromSymbol().
 //                       ⌄ enclosing_range_start scip-java maven . . snapshots/Suit#Companion#fromSymbol().(symbol)
 //                                                           ⌄ enclosing_range_start local 0
