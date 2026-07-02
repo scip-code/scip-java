@@ -137,6 +137,21 @@ To narrow the set of targets to index or pass additional flags to Bazel, include
         Files.walkFileTree(
             bazelOutLink,
             object : SimpleFileVisitor<Path>() {
+                override fun preVisitDirectory(
+                    dir: Path,
+                    attrs: BasicFileAttributes,
+                ): FileVisitResult {
+                    // The aspect declares a `<target>.scip-targetroot` directory that
+                    // contains the intermediate per-source `*.scip` shards. Those shards
+                    // are already aggregated into the sibling `<target>.scip` file, so
+                    // including them here would duplicate every document in the index.
+                    return if (dir.fileName.toString().endsWith(".scip-targetroot")) {
+                        FileVisitResult.SKIP_SUBTREE
+                    } else {
+                        FileVisitResult.CONTINUE
+                    }
+                }
+
                 override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
                     if (scipPattern.matches(file)) {
                         val bytes = Files.readAllBytes(file)

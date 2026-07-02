@@ -13,9 +13,12 @@ many *.scip (https://github.com/scip-code/scip) files.
 These files encode information about which symbols are referenced from which
 locations in your source code.
 
-Use the command below to merge all of these SCIP files into a single index:
+Use the command below to merge all of these SCIP files into a single index.
+The `*.scip-targetroot` directories are excluded because they contain
+intermediate per-source shards that are already aggregated into the sibling
+`<target>.scip` files:
 
-    find bazel-bin/ -type f -name '*.scip' | xargs cat > index.scip
+    find bazel-bin/ -type f -name '*.scip' -not -path '*.scip-targetroot/*' | xargs cat > index.scip
 
 Use `src code-intel upload` to upload the unified SCIP file to Sourcegraph:
 
