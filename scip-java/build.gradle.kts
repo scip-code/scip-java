@@ -17,13 +17,9 @@ val kotlincShadowJar = shadowJarArtifact(":scip-kotlinc", "kotlincShadowJar")
 
 dependencies {
     implementation(project(":scip-aggregator"))
+    implementation(project(":scip-kotlin-analysis"))
     implementation(libs.clikt.jvm)
     implementation(libs.kotlin.stdlib)
-    implementation(libs.kotlin.compiler.embeddable)
-    implementation(libs.kotlin.scripting.common)
-    implementation(libs.kotlin.scripting.jvm)
-    implementation(libs.kotlin.scripting.dependencies)
-    implementation(libs.kotlin.scripting.dependencies.maven)
     implementation(libs.kotlinx.serialization.json.jvm)
 
     testImplementation(libs.kotlin.test)

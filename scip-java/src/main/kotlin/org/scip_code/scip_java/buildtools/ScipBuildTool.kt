@@ -17,16 +17,9 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonArray
-import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
-import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
-import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
-import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
-import org.jetbrains.kotlin.cli.common.messages.MessageCollector
-import org.jetbrains.kotlin.cli.common.messages.MessageRenderer
-import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler
-import org.jetbrains.kotlin.config.Services
 import org.scip_code.scip_java.Embedded
 import org.scip_code.scip_java.commands.IndexCommand
+import org.scip_code.scip_java.kotlin_analysis.KotlinAnalysisIndexer
 
 /**
  * A custom build tool that is specifically made for scip-java.
@@ -130,7 +123,7 @@ class ScipBuildTool(index: IndexCommand) : BuildTool("SCIP", index) {
 
         val errors = mutableListOf<Throwable>()
         compileJavaFiles(tmp, config, javaFiles)?.let { errors += it }
-        compileKotlinFiles(config, kotlinFiles, tmp)?.let { errors += it }
+        indexKotlinFiles(config, kotlinFiles)?.let { errors += it }
 
         if (index.cleanup) {
             tmp.toFile().deleteRecursively()
@@ -154,93 +147,28 @@ class ScipBuildTool(index: IndexCommand) : BuildTool("SCIP", index) {
         }
     }
 
-    private fun compileKotlinFiles(
-        config: Config,
-        allKotlinFiles: List<Path>,
-        tmp: Path,
-    ): Throwable? {
+    private fun indexKotlinFiles(config: Config, allKotlinFiles: List<Path>): Throwable? {
         if (allKotlinFiles.isEmpty()) return null
         val sourceroot = index.workingDirectory
-        val filesPaths = allKotlinFiles.map { it.toString() }
-
-        // The scip-kotlinc compiler plugin is built and shipped together
-        // with the scip-java CLI as an embedded resource (see Embedded.kt and
-        // the :scip-java Gradle resources wiring).
-        val plugin = Embedded.scipKotlincJar(tmp)
-
-        val classpath =
-            config.classpath.joinToString(File.pathSeparator) {
-                index.workingDirectory.resolve(it).toString()
-            }
-
-        val kargs = K2JVMCompilerArguments()
-        val args =
-            mutableListOf(
-                "-nowarn",
-                "-no-reflect",
-                "-no-stdlib",
-                "-Xmulti-platform",
-                "-Xno-check-actual",
-                "-verbose:class",
-                "-opt-in=kotlin.RequiresOptIn",
-                "-opt-in=kotlin.ExperimentalUnsignedTypes",
-                "-opt-in=kotlin.ExperimentalStdlibApi",
-                "-opt-in=kotlin.ExperimentalMultiplatform",
-                "-opt-in=kotlin.contracts.ExperimentalContracts",
-                "-Xallow-kotlin-package",
-                "-Xplugin=$plugin",
-                "-P",
-                "plugin:scip-kotlinc:sourceroot=$sourceroot",
-                "-P",
-                "plugin:scip-kotlinc:targetroot=$targetroot",
-                "-classpath",
-                classpath,
-            )
-        args += filesPaths
-
-        parseCommandLineArguments(args, kargs)
-
-        val exit =
-            K2JVMCompiler()
-                .exec(
-                    object : MessageCollector {
-                        private var sawError = false
-
-                        override fun clear() {
-                            sawError = false
-                        }
-
-                        override fun hasErrors(): Boolean = sawError
-
-                        override fun report(
-                            severity: CompilerMessageSeverity,
-                            message: String,
-                            location: CompilerMessageSourceLocation?,
-                        ) {
-                            if (
-                                message.endsWith("without a body must be abstract") ||
-                                    message.endsWith("must have a body")
-                            ) {
-                                // We get these when indexing the stdlib;
-                                // no other solution found yet.
-                                return
-                            }
-                            val rendered =
-                                MessageRenderer.PLAIN_FULL_PATHS.render(severity, message, location)
-                            index.app.reporter.debug(rendered)
-                            // Only treat ERROR / EXCEPTION as failures.
-                            // Kotlin 2.2.0's K2JVMCompiler emits LOGGING/INFO/WARNING
-                            // messages during normal compilation; pushing those onto
-                            // `errors` would cause hasErrors to return true.
-                            if (severity.isError) {
-                                sawError = true
-                            }
-                        }
-                    },
-                    Services.EMPTY,
-                    kargs,
+        val classpath = config.classpath.map { sourceroot.resolve(it).normalize() }
+        val jdkHome =
+            config.javaHome?.let { Paths.get(it) } ?: Paths.get(System.getProperty("java.home"))
+        // Unlike the old scip-kotlinc compiler plugin, the Analysis API indexer does
+        // not compile the sources: unresolved code degrades individual occurrences
+        // instead of failing the build, so only indexer crashes surface as errors.
+        return try {
+            KotlinAnalysisIndexer(
+                    sourceroot = sourceroot,
+                    targetroot = targetroot,
+                    sourceRoots = allKotlinFiles,
+                    classpath = classpath,
+                    jdkHome = jdkHome,
                 )
-        return if (exit.code == 0) null else Exception(exit.toString())
+                .run()
+            null
+        } catch (e: Exception) {
+            e
+        }
     }
 
     private fun compileJavaFiles(tmp: Path, config: Config, allJavaFiles: List<Path>): Throwable? {
