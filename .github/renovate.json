@@ -4,5 +4,16 @@
     "config:recommended"
   ],
   "automerge": true,
-  "semanticCommits": false
+  "semanticCommits": false,
+  "packageRules": [
+    {
+      "description": "The Analysis API engine pin is managed manually: it lives in the JetBrains intellij-dependencies repository, uses IDE-aligned version schemes, and must move in lockstep with the `kotlin` toolchain version.",
+      "matchPackagePatterns": [
+        "^org\\.jetbrains\\.kotlin:kotlin-compiler$",
+        "-for-ide$",
+        "^com\\.intellij\\.platform:"
+      ],
+      "enabled": false
+    }
+  ]
 }

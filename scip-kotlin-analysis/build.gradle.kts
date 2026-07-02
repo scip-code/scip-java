@@ -19,6 +19,9 @@ dependencies {
 
     runtimeOnly(libs.kotlin.analysis.api.impl.base) { isTransitive = false }
     runtimeOnly(libs.kotlin.analysis.api.k2) { isTransitive = false }
+    // Provides org.jetbrains.kotlin.analysis.decompiler.* which is no longer
+    // bundled in kotlin-compiler as of the 2.4 line.
+    runtimeOnly(libs.kotlin.analysis.compiler.common) { isTransitive = false }
     runtimeOnly(libs.kotlin.analysis.low.level.api.fir) { isTransitive = false }
     runtimeOnly(libs.kotlin.analysis.api.platform.`interface`) { isTransitive = false }
     runtimeOnly(libs.kotlin.analysis.symbol.light.classes) { isTransitive = false }
