@@ -7,7 +7,7 @@
 //⌄ enclosing_range_start scip-java maven . . snapshots/Suit#valueOf().(value)
 //⌄ enclosing_range_start scip-java maven . . snapshots/Suit#entries.
 //⌄ enclosing_range_start scip-java maven . . snapshots/Suit#getEntries().
-//               ⌄ enclosing_range_start scip-java maven . . snapshots/Suit#`<init>`().
+//           ⌄ enclosing_range_start scip-java maven . . snapshots/Suit#`<init>`().
 //                ⌄ enclosing_range_start scip-java maven . . snapshots/Suit#`<init>`().(symbol)
 //                ⌄ enclosing_range_start scip-java maven . . snapshots/Suit#symbol.
 //                ⌄ enclosing_range_start scip-java maven . . snapshots/Suit#getSymbol().
