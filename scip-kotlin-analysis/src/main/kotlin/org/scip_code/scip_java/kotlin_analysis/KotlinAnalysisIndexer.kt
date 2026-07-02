@@ -270,7 +270,11 @@ class KotlinAnalysisIndexer(
                 emitDefinition(
                     symbol = cache.symbolForDeclaration(primaryConstructor),
                     range = range,
-                    enclosing = primaryConstructor.textRange,
+                    // Span from the class identifier (the definition anchor) through the
+                    // parameter list, so the enclosing range contains its own anchor —
+                    // scip-kotlinc used the parameter list alone, which did not.
+                    enclosing =
+                        TextRange(range.startOffset, primaryConstructor.textRange.endOffset),
                     displayName = displayName,
                     signatureText = signatures.constructorSignature(primaryConstructor),
                     documentation = docComment(primaryConstructor),

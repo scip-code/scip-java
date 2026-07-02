@@ -2,7 +2,7 @@
 //        ^^^^^^^^^ reference scip-java maven . . snapshots/
   
 //⌄ enclosing_range_start scip-java maven . . snapshots/Point#
-//                ⌄ enclosing_range_start scip-java maven . . snapshots/Point#`<init>`().
+//           ⌄ enclosing_range_start scip-java maven . . snapshots/Point#`<init>`().
 //                ⌄ enclosing_range_start scip-java maven . . snapshots/Point#copy().
 //                 ⌄ enclosing_range_start scip-java maven . . snapshots/Point#`<init>`().(x)
 //                 ⌄ enclosing_range_start scip-java maven . . snapshots/Point#x.
