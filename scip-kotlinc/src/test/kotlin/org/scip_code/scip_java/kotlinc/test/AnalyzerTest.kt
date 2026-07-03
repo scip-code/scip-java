@@ -418,6 +418,178 @@ class AnalyzerTest {
     }
 
     @Test
+    fun `local functions`(@TempDir path: Path) {
+        val document =
+            compileScip(
+                path,
+                """
+                    package sample
+
+                    fun outer() {
+                        fun inner() {}
+                        fun innerWithReturnType(): Int = 42
+                        inner()
+                    }
+                """,
+            )
+
+        val occurrences =
+            arrayOf(
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/outer()."
+                    range {
+                        startLine = 2
+                        startCharacter = 4
+                        endLine = 2
+                        endCharacter = 9
+                    }
+                    enclosingRange {
+                        startLine = 2
+                        startCharacter = 0
+                        endLine = 6
+                        endCharacter = 1
+                    }
+                },
+                // inner() — local named function gets a local symbol
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "local 0"
+                    range {
+                        startLine = 3
+                        startCharacter = 8
+                        endLine = 3
+                        endCharacter = 13
+                    }
+                    enclosingRange {
+                        startLine = 3
+                        startCharacter = 4
+                        endLine = 3
+                        endCharacter = 18
+                    }
+                },
+                // innerWithReturnType() — local named function with explicit return type
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "local 1"
+                    range {
+                        startLine = 4
+                        startCharacter = 8
+                        endLine = 4
+                        endCharacter = 27
+                    }
+                    enclosingRange {
+                        startLine = 4
+                        startCharacter = 4
+                        endLine = 4
+                        endCharacter = 39
+                    }
+                },
+                // Int return-type reference
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "kotlin/Int#"
+                    range {
+                        startLine = 4
+                        startCharacter = 31
+                        endLine = 4
+                        endCharacter = 34
+                    }
+                },
+                // call site inner() references the same local symbol
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "local 0"
+                    range {
+                        startLine = 5
+                        startCharacter = 4
+                        endLine = 5
+                        endCharacter = 9
+                    }
+                },
+            )
+        document.occurrencesList.shouldContainAll(*occurrences)
+
+        val symbols =
+            arrayOf(
+                scipSymbol {
+                    symbol = "local 0"
+                    kind = Kind.Method
+                    enclosingSymbol = "sample/outer()."
+                    displayName = "inner"
+                    signatureText = "local final fun inner(): Unit"
+                },
+                scipSymbol {
+                    symbol = "local 1"
+                    kind = Kind.Method
+                    enclosingSymbol = "sample/outer()."
+                    displayName = "innerWithReturnType"
+                    signatureText = "local final fun innerWithReturnType(): Int"
+                },
+            )
+        document.symbolsList.shouldContainAll(*symbols)
+    }
+
+    @Test
+    fun `user-defined class as return type`(@TempDir path: Path) {
+        val document =
+            compileScip(
+                path,
+                """
+                    package sample
+
+                    class MyClass
+
+                    fun bar(): MyClass = MyClass()
+                """,
+            )
+
+        val occurrences =
+            arrayOf(
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/bar()."
+                    range {
+                        startLine = 4
+                        startCharacter = 4
+                        endLine = 4
+                        endCharacter = 7
+                    }
+                    enclosingRange {
+                        startLine = 4
+                        startCharacter = 0
+                        endLine = 4
+                        endCharacter = 30
+                    }
+                },
+                // MyClass in the return type position generates a class reference
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "sample/MyClass#"
+                    range {
+                        startLine = 4
+                        startCharacter = 11
+                        endLine = 4
+                        endCharacter = 18
+                    }
+                },
+            )
+        document.occurrencesList.shouldContainAll(*occurrences)
+
+        val symbols =
+            arrayOf(
+                scipSymbol {
+                    symbol = "sample/bar()."
+                    kind = Kind.Method
+                    enclosingSymbol = "sample/"
+                    displayName = "bar"
+                    signatureText = "public final fun bar(): MyClass"
+                }
+            )
+        document.symbolsList.shouldContainAll(*symbols)
+    }
+
+    @Test
     fun overrides(@TempDir path: Path) {
         val document =
             compileScip(
