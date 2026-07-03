@@ -10,22 +10,22 @@ class LineMap(private val file: FirFile) {
     private fun offsetToLineAndCol(offset: Int): Pair<Int, Int>? =
         file.sourceFileLinesMapping?.getLineAndColumnByOffset(offset)
 
-    /** Returns the non-0-based line number for a given offset */
+    /** Returns the 1-based line number for a given offset (subtract 1 for protobuf). */
     fun lineNumberForOffset(offset: Int): Int =
         file.sourceFileLinesMapping?.getLineByOffset(offset)?.let { it + 1 } ?: 0
 
-    /** Returns the non-0-based column number for a given offset */
+    /** Returns the 0-based column number for a given offset. */
     fun columnForOffset(offset: Int): Int = offsetToLineAndCol(offset)?.second ?: 0
 
-    /** Returns the non-0-based start character */
+    /** Returns the 0-based start character. */
     fun startCharacter(element: KtSourceElement): Int =
         offsetToLineAndCol(element.startOffset)?.second ?: 0
 
-    /** Returns the non-0-based end character */
+    /** Returns the 0-based end character. */
     fun endCharacter(element: KtSourceElement): Int =
         startCharacter(element) + nameForOffset(element).length
 
-    /** Returns the non-0-based line number */
+    /** Returns the 1-based line number (subtract 1 for protobuf). */
     fun lineNumber(element: KtSourceElement): Int =
         file.sourceFileLinesMapping?.getLineByOffset(element.startOffset)?.let { it + 1 } ?: 0
 
