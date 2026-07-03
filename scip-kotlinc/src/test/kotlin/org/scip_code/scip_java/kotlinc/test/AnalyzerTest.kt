@@ -7,6 +7,7 @@ import io.kotest.assertions.fail
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.string.shouldContain
 import java.io.File
 import java.nio.file.Path
 import kotlin.test.Test
@@ -807,6 +808,7 @@ class AnalyzerTest {
                     compilerPluginRegistrars =
                         listOf(AnalyzerRegistrar { throw Exception("sample text") })
                     verbose = false
+                    messageOutputStream = java.io.OutputStream.nullOutputStream()
                     pluginOptions =
                         listOf(
                             PluginOption("scip-kotlinc", "sourceroot", path.toString()),
@@ -818,6 +820,8 @@ class AnalyzerTest {
                 .compile()
 
         result.exitCode shouldBe KotlinCompilation.ExitCode.OK
+        result.messages shouldContain "Exception in scip-kotlin compiler plugin:"
+        result.messages shouldContain "sample text"
     }
 
     @Test

@@ -193,6 +193,7 @@ fun scipVisitorAnalyzer(
             )
             IrGenerationExtension.registerExtension(
                 PostAnalysisExtension(
+                    configuration = configuration,
                     sourceRoot = sourceroot,
                     targetRoot = Paths.get(""),
                     callback = hook,
