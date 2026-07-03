@@ -721,6 +721,73 @@ class AnalyzerTest {
     }
 
     @Test
+    fun `generic class declaration`(@TempDir path: Path) {
+        val document =
+            compileScip(
+                path,
+                """
+                    package sample
+
+                    class Box<T>(val value: T) {
+                        fun unwrap(): T = value
+                    }
+                """,
+            )
+
+        val occurrences =
+            arrayOf(
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/Box#"
+                    range {
+                        startLine = 2
+                        startCharacter = 6
+                        endLine = 2
+                        endCharacter = 9
+                    }
+                    enclosingRange {
+                        startLine = 2
+                        endLine = 4
+                        endCharacter = 1
+                    }
+                },
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/Box#[T]"
+                    range {
+                        startLine = 2
+                        startCharacter = 10
+                        endLine = 2
+                        endCharacter = 11
+                    }
+                    enclosingRange {
+                        startLine = 2
+                        startCharacter = 10
+                        endLine = 2
+                        endCharacter = 11
+                    }
+                },
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/Box#unwrap()."
+                    range {
+                        startLine = 3
+                        startCharacter = 8
+                        endLine = 3
+                        endCharacter = 14
+                    }
+                    enclosingRange {
+                        startLine = 3
+                        startCharacter = 4
+                        endLine = 3
+                        endCharacter = 27
+                    }
+                },
+            )
+        document.occurrencesList.shouldContainAll(*occurrences)
+    }
+
+    @Test
     fun overrides(@TempDir path: Path) {
         val document =
             compileScip(
@@ -2254,6 +2321,91 @@ class AnalyzerTest {
                     enclosingSymbol = "sample/Color#"
                     displayName = "BLUE"
                     signatureText = "public final static enum entry BLUE: Color"
+                },
+            )
+        document.symbolsList.shouldContainAll(*symbols)
+    }
+
+    @Test
+    fun `enum entry with body`(@TempDir path: Path) {
+        val document =
+            compileScip(
+                path,
+                """
+                    package sample
+
+                    enum class Op {
+                        PLUS {
+                            override fun apply(a: Int, b: Int) = a + b
+                        };
+
+                        abstract fun apply(a: Int, b: Int): Int
+                    }
+                """,
+            )
+
+        val occurrences =
+            arrayOf(
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/Op#PLUS."
+                    range {
+                        startLine = 3
+                        startCharacter = 4
+                        endLine = 3
+                        endCharacter = 8
+                    }
+                    // Body-having enum entry: enclosing_range covers PLUS through the
+                    // trailing `};` that terminates the entry list.
+                    enclosingRange {
+                        startLine = 3
+                        startCharacter = 4
+                        endLine = 5
+                        endCharacter = 6
+                    }
+                },
+                // An enum entry with a body is modeled as a synthetic anonymous subclass,
+                // so its overridden member is a local symbol (local2), not a global
+                // sample/Op#PLUS.apply(). It still gets an enclosing_range spanning the
+                // function declaration.
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "local 2"
+                    range {
+                        startLine = 4
+                        startCharacter = 21
+                        endLine = 4
+                        endCharacter = 26
+                    }
+                    enclosingRange {
+                        startLine = 4
+                        startCharacter = 8
+                        endLine = 4
+                        endCharacter = 50
+                    }
+                },
+            )
+        document.occurrencesList.shouldContainAll(*occurrences)
+
+        val symbols =
+            arrayOf(
+                // The entry body becomes an anonymous class enclosed by the entry...
+                scipSymbol {
+                    symbol = "local 0"
+                    kind = Kind.Class
+                    enclosingSymbol = "sample/Op#PLUS."
+                    displayName = "<anonymous>"
+                    addOverriddenSymbols("sample/Op#")
+                    signatureText = "object : Op"
+                },
+                // ...and the override is a method of that anonymous class.
+                scipSymbol {
+                    symbol = "local 2"
+                    kind = Kind.Method
+                    enclosingSymbol = "local 0"
+                    displayName = "apply"
+                    addOverriddenSymbols("sample/Op#apply().")
+                    signatureText = "public open override fun apply(a: Int, b: Int): Int"
                 },
             )
         document.symbolsList.shouldContainAll(*symbols)
