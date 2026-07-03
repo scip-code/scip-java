@@ -590,6 +590,137 @@ class AnalyzerTest {
     }
 
     @Test
+    fun `typealias`(@TempDir path: Path) {
+        val document =
+            compileScip(
+                path,
+                """
+                    package sample
+
+                    typealias MyAlias = Int
+                    val x: MyAlias = 42
+                """,
+            )
+
+        val occurrences =
+            arrayOf(
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/MyAlias#"
+                    range {
+                        startLine = 2
+                        startCharacter = 10
+                        endLine = 2
+                        endCharacter = 17
+                    }
+                    enclosingRange {
+                        startLine = 2
+                        startCharacter = 0
+                        endLine = 2
+                        endCharacter = 23
+                    }
+                },
+                // Note: val x: MyAlias does not emit a REFERENCE for sample/MyAlias# because the
+                // property checker resolves the type alias to its expansion (Int).
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/x."
+                    range {
+                        startLine = 3
+                        startCharacter = 4
+                        endLine = 3
+                        endCharacter = 5
+                    }
+                    enclosingRange {
+                        startLine = 3
+                        startCharacter = 0
+                        endLine = 3
+                        endCharacter = 19
+                    }
+                },
+            )
+        document.occurrencesList.shouldContainAll(*occurrences)
+
+        val symbols =
+            arrayOf(
+                scipSymbol {
+                    symbol = "sample/MyAlias#"
+                    kind = Kind.TypeAlias
+                    enclosingSymbol = "sample/"
+                    displayName = "MyAlias"
+                    signatureText = "public final typealias MyAlias = Int\n"
+                }
+            )
+        document.symbolsList.shouldContainAll(*symbols)
+    }
+
+    @Test
+    fun `type parameters`(@TempDir path: Path) {
+        val document =
+            compileScip(
+                path,
+                """
+                    package sample
+
+                    fun <T> identity(x: T): T = x
+                """,
+            )
+
+        val occurrences =
+            arrayOf(
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/identity()."
+                    range {
+                        startLine = 2
+                        startCharacter = 8
+                        endLine = 2
+                        endCharacter = 16
+                    }
+                    enclosingRange {
+                        startLine = 2
+                        startCharacter = 0
+                        endLine = 2
+                        endCharacter = 29
+                    }
+                },
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/identity().[T]"
+                    range {
+                        startLine = 2
+                        startCharacter = 5
+                        endLine = 2
+                        endCharacter = 6
+                    }
+                    enclosingRange {
+                        startLine = 2
+                        startCharacter = 5
+                        endLine = 2
+                        endCharacter = 6
+                    }
+                },
+                // Note: T in type-annotation positions (x: T and return type : T) does not produce
+                // REFERENCE occurrences. The checkers use toClassLikeSymbol() to detect type
+                // references, which returns null for type parameters, so those usages are not
+                // currently tracked.
+            )
+        document.occurrencesList.shouldContainAll(*occurrences)
+
+        val symbols =
+            arrayOf(
+                scipSymbol {
+                    symbol = "sample/identity().[T]"
+                    kind = Kind.TypeParameter
+                    enclosingSymbol = "sample/identity()."
+                    displayName = "T"
+                    signatureText = "T"
+                }
+            )
+        document.symbolsList.shouldContainAll(*symbols)
+    }
+
+    @Test
     fun overrides(@TempDir path: Path) {
         val document =
             compileScip(

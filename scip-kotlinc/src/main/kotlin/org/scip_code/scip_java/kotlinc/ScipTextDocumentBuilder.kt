@@ -170,6 +170,7 @@ class ScipTextDocumentBuilder(
     private fun scipKind(element: FirElement?): Kind =
         when (element) {
             is FirClass if element.isInterface -> Kind.Interface
+            is FirTypeAlias -> Kind.TypeAlias
             is FirClassLikeDeclaration -> Kind.Class
             is FirConstructor -> Kind.Constructor
             is FirTypeParameter -> Kind.TypeParameter
@@ -210,12 +211,13 @@ class ScipTextDocumentBuilder(
         @OptIn(SymbolInternals::class, RenderingInternals::class)
         private fun displayName(firBasedSymbol: FirBasedSymbol<*>): String =
             when (firBasedSymbol) {
-                is FirClassSymbol -> firBasedSymbol.classId.shortClassName.asString()
+                is FirClassLikeSymbol -> firBasedSymbol.classId.shortClassName.asString()
                 is FirPropertyAccessorSymbol -> firBasedSymbol.fir.propertySymbol.name.asString()
                 is FirFunctionSymbol -> firBasedSymbol.callableId.callableName.asString()
                 is FirPropertySymbol ->
                     firBasedSymbol.callableIdForRendering.callableName.asString()
                 is FirVariableSymbol -> firBasedSymbol.name.asString()
+                is FirTypeParameterSymbol -> firBasedSymbol.name.asString()
                 else -> firBasedSymbol.toString()
             }
     }
