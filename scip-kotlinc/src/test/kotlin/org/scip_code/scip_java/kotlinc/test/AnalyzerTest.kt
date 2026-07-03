@@ -1174,6 +1174,13 @@ class AnalyzerTest {
                     else -> x as Float
                 }
             }
+
+            class Wrapper
+            fun classify(x: Any) {
+                if (x is Wrapper) {}
+                val s = x as? String
+                val w = x as Wrapper
+            }
             """,
             )
 
@@ -1197,6 +1204,36 @@ class AnalyzerTest {
                         startCharacter = 21
                         endLine = 5
                         endCharacter = 26
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "sample/Wrapper#"
+                    range {
+                        startLine = 11
+                        startCharacter = 13
+                        endLine = 11
+                        endCharacter = 20
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "kotlin/String#"
+                    range {
+                        startLine = 12
+                        startCharacter = 18
+                        endLine = 12
+                        endCharacter = 24
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "sample/Wrapper#"
+                    range {
+                        startLine = 13
+                        startCharacter = 17
+                        endLine = 13
+                        endCharacter = 24
                     }
                 },
             )
@@ -2627,6 +2664,216 @@ class AnalyzerTest {
                     displayName = "greet"
                     signatureText = "public final fun greet(name: String): String"
                 }
+            )
+        document.symbolsList.shouldContainAll(*symbols)
+    }
+
+    @Test
+    fun `multiple supertype references`(@TempDir path: Path) {
+        val document =
+            compileScip(
+                path,
+                """
+                    package sample
+
+                    interface Named
+                    interface Speakable
+                    class Person : Named, Speakable
+                    fun use(p: Person): Named = p
+                """,
+            )
+
+        val occurrences =
+            arrayOf(
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/Person#"
+                    range {
+                        startLine = 4
+                        startCharacter = 6
+                        endLine = 4
+                        endCharacter = 12
+                    }
+                    enclosingRange {
+                        startLine = 4
+                        startCharacter = 0
+                        endLine = 4
+                        endCharacter = 31
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "sample/Named#"
+                    range {
+                        startLine = 4
+                        startCharacter = 15
+                        endLine = 4
+                        endCharacter = 20
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "sample/Speakable#"
+                    range {
+                        startLine = 4
+                        startCharacter = 22
+                        endLine = 4
+                        endCharacter = 31
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "sample/Named#"
+                    range {
+                        startLine = 5
+                        startCharacter = 20
+                        endLine = 5
+                        endCharacter = 25
+                    }
+                },
+            )
+        document.occurrencesList.shouldContainAll(*occurrences)
+
+        val symbols =
+            arrayOf(
+                scipSymbol {
+                    symbol = "sample/Person#"
+                    kind = Kind.Class
+                    enclosingSymbol = "sample/"
+                    displayName = "Person"
+                    addOverriddenSymbols("sample/Named#")
+                    addOverriddenSymbols("sample/Speakable#")
+                    signatureText = "public final class Person : Named, Speakable"
+                }
+            )
+        document.symbolsList.shouldContainAll(*symbols)
+    }
+
+    @Test
+    fun `three-way overload disambiguator`(@TempDir path: Path) {
+        val document =
+            compileScip(
+                path,
+                """
+                    package sample
+
+                    fun add(x: Int, y: Int): Int = x + y
+                    fun add(x: Double, y: Double): Double = x + y
+                    fun add(x: String, y: String): String = x + y
+                    fun use() {
+                        add(1, 2)
+                        add(1.0, 2.0)
+                        add("a", "b")
+                    }
+                """,
+            )
+
+        val occurrences =
+            arrayOf(
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/add()."
+                    range {
+                        startLine = 2
+                        startCharacter = 4
+                        endLine = 2
+                        endCharacter = 7
+                    }
+                    enclosingRange {
+                        startLine = 2
+                        startCharacter = 0
+                        endLine = 2
+                        endCharacter = 36
+                    }
+                },
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/add(+1)."
+                    range {
+                        startLine = 3
+                        startCharacter = 4
+                        endLine = 3
+                        endCharacter = 7
+                    }
+                    enclosingRange {
+                        startLine = 3
+                        startCharacter = 0
+                        endLine = 3
+                        endCharacter = 45
+                    }
+                },
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/add(+2)."
+                    range {
+                        startLine = 4
+                        startCharacter = 4
+                        endLine = 4
+                        endCharacter = 7
+                    }
+                    enclosingRange {
+                        startLine = 4
+                        startCharacter = 0
+                        endLine = 4
+                        endCharacter = 45
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "sample/add()."
+                    range {
+                        startLine = 6
+                        startCharacter = 4
+                        endLine = 6
+                        endCharacter = 7
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "sample/add(+1)."
+                    range {
+                        startLine = 7
+                        startCharacter = 4
+                        endLine = 7
+                        endCharacter = 7
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "sample/add(+2)."
+                    range {
+                        startLine = 8
+                        startCharacter = 4
+                        endLine = 8
+                        endCharacter = 7
+                    }
+                },
+            )
+        document.occurrencesList.shouldContainAll(*occurrences)
+
+        val symbols =
+            arrayOf(
+                scipSymbol {
+                    symbol = "sample/add()."
+                    kind = Kind.Method
+                    enclosingSymbol = "sample/"
+                    displayName = "add"
+                    signatureText = "public final fun add(x: Int, y: Int): Int"
+                },
+                scipSymbol {
+                    symbol = "sample/add(+1)."
+                    kind = Kind.Method
+                    enclosingSymbol = "sample/"
+                    displayName = "add"
+                    signatureText = "public final fun add(x: Double, y: Double): Double"
+                },
+                scipSymbol {
+                    symbol = "sample/add(+2)."
+                    kind = Kind.Method
+                    enclosingSymbol = "sample/"
+                    displayName = "add"
+                    signatureText = "public final fun add(x: String, y: String): String"
+                },
             )
         document.symbolsList.shouldContainAll(*symbols)
     }
