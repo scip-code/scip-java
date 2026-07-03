@@ -158,6 +158,7 @@ class GlobalSymbolsCache(testing: Boolean = false) : Iterable<Symbol> {
             symbol is FirValueParameterSymbol ->
                 ScipSymbolDescriptor(Kind.PARAMETER, symbol.name.toString())
             symbol is FirVariableSymbol -> ScipSymbolDescriptor(Kind.TERM, symbol.name.toString())
+            symbol is FirFileSymbol -> ScipSymbolDescriptor.NONE
             else -> {
                 err.println("unknown symbol kind ${symbol.javaClass.simpleName}")
                 ScipSymbolDescriptor.NONE
