@@ -169,6 +169,17 @@ class ScipVisitor(
     }
 
     context(context: CheckerContext)
+    fun visitEnumEntry(
+        firEnumEntry: FirEnumEntry,
+        source: KtSourceElement,
+        enclosingSource: KtSourceElement? = null,
+    ) {
+        cache[firEnumEntry.symbol]
+            .with(firEnumEntry.symbol)
+            .emitAll(source, isDefinition = true, enclosingSource)
+    }
+
+    context(context: CheckerContext)
     fun visitSimpleNameExpression(
         firResolvedNamedReference: FirResolvedNamedReference,
         source: KtSourceElement,

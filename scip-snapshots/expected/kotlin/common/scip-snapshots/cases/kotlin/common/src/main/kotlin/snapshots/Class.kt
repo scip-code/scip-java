@@ -105,6 +105,7 @@
 //                    display_name doStuff
 //                    signature_documentation
 //                    > public final fun doStuff(): Unit
+//                        ^^^^ reference scip-java maven . . kotlin/Unit#
 //                           ⌃ enclosing_range_end local 2
         }
 //      ⌃ enclosing_range_end scip-java maven . . snapshots/Class#asdf.
@@ -148,6 +149,7 @@
 //          > public final fun run(): Unit
       println(Class::class)
 //    ^^^^^^^ reference scip-java maven . . kotlin/io/println().
+//            ^^^^^ reference scip-java maven . . snapshots/Class#
       println("I eat $banana for lunch")
 //    ^^^^^^^ reference scip-java maven . . kotlin/io/println().
 //                    ^^^^^^ reference scip-java maven . . snapshots/Class#banana.

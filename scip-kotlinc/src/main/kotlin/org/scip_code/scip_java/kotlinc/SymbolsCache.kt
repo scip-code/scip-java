@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.*
+import org.jetbrains.kotlin.fir.types.classId
+import org.jetbrains.kotlin.fir.types.coneType
 import org.jetbrains.kotlin.name.FqName
 import org.scip_code.scip_java.kotlinc.ScipSymbolDescriptor.Kind
 import org.scip_code.scip_java.shared.LocalSymbolsCache as SharedLocalSymbolsCache
@@ -116,8 +118,27 @@ class GlobalSymbolsCache(testing: Boolean = false) : Iterable<Symbol> {
             is FirPropertyAccessorSymbol -> return getSymbol(symbol.propertySymbol, locals)
             is FirCallableSymbol -> {
                 val session = symbol.fir.moduleData.session
-                return symbol.getContainingSymbol(session)?.let { getSymbol(it, locals) }
-                    ?: getSymbol(symbol.packageFqName())
+                val containingSymbol = symbol.getContainingSymbol(session)
+                // For top-level extension functions/properties (containingSymbol is file or null),
+                // use the receiver type as a synthetic parent within the package
+                // (e.g. sample/String#foo().).
+                if (containingSymbol == null || containingSymbol is FirFileSymbol) {
+                    val receiverClassId = symbol.fir.receiverParameter?.typeRef?.coneType?.classId
+                    if (receiverClassId != null) {
+                        val packageSymbol = getSymbol(symbol.packageFqName())
+                        return Symbol.createGlobal(
+                            packageSymbol,
+                            ScipSymbolDescriptor(
+                                Kind.TYPE,
+                                receiverClassId.shortClassName.asString(),
+                            ),
+                        )
+                    }
+                }
+                containingSymbol?.let {
+                    return getSymbol(it, locals)
+                }
+                return getSymbol(symbol.packageFqName())
             }
             is FirClassLikeSymbol -> {
                 val session = symbol.fir.moduleData.session
@@ -172,12 +193,42 @@ class GlobalSymbolsCache(testing: Boolean = false) : Iterable<Symbol> {
         val siblings =
             when (val containingSymbol = symbol.getContainingSymbol(session)) {
                 is FirClassSymbol -> containingSymbol.fir.declarations.map { it.symbol }
-                is FirFileSymbol -> containingSymbol.fir.declarations.map { it.symbol }
-                null ->
-                    symbol.moduleData.session.symbolProvider.getTopLevelCallableSymbols(
-                        symbol.packageFqName(),
-                        symbol.name,
-                    )
+                is FirFileSymbol,
+                null -> {
+                    // For top-level extension functions, siblings are the receiver class members
+                    // (if in the same package) followed by other extension functions on the same
+                    // receiver type in this package.  This ensures consistent disambiguation
+                    // when both a class member and an extension share the same parent namespace
+                    // (e.g. sample/MyClass#foo(). vs sample/MyClass#foo(+1).).
+                    val receiverClassId = symbol.fir.receiverParameter?.typeRef?.coneType?.classId
+                    if (receiverClassId != null) {
+                        val receiverClass =
+                            session.symbolProvider.getClassLikeSymbolByClassId(receiverClassId)
+                                as? FirClassSymbol<*>
+                        val classMembers =
+                            if (receiverClass?.packageFqName() == symbol.packageFqName()) {
+                                receiverClass.fir.declarations.map { it.symbol }
+                            } else {
+                                emptyList()
+                            }
+                        val extensionFns =
+                            session.symbolProvider
+                                .getTopLevelCallableSymbols(symbol.packageFqName(), symbol.name)
+                                .filter {
+                                    it is FirFunctionSymbol<*> &&
+                                        it.fir.receiverParameter?.typeRef?.coneType?.classId ==
+                                            receiverClassId
+                                }
+                        classMembers + extensionFns
+                    } else if (containingSymbol is FirFileSymbol) {
+                        containingSymbol.fir.declarations.map { it.symbol }
+                    } else {
+                        session.symbolProvider.getTopLevelCallableSymbols(
+                            symbol.packageFqName(),
+                            symbol.name,
+                        )
+                    }
+                }
                 else -> return "()"
             }
 
@@ -194,7 +245,11 @@ class GlobalSymbolsCache(testing: Boolean = false) : Iterable<Symbol> {
             }
         }
 
-        if (count == 0 || !found) return "()"
+        if (!found) {
+            err.println("methodDisambiguator: ${symbol.callableId} not found in sibling list")
+            return "()"
+        }
+        if (count == 0) return "()"
         return "(+${count})"
     }
 

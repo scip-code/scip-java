@@ -17,11 +17,11 @@
 //  ⌄ enclosing_range_start scip-java maven . . snapshots/CompanionOwner#Companion#
 //  ⌄ enclosing_range_start scip-java maven . . snapshots/CompanionOwner#Companion#`<init>`().
     companion object {
-//  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ definition scip-java maven . . snapshots/CompanionOwner#Companion#
-//                                                                             kind Class
-//                                                                             display_name Companion
-//                                                                             signature_documentation
-//                                                                             > public final companion object Companion : Any
+//  ^^^^^^^^^ definition scip-java maven . . snapshots/CompanionOwner#Companion#
+//            kind Class
+//            display_name Companion
+//            signature_documentation
+//            > public final companion object Companion : Any
 //  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ definition scip-java maven . . snapshots/CompanionOwner#Companion#`<init>`().
 //                                                                             kind Constructor
 //                                                                             display_name Companion
@@ -48,6 +48,7 @@
 //             signature_documentation
 //             > public final fun create(): Int
 //                ^^^ reference scip-java maven . . kotlin/Int#
+//                      ^^^^^^^^^^^^^^ reference scip-java maven . . snapshots/CompanionOwner#
 //                                     ^^^^^^ reference scip-java maven . . snapshots/CompanionOwner#Companion#create().
 //                                              ^^^^^^^^ reference scip-java maven . . kotlin/Any#hashCode().
 //                                                       ⌃ enclosing_range_end scip-java maven . . snapshots/CompanionOwner#create().

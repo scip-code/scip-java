@@ -11,11 +11,14 @@ import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.declaration.*
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.ExpressionCheckers
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.FirQualifiedAccessExpressionChecker
+import org.jetbrains.kotlin.fir.analysis.checkers.expression.FirResolvedQualifierChecker
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.FirTypeOperatorCallChecker
 import org.jetbrains.kotlin.fir.analysis.checkers.toClassLikeSymbol
 import org.jetbrains.kotlin.fir.analysis.extensions.FirAdditionalCheckersExtension
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.utils.isCompanion
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccessExpression
+import org.jetbrains.kotlin.fir.expressions.FirResolvedQualifier
 import org.jetbrains.kotlin.fir.expressions.FirTypeOperatorCall
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
 import org.jetbrains.kotlin.fir.resolve.calls.FirSyntheticFunctionSymbol
@@ -24,6 +27,7 @@ import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.resolve.toClassLikeSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirAnonymousObjectSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
+import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -36,6 +40,15 @@ open class AnalyzerCheckers(session: FirSession) : FirAdditionalCheckersExtensio
             element.treeStructure
                 .findChildByType(element.lighterASTNode, KtTokens.IDENTIFIER)
                 ?.toKtLightSourceElement(element.treeStructure) ?: element
+
+        context(context: CheckerContext)
+        private fun ScipVisitor.emitTypeRef(typeRef: FirTypeRef) {
+            val klass = typeRef.toClassLikeSymbol(context.session)
+            val source = typeRef.source
+            if (klass != null && source != null && source.kind !is KtFakeSourceElementKind) {
+                visitClassReference(klass, getIdentifier(source))
+            }
+        }
     }
 
     override val declarationCheckers: DeclarationCheckers
@@ -48,8 +61,10 @@ open class AnalyzerCheckers(session: FirSession) : FirAdditionalCheckersExtensio
                     Set<FirQualifiedAccessExpressionChecker> =
                     setOf(SemanticQualifiedAccessExpressionChecker())
 
-                override val typeOperatorCallCheckers:
-                    Set<SemanticClassReferenceExpressionChecker> =
+                override val resolvedQualifierCheckers: Set<FirResolvedQualifierChecker> =
+                    setOf(SemanticResolvedQualifierChecker())
+
+                override val typeOperatorCallCheckers: Set<FirTypeOperatorCallChecker> =
                     setOf(SemanticClassReferenceExpressionChecker())
             }
 
@@ -71,6 +86,7 @@ open class AnalyzerCheckers(session: FirSession) : FirAdditionalCheckersExtensio
         override val typeAliasCheckers: Set<FirTypeAliasChecker> = setOf(SemanticTypeAliasChecker())
         override val propertyAccessorCheckers: Set<FirPropertyAccessorChecker> =
             setOf(SemanticPropertyAccessorChecker())
+        override val enumEntryCheckers: Set<FirEnumEntryChecker> = setOf(SemanticEnumEntryChecker())
     }
 
     private class SemanticFileChecker(private val sourceroot: Path) :
@@ -189,19 +205,32 @@ open class AnalyzerCheckers(session: FirSession) : FirAdditionalCheckersExtensio
                 } else {
                     null
                 }
+            val identifierSource = getIdentifier(source)
+            // For unnamed companion objects, getIdentifier() falls back to source (no IDENTIFIER
+            // token). Use the 'companion' keyword as the range instead. The COMPANION_KEYWORD is
+            // inside a MODIFIER_LIST child, so we use findDescendantByType instead of
+            // findChildByType.
+            val companionKeyword =
+                if (
+                    identifierSource === source &&
+                        declaration is FirRegularClass &&
+                        declaration.isCompanion
+                ) {
+                    source.treeStructure
+                        .findDescendantByType(source.lighterASTNode, KtTokens.COMPANION_KEYWORD)
+                        ?.toKtLightSourceElement(source.treeStructure)
+                } else {
+                    null
+                }
             visitor?.visitClassOrObject(
                 declaration,
-                objectKeyword ?: getIdentifier(source),
+                objectKeyword ?: companionKeyword ?: identifierSource,
                 enclosingSource = source,
             )
 
             if (declaration is FirClass) {
                 for (superType in declaration.superTypeRefs) {
-                    val superSymbol = superType.toClassLikeSymbol(context.session)
-                    val superSource = superType.source
-                    if (superSymbol != null && superSource != null) {
-                        visitor?.visitClassReference(superSymbol, superSource)
-                    }
+                    visitor?.emitTypeRef(superType)
                 }
             }
         }
@@ -260,14 +289,8 @@ open class AnalyzerCheckers(session: FirSession) : FirAdditionalCheckersExtensio
                 getIdentifier(source),
                 enclosingSource = source,
             )
-
-            val klass = declaration.returnTypeRef.toClassLikeSymbol(context.session)
-            val klassSource = declaration.returnTypeRef.source
-            if (
-                klass != null && klassSource != null && klassSource.kind !is KtFakeSourceElementKind
-            ) {
-                visitor?.visitClassReference(klass, getIdentifier(klassSource))
-            }
+            visitor?.emitTypeRef(declaration.returnTypeRef)
+            declaration.receiverParameter?.typeRef?.let { visitor?.emitTypeRef(it) }
         }
     }
 
@@ -289,14 +312,8 @@ open class AnalyzerCheckers(session: FirSession) : FirAdditionalCheckersExtensio
             val ktFile = context.containingFileSymbol?.sourceFile ?: return
             val visitor = visitors[ktFile]
             visitor?.visitProperty(declaration, getIdentifier(source), enclosingSource = source)
-
-            val klass = declaration.returnTypeRef.toClassLikeSymbol(context.session)
-            val klassSource = declaration.returnTypeRef.source
-            if (
-                klass != null && klassSource != null && klassSource.kind !is KtFakeSourceElementKind
-            ) {
-                visitor?.visitClassReference(klass, getIdentifier(klassSource))
-            }
+            visitor?.emitTypeRef(declaration.returnTypeRef)
+            declaration.receiverParameter?.typeRef?.let { visitor?.emitTypeRef(it) }
         }
     }
 
@@ -307,14 +324,7 @@ open class AnalyzerCheckers(session: FirSession) : FirAdditionalCheckersExtensio
             val ktFile = context.containingFileSymbol?.sourceFile ?: return
             val visitor = visitors[ktFile]
             visitor?.visitParameter(declaration, getIdentifier(source), enclosingSource = source)
-
-            val klass = declaration.returnTypeRef.toClassLikeSymbol(context.session)
-            val klassSource = declaration.returnTypeRef.source
-            if (
-                klass != null && klassSource != null && klassSource.kind !is KtFakeSourceElementKind
-            ) {
-                visitor?.visitClassReference(klass, getIdentifier(klassSource))
-            }
+            visitor?.emitTypeRef(declaration.returnTypeRef)
         }
     }
 
@@ -366,6 +376,29 @@ open class AnalyzerCheckers(session: FirSession) : FirAdditionalCheckersExtensio
         }
     }
 
+    private class SemanticEnumEntryChecker : FirEnumEntryChecker(MppCheckerKind.Common) {
+        context(context: CheckerContext, reporter: DiagnosticReporter)
+        override fun check(declaration: FirEnumEntry) {
+            val source = declaration.source ?: return
+            val ktFile = context.containingFileSymbol?.sourceFile ?: return
+            val visitor = visitors[ktFile]
+            visitor?.visitEnumEntry(declaration, getIdentifier(source), enclosingSource = source)
+        }
+    }
+
+    private class SemanticResolvedQualifierChecker :
+        FirResolvedQualifierChecker(MppCheckerKind.Common) {
+        context(context: CheckerContext, reporter: DiagnosticReporter)
+        override fun check(expression: FirResolvedQualifier) {
+            val symbol = expression.symbol ?: return
+            val source = expression.source ?: return
+            if (source.kind is KtFakeSourceElementKind) return
+            val ktFile = context.containingFileSymbol?.sourceFile ?: return
+            val visitor = visitors[ktFile]
+            visitor?.visitClassReference(symbol, getIdentifier(source))
+        }
+    }
+
     private class SemanticQualifiedAccessExpressionChecker :
         FirQualifiedAccessExpressionChecker(MppCheckerKind.Common) {
         context(context: CheckerContext, reporter: DiagnosticReporter)
@@ -378,10 +411,8 @@ open class AnalyzerCheckers(session: FirSession) : FirAdditionalCheckersExtensio
 
             val ktFile = context.containingFileSymbol?.sourceFile ?: return
             val visitor = visitors[ktFile]
-            visitor?.visitSimpleNameExpression(
-                calleeReference,
-                getIdentifier(calleeReference.source ?: source),
-            )
+            val identifierSource = getIdentifier(calleeReference.source ?: source)
+            visitor?.visitSimpleNameExpression(calleeReference, identifierSource)
 
             val resolvedSymbol = calleeReference.resolvedSymbol
             if (
@@ -390,10 +421,7 @@ open class AnalyzerCheckers(session: FirSession) : FirAdditionalCheckersExtensio
             ) {
                 val referencedKlass = resolvedSymbol.resolvedReturnType.toClassLikeSymbol()
                 if (referencedKlass != null) {
-                    visitor?.visitClassReference(
-                        referencedKlass,
-                        getIdentifier(calleeReference.source ?: source),
-                    )
+                    visitor?.visitClassReference(referencedKlass, identifierSource)
                 }
             }
 
@@ -401,16 +429,10 @@ open class AnalyzerCheckers(session: FirSession) : FirAdditionalCheckersExtensio
             // symbols
             if (resolvedSymbol is FirPropertySymbol) {
                 resolvedSymbol.getterSymbol?.let {
-                    visitor?.visitCallableReference(
-                        it,
-                        getIdentifier(calleeReference.source ?: source),
-                    )
+                    visitor?.visitCallableReference(it, identifierSource)
                 }
                 resolvedSymbol.setterSymbol?.let {
-                    visitor?.visitCallableReference(
-                        it,
-                        getIdentifier(calleeReference.source ?: source),
-                    )
+                    visitor?.visitCallableReference(it, identifierSource)
                 }
             }
         }
@@ -422,15 +444,11 @@ open class AnalyzerCheckers(session: FirSession) : FirAdditionalCheckersExtensio
         override fun check(expression: FirTypeOperatorCall) {
             val typeRef = expression.conversionTypeRef
             val source = typeRef.source ?: return
-            val classSymbol =
-                expression.conversionTypeRef.toClassLikeSymbol(context.session) ?: return
+            val classSymbol = typeRef.toClassLikeSymbol(context.session) ?: return
             val ktFile = context.containingFileSymbol?.sourceFile ?: return
             val visitor = visitors[ktFile]
 
-            visitor?.visitClassReference(
-                classSymbol,
-                getIdentifier(expression.conversionTypeRef.source ?: source),
-            )
+            visitor?.visitClassReference(classSymbol, getIdentifier(source))
         }
     }
 }

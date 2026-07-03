@@ -177,6 +177,7 @@ class ScipTextDocumentBuilder(
             is FirValueParameter -> Kind.Parameter
             is FirField -> Kind.Field
             is FirProperty -> Kind.Property
+            is FirEnumEntry -> Kind.EnumMember
             is FirVariable -> Kind.Variable
             is FirCallableDeclaration -> Kind.Method
             is FirPackageDirective -> Kind.Package
