@@ -3,7 +3,6 @@ package org.scip_code.scip_java.kotlinc
 import java.lang.System.err
 import org.jetbrains.kotlin.fir.analysis.checkers.declaration.isLocalMember
 import org.jetbrains.kotlin.fir.declarations.DirectDeclarationsAccess
-import org.jetbrains.kotlin.fir.declarations.FirClass
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.declarations.utils.memberDeclarationNameOrNull
 import org.jetbrains.kotlin.fir.packageFqName
@@ -172,8 +171,7 @@ class GlobalSymbolsCache(testing: Boolean = false) : Iterable<Symbol> {
 
         val siblings =
             when (val containingSymbol = symbol.getContainingSymbol(session)) {
-                is FirClassSymbol ->
-                    (containingSymbol.fir as FirClass).declarations.map { it.symbol }
+                is FirClassSymbol -> containingSymbol.fir.declarations.map { it.symbol }
                 is FirFileSymbol -> containingSymbol.fir.declarations.map { it.symbol }
                 null ->
                     symbol.moduleData.session.symbolProvider.getTopLevelCallableSymbols(

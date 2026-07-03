@@ -388,8 +388,7 @@ open class AnalyzerCheckers(session: FirSession) : FirAdditionalCheckersExtensio
                 resolvedSymbol.origin == FirDeclarationOrigin.SamConstructor &&
                     resolvedSymbol is FirSyntheticFunctionSymbol
             ) {
-                val referencedKlass =
-                    resolvedSymbol.resolvedReturnType.toClassLikeSymbol(context.session)
+                val referencedKlass = resolvedSymbol.resolvedReturnType.toClassLikeSymbol()
                 if (referencedKlass != null) {
                     visitor?.visitClassReference(
                         referencedKlass,
