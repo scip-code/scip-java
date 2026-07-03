@@ -5,10 +5,12 @@
 //               ⌄ enclosing_range_start scip-java maven . . snapshots/sampleText().(x)
   fun sampleText(x: String = "") {
 //    ^^^^^^^^^^ definition scip-java maven . . snapshots/sampleText().
+//               kind Method
 //               display_name sampleText
 //               signature_documentation
 //               > public final fun sampleText(x: String = ...): Unit
 //               ^ definition scip-java maven . . snapshots/sampleText().(x)
+//                 kind Parameter
 //                 display_name x
 //                 signature_documentation
 //                 > x: String = ...

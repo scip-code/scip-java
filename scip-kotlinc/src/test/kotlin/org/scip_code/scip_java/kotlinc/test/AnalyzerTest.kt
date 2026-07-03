@@ -15,6 +15,7 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.junit.jupiter.api.io.TempDir
 import org.scip_code.scip.Document
+import org.scip_code.scip.SymbolInformation.Kind
 import org.scip_code.scip_java.kotlinc.*
 
 @OptIn(ExperimentalCompilerApi::class)
@@ -107,11 +108,13 @@ class AnalyzerTest {
             arrayOf(
                 scipSymbol {
                     symbol = "sample/Banana#"
+                    kind = Kind.Class
                     displayName = "Banana"
                     signatureText = "public final class Banana : Any"
                 },
                 scipSymbol {
                     symbol = "sample/Banana#foo()."
+                    kind = Kind.Method
                     displayName = "foo"
                     signatureText = "public final fun foo(): Unit"
                 },
@@ -279,21 +282,25 @@ class AnalyzerTest {
             arrayOf(
                 scipSymbol {
                     symbol = "sample/foo()."
+                    kind = Kind.Method
                     displayName = "foo"
                     signatureText = "public final fun foo(): Unit"
                 },
                 scipSymbol {
                     symbol = "local 0"
+                    kind = Kind.Class
                     displayName = "LocalClass"
                     signatureText = "local final class LocalClass : Any"
                 },
                 scipSymbol {
                     symbol = "local 1"
+                    kind = Kind.Constructor
                     displayName = "LocalClass"
                     signatureText = "public constructor(): LocalClass"
                 },
                 scipSymbol {
                     symbol = "local 2"
+                    kind = Kind.Method
                     displayName = "localClassMethod"
                     signatureText = "public final fun localClassMethod(): Unit"
                 },
@@ -410,22 +417,26 @@ class AnalyzerTest {
             arrayOf(
                 scipSymbol {
                     symbol = "sample/Interface#"
+                    kind = Kind.Interface
                     displayName = "Interface"
                     signatureText = "public abstract interface Interface : Any"
                 },
                 scipSymbol {
                     symbol = "sample/Interface#foo()."
+                    kind = Kind.Method
                     displayName = "foo"
                     signatureText = "public abstract fun foo(): Unit\n"
                 },
                 scipSymbol {
                     symbol = "sample/Class#"
+                    kind = Kind.Class
                     displayName = "Class"
                     signatureText = "public final class Class : Interface"
                     addOverriddenSymbols("sample/Interface#")
                 },
                 scipSymbol {
                     symbol = "sample/Class#foo()."
+                    kind = Kind.Method
                     displayName = "foo"
                     signatureText = "public open override fun foo(): Unit"
                     addOverriddenSymbols("sample/Interface#foo().")
@@ -623,29 +634,34 @@ class AnalyzerTest {
             arrayOf(
                 scipSymbol {
                     symbol = "sample/Interface#"
+                    kind = Kind.Interface
                     displayName = "Interface"
                     signatureText = "public abstract interface Interface : Any"
                 },
                 scipSymbol {
                     symbol = "local 1"
+                    kind = Kind.Class
                     displayName = "<anonymous>"
                     signatureText = "object : Interface"
                     addOverriddenSymbols("sample/Interface#")
                 },
                 scipSymbol {
                     symbol = "local 3"
+                    kind = Kind.Method
                     displayName = "foo"
                     signatureText = "public open override fun foo(): Unit"
                     addOverriddenSymbols("sample/Interface#foo().")
                 },
                 scipSymbol {
                     symbol = "local 5"
+                    kind = Kind.Class
                     displayName = "<anonymous>"
                     signatureText = "object : Interface"
                     addOverriddenSymbols("sample/Interface#")
                 },
                 scipSymbol {
                     symbol = "local 7"
+                    kind = Kind.Method
                     displayName = "foo"
                     signatureText = "public open override fun foo(): Unit"
                     addOverriddenSymbols("sample/Interface#foo().")
@@ -1300,6 +1316,7 @@ class AnalyzerTest {
             arrayOf(
                 scipSymbol {
                     symbol = "hello/sample/Apple#"
+                    kind = Kind.Class
                     displayName = "Apple"
                     signatureText = "public final class Apple : Any"
                 }
@@ -1385,11 +1402,13 @@ class AnalyzerTest {
             arrayOf(
                 scipSymbol {
                     symbol = "sample/Banana#"
+                    kind = Kind.Class
                     displayName = "Banana"
                     signatureText = "public final class Banana : Any"
                 },
                 scipSymbol {
                     symbol = "sample/Banana#foo()."
+                    kind = Kind.Method
                     displayName = "foo"
                     signatureText = "public final fun foo(): Unit"
                 },

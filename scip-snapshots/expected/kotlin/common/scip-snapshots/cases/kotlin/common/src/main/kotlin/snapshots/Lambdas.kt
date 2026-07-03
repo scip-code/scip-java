@@ -7,20 +7,24 @@
 //                                                  ⌄ enclosing_range_start local 1
   val x = arrayListOf<String>().forEachIndexed { i, s -> println("$i $s") }
 //    ^ definition scip-java maven . . snapshots/x.
+//      kind Property
 //      display_name x
 //      signature_documentation
 //      > public final val x: Unit
 //    ^ definition scip-java maven . . snapshots/getX().
+//      kind Method
 //      display_name x
 //      signature_documentation
 //      > public get(): Unit
 //        ^^^^^^^^^^^ reference scip-java maven . . kotlin/collections/arrayListOf().
 //                              ^^^^^^^^^^^^^^ reference scip-java maven . . kotlin/collections/forEachIndexed(+9).
 //                                               ^ definition local 0
+//                                                 kind Parameter
 //                                                 display_name i
 //                                                 signature_documentation
 //                                                 > i: Int
 //                                                  ^ definition local 1
+//                                                    kind Parameter
 //                                                    display_name s
 //                                                    signature_documentation
 //                                                    > s: String
@@ -36,10 +40,12 @@
 //⌄ enclosing_range_start scip-java maven . . snapshots/getY().
   val y = "fdsa".run { this.toByteArray() }
 //    ^ definition scip-java maven . . snapshots/y.
+//      kind Property
 //      display_name y
 //      signature_documentation
 //      > public final val y: ByteArray
 //    ^ definition scip-java maven . . snapshots/getY().
+//      kind Method
 //      display_name y
 //      signature_documentation
 //      > public get(): ByteArray
@@ -53,10 +59,12 @@
 //              ⌄ enclosing_range_start local 2
   val z = y.let { it.size }
 //    ^ definition scip-java maven . . snapshots/z.
+//      kind Property
 //      display_name z
 //      signature_documentation
 //      > public final val z: Int
 //    ^ definition scip-java maven . . snapshots/getZ().
+//      kind Method
 //      display_name z
 //      signature_documentation
 //      > public get(): Int
@@ -64,6 +72,7 @@
 //        ^ reference scip-java maven . . snapshots/getY().
 //          ^^^ reference scip-java maven . . kotlin/let().
 //              ^^^^^^^^^^^ definition local 2
+//                          kind Parameter
 //                          display_name it
 //                          signature_documentation
 //                          > it: ByteArray

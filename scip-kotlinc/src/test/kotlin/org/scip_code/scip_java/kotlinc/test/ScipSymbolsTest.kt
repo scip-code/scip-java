@@ -3,6 +3,7 @@ package org.scip_code.scip_java.kotlinc.test
 import com.tschuchort.compiletesting.SourceFile
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.junit.jupiter.api.TestFactory
+import org.scip_code.scip.SymbolInformation.Kind
 import org.scip_code.scip_java.kotlinc.*
 import org.scip_code.scip_java.kotlinc.test.ExpectedSymbols.ScipData
 import org.scip_code.scip_java.kotlinc.test.ExpectedSymbols.SymbolCacheData
@@ -775,12 +776,14 @@ class ScipSymbolsTest {
                                 listOf(
                                     scipSymbol {
                                         symbol = "x."
+                                        kind = Kind.Property
                                         displayName = "x"
                                         signatureText = "public final val x: String"
                                         documentation("hello world\n test content")
                                     },
                                     scipSymbol {
                                         symbol = "getX()."
+                                        kind = Kind.Method
                                         displayName = "x"
                                         signatureText = "public get(): String"
                                         documentation("hello world\n test content")

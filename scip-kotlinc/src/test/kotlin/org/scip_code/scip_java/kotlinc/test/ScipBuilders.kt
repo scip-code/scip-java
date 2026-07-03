@@ -76,6 +76,7 @@ class ScipOccurrenceBuilder {
 @ScipBuilderDsl
 class ScipSymbolInformationBuilder {
     var symbol: String = ""
+    var kind: SymbolInformation.Kind = SymbolInformation.Kind.UnspecifiedKind
     var displayName: String = ""
     var signatureText: String? = null
     private val docs = mutableListOf<String>()
@@ -95,6 +96,7 @@ class ScipSymbolInformationBuilder {
 
     internal fun build(): SymbolInformation = symbolInformation {
         symbol = this@ScipSymbolInformationBuilder.symbol
+        kind = this@ScipSymbolInformationBuilder.kind
         if (this@ScipSymbolInformationBuilder.displayName.isNotEmpty()) {
             displayName = this@ScipSymbolInformationBuilder.displayName
         }

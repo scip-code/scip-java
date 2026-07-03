@@ -5,10 +5,13 @@ import java.nio.file.Paths
 import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.KtSourceFile
 import org.jetbrains.kotlin.fir.FirElement
+import org.jetbrains.kotlin.fir.FirPackageDirective
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.directOverriddenSymbolsSafe
 import org.jetbrains.kotlin.fir.analysis.checkers.toClassLikeSymbol
 import org.jetbrains.kotlin.fir.analysis.getChild
+import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.utils.isInterface
 import org.jetbrains.kotlin.fir.renderer.*
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
@@ -19,6 +22,7 @@ import org.jetbrains.kotlin.text
 import org.scip_code.scip.Document
 import org.scip_code.scip.Occurrence
 import org.scip_code.scip.SymbolInformation
+import org.scip_code.scip.SymbolInformation.Kind
 import org.scip_code.scip.SymbolRole
 import org.scip_code.scip.relationship
 import org.scip_code.scip.signature
@@ -84,6 +88,7 @@ class ScipTextDocumentBuilder(
                 }
                 docComment(firBasedSymbol.fir)?.let { documentation += it }
             }
+            this.kind = scipKind(firBasedSymbol?.fir)
             for (parent in supers) {
                 relationships += relationship {
                     this.symbol = parent.toString()
@@ -158,6 +163,21 @@ class ScipTextDocumentBuilder(
         val kdoc = element.source?.getChild(KtTokens.DOC_COMMENT)?.text?.toString() ?: return null
         return stripKdoc(kdoc).ifEmpty { null }
     }
+
+    private fun scipKind(element: FirElement?): Kind =
+        when (element) {
+            is FirClass if element.isInterface -> Kind.Interface
+            is FirClassLikeDeclaration -> Kind.Class
+            is FirConstructor -> Kind.Constructor
+            is FirTypeParameter -> Kind.TypeParameter
+            is FirValueParameter -> Kind.Parameter
+            is FirField -> Kind.Field
+            is FirProperty -> Kind.Property
+            is FirVariable -> Kind.Variable
+            is FirCallableDeclaration -> Kind.Method
+            is FirPackageDirective -> Kind.Package
+            else -> Kind.UNRECOGNIZED
+        }
 
     /** Strips the `/**`, leading `*`s, and `*/` from a kdoc block, returning just the body text. */
     private fun stripKdoc(kdoc: String): String {

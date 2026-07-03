@@ -11,37 +11,45 @@
 //                                                 ⌄ enclosing_range_start scip-java maven . . snapshots/Class#`<init>`().(apple)
   class Class constructor(private var banana: Int, apple: String) :
 //      ^^^^^ definition scip-java maven . . snapshots/Class#
+//            kind Class
 //            display_name Class
 //            signature_documentation
 //            > public final class Class : Throwable
 //            relationship scip-java maven . . kotlin/Throwable# implementation
 //            ^^^^^^^^^^^ definition scip-java maven . . snapshots/Class#`<init>`().
+//                        kind Constructor
 //                        display_name Class
 //                        signature_documentation
 //                        > public constructor(banana: Int, apple: String): Class
 //                                    ^^^^^^ definition scip-java maven . . snapshots/Class#`<init>`().(banana)
+//                                           kind Parameter
 //                                           display_name banana
 //                                           signature_documentation
 //                                           > banana: Int
 //                                    ^^^^^^ definition scip-java maven . . snapshots/Class#banana.
+//                                           kind Property
 //                                           display_name banana
 //                                           signature_documentation
 //                                           > private final var banana: Int
 //                                    ^^^^^^ reference scip-java maven . . snapshots/Class#`<init>`().(banana)
 //                                    ^^^^^^ definition scip-java maven . . snapshots/Class#getBanana().
+//                                           kind Method
 //                                           display_name banana
 //                                           signature_documentation
 //                                           > private get(): Int
 //                                    ^^^^^^ definition scip-java maven . . snapshots/Class#setBanana().
+//                                           kind Method
 //                                           display_name banana
 //                                           signature_documentation
 //                                           > private set(value: Int): Unit
 //                                    ^^^^^^ definition scip-java maven . . snapshots/Class#setBanana().(value)
+//                                           kind Parameter
 //                                           display_name value
 //                                           signature_documentation
 //                                           > value: Int
 //                                            ^^^ reference scip-java maven . . kotlin/Int#
 //                                                 ^^^^^ definition scip-java maven . . snapshots/Class#`<init>`().(apple)
+//                                                       kind Parameter
 //                                                       display_name apple
 //                                                       signature_documentation
 //                                                       > apple: String
@@ -68,10 +76,12 @@
 //  ⌄ enclosing_range_start scip-java maven . . snapshots/Class#getAsdf().
     val asdf =
 //      ^^^^ definition scip-java maven . . snapshots/Class#asdf.
+//           kind Property
 //           display_name asdf
 //           signature_documentation
 //           > public final val asdf: Any
 //      ^^^^ definition scip-java maven . . snapshots/Class#getAsdf().
+//           kind Method
 //           display_name asdf
 //           signature_documentation
 //           > public get(): Any
@@ -79,16 +89,19 @@
 //      ⌄ enclosing_range_start local 1
         object {
 //      ^^^^^^ definition local 0
+//             kind Class
 //             display_name <anonymous>
 //             signature_documentation
 //             > object : Any
 //      ^^^^^^ definition local 1
+//             kind Constructor
 //             display_name <anonymous>
 //             signature_documentation
 //             > private constructor(): <anonymous>
 //        ⌄ enclosing_range_start local 2
           fun doStuff() = Unit
 //            ^^^^^^^ definition local 2
+//                    kind Method
 //                    display_name doStuff
 //                    signature_documentation
 //                    > public final fun doStuff(): Unit
@@ -102,6 +115,7 @@
 //  ⌄ enclosing_range_start scip-java maven . . snapshots/Class#`<init>`(+1).
     constructor() : this(1, "")
 //  ^^^^^^^^^^^^^^^^^^^^^^^^^^^ definition scip-java maven . . snapshots/Class#`<init>`(+1).
+//                              kind Constructor
 //                              display_name Class
 //                              signature_documentation
 //                              > public constructor(): Class
@@ -111,10 +125,12 @@
 //              ⌄ enclosing_range_start scip-java maven . . snapshots/Class#`<init>`(+2).(banana)
     constructor(banana: Int) : this(banana, "")
 //  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ definition scip-java maven . . snapshots/Class#`<init>`(+2).
+//                                              kind Constructor
 //                                              display_name Class
 //                                              signature_documentation
 //                                              > public constructor(banana: Int): Class
 //              ^^^^^^ definition scip-java maven . . snapshots/Class#`<init>`(+2).(banana)
+//                     kind Parameter
 //                     display_name banana
 //                     signature_documentation
 //                     > banana: Int
@@ -126,6 +142,7 @@
 //  ⌄ enclosing_range_start scip-java maven . . snapshots/Class#run().
     fun run() {
 //      ^^^ definition scip-java maven . . snapshots/Class#run().
+//          kind Method
 //          display_name run
 //          signature_documentation
 //          > public final fun run(): Unit
