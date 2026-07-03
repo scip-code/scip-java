@@ -777,6 +777,7 @@ class ScipSymbolsTest {
                                     scipSymbol {
                                         symbol = "x."
                                         kind = Kind.Property
+                                        enclosingSymbol = "_root_/"
                                         displayName = "x"
                                         signatureText = "public final val x: String"
                                         documentation("hello world\n test content")
@@ -784,6 +785,7 @@ class ScipSymbolsTest {
                                     scipSymbol {
                                         symbol = "x.get()."
                                         kind = Kind.Method
+                                        enclosingSymbol = "x."
                                         displayName = "x"
                                         signatureText = "public get(): String"
                                         documentation("hello world\n test content")

@@ -109,12 +109,14 @@ class AnalyzerTest {
                 scipSymbol {
                     symbol = "sample/Banana#"
                     kind = Kind.Class
+                    enclosingSymbol = "sample/"
                     displayName = "Banana"
                     signatureText = "public final class Banana : Any"
                 },
                 scipSymbol {
                     symbol = "sample/Banana#foo()."
                     kind = Kind.Method
+                    enclosingSymbol = "sample/Banana#"
                     displayName = "foo"
                     signatureText = "public final fun foo(): Unit"
                 },
@@ -283,24 +285,28 @@ class AnalyzerTest {
                 scipSymbol {
                     symbol = "sample/foo()."
                     kind = Kind.Method
+                    enclosingSymbol = "sample/"
                     displayName = "foo"
                     signatureText = "public final fun foo(): Unit"
                 },
                 scipSymbol {
                     symbol = "local 0"
                     kind = Kind.Class
+                    enclosingSymbol = "sample/foo()."
                     displayName = "LocalClass"
                     signatureText = "local final class LocalClass : Any"
                 },
                 scipSymbol {
                     symbol = "local 1"
                     kind = Kind.Constructor
+                    enclosingSymbol = "local 0"
                     displayName = "LocalClass"
                     signatureText = "public constructor(): LocalClass"
                 },
                 scipSymbol {
                     symbol = "local 2"
                     kind = Kind.Method
+                    enclosingSymbol = "local 0"
                     displayName = "localClassMethod"
                     signatureText = "public final fun localClassMethod(): Unit"
                 },
@@ -418,18 +424,21 @@ class AnalyzerTest {
                 scipSymbol {
                     symbol = "sample/Interface#"
                     kind = Kind.Interface
+                    enclosingSymbol = "sample/"
                     displayName = "Interface"
                     signatureText = "public abstract interface Interface : Any"
                 },
                 scipSymbol {
                     symbol = "sample/Interface#foo()."
                     kind = Kind.Method
+                    enclosingSymbol = "sample/Interface#"
                     displayName = "foo"
                     signatureText = "public abstract fun foo(): Unit\n"
                 },
                 scipSymbol {
                     symbol = "sample/Class#"
                     kind = Kind.Class
+                    enclosingSymbol = "sample/"
                     displayName = "Class"
                     signatureText = "public final class Class : Interface"
                     addOverriddenSymbols("sample/Interface#")
@@ -437,6 +446,7 @@ class AnalyzerTest {
                 scipSymbol {
                     symbol = "sample/Class#foo()."
                     kind = Kind.Method
+                    enclosingSymbol = "sample/Class#"
                     displayName = "foo"
                     signatureText = "public open override fun foo(): Unit"
                     addOverriddenSymbols("sample/Interface#foo().")
@@ -635,12 +645,14 @@ class AnalyzerTest {
                 scipSymbol {
                     symbol = "sample/Interface#"
                     kind = Kind.Interface
+                    enclosingSymbol = "sample/"
                     displayName = "Interface"
                     signatureText = "public abstract interface Interface : Any"
                 },
                 scipSymbol {
                     symbol = "local 1"
                     kind = Kind.Class
+                    enclosingSymbol = "local 0"
                     displayName = "<anonymous>"
                     signatureText = "object : Interface"
                     addOverriddenSymbols("sample/Interface#")
@@ -648,6 +660,7 @@ class AnalyzerTest {
                 scipSymbol {
                     symbol = "local 3"
                     kind = Kind.Method
+                    enclosingSymbol = "local 1"
                     displayName = "foo"
                     signatureText = "public open override fun foo(): Unit"
                     addOverriddenSymbols("sample/Interface#foo().")
@@ -655,6 +668,7 @@ class AnalyzerTest {
                 scipSymbol {
                     symbol = "local 5"
                     kind = Kind.Class
+                    enclosingSymbol = "local 4"
                     displayName = "<anonymous>"
                     signatureText = "object : Interface"
                     addOverriddenSymbols("sample/Interface#")
@@ -662,6 +676,7 @@ class AnalyzerTest {
                 scipSymbol {
                     symbol = "local 7"
                     kind = Kind.Method
+                    enclosingSymbol = "local 5"
                     displayName = "foo"
                     signatureText = "public open override fun foo(): Unit"
                     addOverriddenSymbols("sample/Interface#foo().")
@@ -1317,6 +1332,7 @@ class AnalyzerTest {
                 scipSymbol {
                     symbol = "hello/sample/Apple#"
                     kind = Kind.Class
+                    enclosingSymbol = "hello/sample/"
                     displayName = "Apple"
                     signatureText = "public final class Apple : Any"
                 }
@@ -1403,12 +1419,14 @@ class AnalyzerTest {
                 scipSymbol {
                     symbol = "sample/Banana#"
                     kind = Kind.Class
+                    enclosingSymbol = "sample/"
                     displayName = "Banana"
                     signatureText = "public final class Banana : Any"
                 },
                 scipSymbol {
                     symbol = "sample/Banana#foo()."
                     kind = Kind.Method
+                    enclosingSymbol = "sample/Banana#"
                     displayName = "foo"
                     signatureText = "public final fun foo(): Unit"
                 },

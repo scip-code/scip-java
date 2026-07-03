@@ -89,6 +89,9 @@ class ScipTextDocumentBuilder(
                 docComment(firBasedSymbol.fir)?.let { documentation += it }
             }
             this.kind = scipKind(firBasedSymbol?.fir)
+            this.enclosingSymbol =
+                context.containingDeclarations.lastOrNull()?.let { cache[it].last().toString() }
+                    ?: ""
             for (parent in supers) {
                 relationships += relationship {
                     this.symbol = parent.toString()
