@@ -316,6 +316,108 @@ class AnalyzerTest {
     }
 
     @Test
+    fun `lambda parameters`(@TempDir path: Path) {
+        val document =
+            compileScip(
+                path,
+                """
+                    package sample
+
+                    fun use() {
+                        val f = { n: Int -> n * 2 }
+                    }
+                """,
+            )
+
+        val occurrences =
+            arrayOf(
+                // val f is a local variable — gets local0 via isLocalMember
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "local 0"
+                    range {
+                        startLine = 3
+                        startCharacter = 8
+                        endLine = 3
+                        endCharacter = 9
+                    }
+                    enclosingRange {
+                        startLine = 3
+                        startCharacter = 4
+                        endLine = 3
+                        endCharacter = 31
+                    }
+                },
+                // n is a lambda parameter — gets local1 via the owner == Symbol.NONE path
+                // (the containing FirAnonymousFunction is skipped, yielding Symbol.NONE as owner)
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "local 1"
+                    range {
+                        startLine = 3
+                        startCharacter = 14
+                        endLine = 3
+                        endCharacter = 15
+                    }
+                    enclosingRange {
+                        startLine = 3
+                        startCharacter = 14
+                        endLine = 3
+                        endCharacter = 20
+                    }
+                },
+                // explicit type annotation on n emits a class reference
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "kotlin/Int#"
+                    range {
+                        startLine = 3
+                        startCharacter = 17
+                        endLine = 3
+                        endCharacter = 20
+                    }
+                },
+                // reference to n in the lambda body uses the same local symbol
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "local 1"
+                    range {
+                        startLine = 3
+                        startCharacter = 24
+                        endLine = 3
+                        endCharacter = 25
+                    }
+                },
+            )
+        document.occurrencesList.shouldContainAll(*occurrences)
+
+        val symbols =
+            arrayOf(
+                scipSymbol {
+                    symbol = "sample/use()."
+                    kind = Kind.Method
+                    enclosingSymbol = "sample/"
+                    displayName = "use"
+                    signatureText = "public final fun use(): Unit"
+                },
+                scipSymbol {
+                    symbol = "local 0"
+                    kind = Kind.Property
+                    enclosingSymbol = "sample/use()."
+                    displayName = "f"
+                    signatureText = "local val f: (Int) -> Int"
+                },
+                scipSymbol {
+                    symbol = "local 1"
+                    kind = Kind.Parameter
+                    displayName = "n"
+                    signatureText = "n: Int"
+                },
+            )
+        document.symbolsList.shouldContainAll(*symbols)
+    }
+
+    @Test
     fun overrides(@TempDir path: Path) {
         val document =
             compileScip(
