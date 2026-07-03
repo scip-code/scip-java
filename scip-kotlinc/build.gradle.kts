@@ -24,10 +24,6 @@ dependencies {
     testImplementation(libs.kctfork.core)
 }
 
-tasks.withType<KotlinCompile>().configureEach {
-    compilerOptions.freeCompilerArgs.add("-Xcontext-parameters")
-}
-
 tasks.named<Test>("test") {
     maxHeapSize = "2g"
 }

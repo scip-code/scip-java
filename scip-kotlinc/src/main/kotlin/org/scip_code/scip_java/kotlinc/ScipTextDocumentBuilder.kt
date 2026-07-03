@@ -154,7 +154,7 @@ class ScipTextDocumentBuilder(
                 bodyRenderer = null,
                 propertyAccessorRenderer = null,
                 callArgumentsRenderer = FirCallNoArgumentsRenderer(),
-                modifierRenderer = FirAllModifierRenderer(),
+                modifierRenderer = FirAllModifierRenderer(FirModifierRenderer.StaticPolicy.Default),
                 callableSignatureRenderer = FirCallableSignatureRendererForReadability(),
                 declarationRenderer = FirDeclarationRenderer("local "),
             )

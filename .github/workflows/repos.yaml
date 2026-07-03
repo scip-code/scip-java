@@ -98,33 +98,33 @@ jobs:
             bazel_version: ""
             covers: Gradle, Java project target 21, Java 21 runtime
 
-          - name: gradle-kotlin-okio
-            repository: square/okio
-            ref: parent-3.16.0
+          - name: gradle-kotlin-kotlinpoet
+            repository: square/kotlinpoet
+            ref: 0182a25089ee1f4f2378568b497f82a8ebc3017d
             directory: .
             build_tool: gradle
-            build_command: "-Dkjs=false -Dkwasm=false :okio:compileKotlinJvm"
+            build_command: "-Dkjs=false -Dkwasm=false compileKotlinJvm"
             java: 17
             bazel_version: ""
-            covers: Gradle, Kotlin, Kotlin 2.2.0
+            covers: Gradle, Kotlin, Kotlin 2.4.0
 
-          - name: gradle-kotlin-flowext
-            repository: hoc081098/FlowExt
-            ref: 7341f3853d670af0283258f57643a68ed273f8ac
+          - name: gradle-kotlin-kotlinconf-app
+            repository: JetBrains/kotlinconf-app
+            ref: b5b0c8b4bb4476a59673dd857b598ef586100f52
             directory: .
             build_tool: gradle
             build_command: "compileKotlinJvm"
-            java: 17
+            java: 25
             bazel_version: ""
             expected_language: kotlin
-            covers: Gradle, Kotlin multiplatform JVM target, Kotlin 2.2.0, Java 17 runtime
+            covers: Gradle, Kotlin multiplatform JVM target, Kotlin 2.4.0, Java 25 runtime
 
-          - name: gradle-mixed-okio-jmh
-            repository: square/okio
-            ref: parent-3.16.0
+          - name: gradle-mixed-kotlinpoet
+            repository: square/kotlinpoet
+            ref: 0182a25089ee1f4f2378568b497f82a8ebc3017d
             directory: .
             build_tool: gradle
-            build_command: "-Dkjs=false -Dkwasm=false :okio:jvm:jmh:jmhClasses"
+            build_command: "-Dkjs=false -Dkwasm=false compileKotlinJvm compileJava"
             java: 21
             bazel_version: ""
             covers: Gradle, mixed Java/Kotlin, Java 21 runtime
