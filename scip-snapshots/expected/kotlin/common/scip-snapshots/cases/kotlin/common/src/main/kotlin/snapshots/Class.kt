@@ -5,9 +5,9 @@
 //            ⌄ enclosing_range_start scip-java maven . . snapshots/Class#`<init>`().
 //                        ⌄ enclosing_range_start scip-java maven . . snapshots/Class#`<init>`().(banana)
 //                        ⌄ enclosing_range_start scip-java maven . . snapshots/Class#banana.
-//                        ⌄ enclosing_range_start scip-java maven . . snapshots/Class#getBanana().
-//                        ⌄ enclosing_range_start scip-java maven . . snapshots/Class#setBanana().
-//                        ⌄ enclosing_range_start scip-java maven . . snapshots/Class#setBanana().(value)
+//                        ⌄ enclosing_range_start scip-java maven . . snapshots/Class#banana.get().
+//                        ⌄ enclosing_range_start scip-java maven . . snapshots/Class#banana.set().
+//                        ⌄ enclosing_range_start scip-java maven . . snapshots/Class#banana.set().(value)
 //                                                 ⌄ enclosing_range_start scip-java maven . . snapshots/Class#`<init>`().(apple)
   class Class constructor(private var banana: Int, apple: String) :
 //      ^^^^^ definition scip-java maven . . snapshots/Class#
@@ -32,17 +32,17 @@
 //                                           signature_documentation
 //                                           > private final var banana: Int
 //                                    ^^^^^^ reference scip-java maven . . snapshots/Class#`<init>`().(banana)
-//                                    ^^^^^^ definition scip-java maven . . snapshots/Class#getBanana().
+//                                    ^^^^^^ definition scip-java maven . . snapshots/Class#banana.get().
 //                                           kind Method
 //                                           display_name banana
 //                                           signature_documentation
 //                                           > private get(): Int
-//                                    ^^^^^^ definition scip-java maven . . snapshots/Class#setBanana().
+//                                    ^^^^^^ definition scip-java maven . . snapshots/Class#banana.set().
 //                                           kind Method
 //                                           display_name banana
 //                                           signature_documentation
 //                                           > private set(value: Int): Unit
-//                                    ^^^^^^ definition scip-java maven . . snapshots/Class#setBanana().(value)
+//                                    ^^^^^^ definition scip-java maven . . snapshots/Class#banana.set().(value)
 //                                           kind Parameter
 //                                           display_name value
 //                                           signature_documentation
@@ -56,9 +56,9 @@
 //                                                        ^^^^^^ reference scip-java maven . . kotlin/String#
 //                                              ⌃ enclosing_range_end scip-java maven . . snapshots/Class#`<init>`().(banana)
 //                                              ⌃ enclosing_range_end scip-java maven . . snapshots/Class#banana.
-//                                              ⌃ enclosing_range_end scip-java maven . . snapshots/Class#getBanana().
-//                                              ⌃ enclosing_range_end scip-java maven . . snapshots/Class#setBanana().
-//                                              ⌃ enclosing_range_end scip-java maven . . snapshots/Class#setBanana().(value)
+//                                              ⌃ enclosing_range_end scip-java maven . . snapshots/Class#banana.get().
+//                                              ⌃ enclosing_range_end scip-java maven . . snapshots/Class#banana.set().
+//                                              ⌃ enclosing_range_end scip-java maven . . snapshots/Class#banana.set().(value)
 //                                                             ⌃ enclosing_range_end scip-java maven . . snapshots/Class#`<init>`().(apple)
 //                                                              ⌃ enclosing_range_end scip-java maven . . snapshots/Class#`<init>`().
       Throwable(banana.toString() + apple) {
@@ -73,14 +73,14 @@
     }
   
 //  ⌄ enclosing_range_start scip-java maven . . snapshots/Class#asdf.
-//  ⌄ enclosing_range_start scip-java maven . . snapshots/Class#getAsdf().
+//  ⌄ enclosing_range_start scip-java maven . . snapshots/Class#asdf.get().
     val asdf =
 //      ^^^^ definition scip-java maven . . snapshots/Class#asdf.
 //           kind Property
 //           display_name asdf
 //           signature_documentation
 //           > public final val asdf: Any
-//      ^^^^ definition scip-java maven . . snapshots/Class#getAsdf().
+//      ^^^^ definition scip-java maven . . snapshots/Class#asdf.get().
 //           kind Method
 //           display_name asdf
 //           signature_documentation
@@ -108,7 +108,7 @@
 //                           ⌃ enclosing_range_end local 2
         }
 //      ⌃ enclosing_range_end scip-java maven . . snapshots/Class#asdf.
-//      ⌃ enclosing_range_end scip-java maven . . snapshots/Class#getAsdf().
+//      ⌃ enclosing_range_end scip-java maven . . snapshots/Class#asdf.get().
 //      ⌃ enclosing_range_end local 0
 //      ⌃ enclosing_range_end local 1
   
@@ -151,12 +151,12 @@
       println("I eat $banana for lunch")
 //    ^^^^^^^ reference scip-java maven . . kotlin/io/println().
 //                    ^^^^^^ reference scip-java maven . . snapshots/Class#banana.
-//                    ^^^^^^ reference scip-java maven . . snapshots/Class#getBanana().
-//                    ^^^^^^ reference scip-java maven . . snapshots/Class#setBanana().
+//                    ^^^^^^ reference scip-java maven . . snapshots/Class#banana.get().
+//                    ^^^^^^ reference scip-java maven . . snapshots/Class#banana.set().
       banana = 42
 //    ^^^^^^ reference scip-java maven . . snapshots/Class#banana.
-//    ^^^^^^ reference scip-java maven . . snapshots/Class#getBanana().
-//    ^^^^^^ reference scip-java maven . . snapshots/Class#setBanana().
+//    ^^^^^^ reference scip-java maven . . snapshots/Class#banana.get().
+//    ^^^^^^ reference scip-java maven . . snapshots/Class#banana.set().
     }
 //  ⌃ enclosing_range_end scip-java maven . . snapshots/Class#run().
   }

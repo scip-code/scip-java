@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.scip_code.scip_java.kotlinc.ScipSymbolDescriptor.Kind
 import org.scip_code.scip_java.shared.LocalSymbolsCache as SharedLocalSymbolsCache
 
@@ -115,6 +114,7 @@ class GlobalSymbolsCache(testing: Boolean = false) : Iterable<Symbol> {
                 return getSymbol(symbol.containingDeclarationSymbol, locals)
             is FirValueParameterSymbol ->
                 return getSymbol(symbol.containingDeclarationSymbol, locals)
+            is FirPropertyAccessorSymbol -> return getSymbol(symbol.propertySymbol, locals)
             is FirCallableSymbol -> {
                 val session = symbol.fir.moduleData.session
                 return symbol.getContainingSymbol(session)?.let { getSymbol(it, locals) }
@@ -142,15 +142,9 @@ class GlobalSymbolsCache(testing: Boolean = false) : Iterable<Symbol> {
             symbol is FirClassLikeSymbol ->
                 ScipSymbolDescriptor(Kind.TYPE, symbol.classId.shortClassName.asString())
             symbol is FirPropertyAccessorSymbol && symbol.isSetter ->
-                ScipSymbolDescriptor(
-                    Kind.METHOD,
-                    "set" + symbol.propertySymbol.fir.name.toString().capitalizeAsciiOnly(),
-                )
+                ScipSymbolDescriptor(Kind.METHOD, "set")
             symbol is FirPropertyAccessorSymbol && symbol.isGetter ->
-                ScipSymbolDescriptor(
-                    Kind.METHOD,
-                    "get" + symbol.propertySymbol.fir.name.toString().capitalizeAsciiOnly(),
-                )
+                ScipSymbolDescriptor(Kind.METHOD, "get")
             symbol is FirConstructorSymbol ->
                 ScipSymbolDescriptor(Kind.METHOD, "<init>", methodDisambiguator(symbol))
             symbol is FirFunctionSymbol ->

@@ -276,7 +276,7 @@ class ScipSymbolsTest {
                                     },
                                     scipOccurrence {
                                         role = DEFINITION
-                                        symbol = "getX()."
+                                        symbol = "x.get()."
                                         range {
                                             startLine = 0
                                             startCharacter = 4
@@ -287,7 +287,7 @@ class ScipSymbolsTest {
                                     },
                                     scipOccurrence {
                                         role = DEFINITION
-                                        symbol = "setX()."
+                                        symbol = "x.set()."
                                         range {
                                             startLine = 0
                                             startCharacter = 4
@@ -328,7 +328,7 @@ class ScipSymbolsTest {
                                     },
                                     scipOccurrence {
                                         role = DEFINITION
-                                        symbol = "setX()."
+                                        symbol = "x.set()."
                                         range {
                                             startLine = 0
                                             startCharacter = 4
@@ -342,7 +342,7 @@ class ScipSymbolsTest {
                                     },
                                     scipOccurrence {
                                         role = DEFINITION
-                                        symbol = "getX()."
+                                        symbol = "x.get()."
                                         range {
                                             startLine = 1
                                             startCharacter = 4
@@ -388,7 +388,7 @@ class ScipSymbolsTest {
                                     },
                                     scipOccurrence {
                                         role = DEFINITION
-                                        symbol = "getX()."
+                                        symbol = "x.get()."
                                         range {
                                             startLine = 0
                                             startCharacter = 4
@@ -402,7 +402,7 @@ class ScipSymbolsTest {
                                     },
                                     scipOccurrence {
                                         role = DEFINITION
-                                        symbol = "setX()."
+                                        symbol = "x.set()."
                                         range {
                                             startLine = 1
                                             startCharacter = 4
@@ -449,7 +449,7 @@ class ScipSymbolsTest {
                                     },
                                     scipOccurrence {
                                         role = DEFINITION
-                                        symbol = "getX()."
+                                        symbol = "x.get()."
                                         range {
                                             startLine = 1
                                             startCharacter = 4
@@ -465,7 +465,7 @@ class ScipSymbolsTest {
                                     },
                                     scipOccurrence {
                                         role = DEFINITION
-                                        symbol = "setX()."
+                                        symbol = "x.set()."
                                         range {
                                             startLine = 2
                                             startCharacter = 4
@@ -528,7 +528,7 @@ class ScipSymbolsTest {
                                     },
                                     scipOccurrence {
                                         role = DEFINITION
-                                        symbol = "Test#getSample()."
+                                        symbol = "Test#sample.get()."
                                         range {
                                             startLine = 0
                                             startCharacter = 15
@@ -542,7 +542,7 @@ class ScipSymbolsTest {
                                     },
                                     scipOccurrence {
                                         role = DEFINITION
-                                        symbol = "Test#setSample()."
+                                        symbol = "Test#sample.set()."
                                         range {
                                             startLine = 0
                                             startCharacter = 15
@@ -576,7 +576,7 @@ class ScipSymbolsTest {
                                     },
                                     scipOccurrence {
                                         role = REFERENCE
-                                        symbol = "Test#getSample()."
+                                        symbol = "Test#sample.get()."
                                         range {
                                             startLine = 2
                                             startCharacter = 16
@@ -782,7 +782,7 @@ class ScipSymbolsTest {
                                         documentation("hello world\n test content")
                                     },
                                     scipSymbol {
-                                        symbol = "getX()."
+                                        symbol = "x.get()."
                                         kind = Kind.Method
                                         displayName = "x"
                                         signatureText = "public get(): String"
