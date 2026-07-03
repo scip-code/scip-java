@@ -280,7 +280,7 @@ open class AnalyzerCheckers(session: FirSession) : FirAdditionalCheckersExtensio
 
     private class SemanticSimpleFunctionChecker : FirSimpleFunctionChecker(MppCheckerKind.Common) {
         context(context: CheckerContext, reporter: DiagnosticReporter)
-        override fun check(declaration: FirSimpleFunction) {
+        override fun check(declaration: FirNamedFunction) {
             val source = declaration.source ?: return
             val ktFile = context.containingFileSymbol?.sourceFile ?: return
             val visitor = visitors[ktFile]

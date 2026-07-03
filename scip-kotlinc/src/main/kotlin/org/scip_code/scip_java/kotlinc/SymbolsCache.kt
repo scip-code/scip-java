@@ -1,7 +1,7 @@
 package org.scip_code.scip_java.kotlinc
 
 import java.lang.System.err
-import org.jetbrains.kotlin.fir.analysis.checkers.declaration.isLocalMember
+import org.jetbrains.kotlin.fir.analysis.checkers.declaration.isLocalDeclaredInBlock
 import org.jetbrains.kotlin.fir.declarations.DirectDeclarationsAccess
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.declarations.utils.memberDeclarationNameOrNull
@@ -80,7 +80,7 @@ class GlobalSymbolsCache(testing: Boolean = false) : Iterable<Symbol> {
     private fun uncachedSymbol(symbol: FirBasedSymbol<*>?, locals: LocalSymbolsCache): Symbol {
         if (symbol == null || symbol is FirAnonymousFunctionSymbol) return Symbol.NONE
 
-        if (symbol.fir.isLocalMember) return locals + symbol
+        if (symbol.fir.isLocalDeclaredInBlock) return locals + symbol
 
         val owner = getParentSymbol(symbol, locals)
 
