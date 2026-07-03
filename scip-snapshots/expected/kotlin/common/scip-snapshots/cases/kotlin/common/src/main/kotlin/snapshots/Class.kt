@@ -75,29 +75,29 @@
 //           display_name asdf
 //           signature_documentation
 //           > public get(): Any
-//      ⌄ enclosing_range_start scip-java maven . . snapshots/`<anonymous object at 177>`#
-//      ⌄ enclosing_range_start scip-java maven . . snapshots/`<anonymous object at 177>`#`<init>`().
+//      ⌄ enclosing_range_start local 0
+//      ⌄ enclosing_range_start local 1
         object {
-//      ^^^^^^ definition scip-java maven . . snapshots/`<anonymous object at 177>`#
+//      ^^^^^^ definition local 0
 //             display_name <anonymous>
 //             signature_documentation
 //             > object : Any
-//      ^^^^^^ definition scip-java maven . . snapshots/`<anonymous object at 177>`#`<init>`().
+//      ^^^^^^ definition local 1
 //             display_name <anonymous>
 //             signature_documentation
 //             > private constructor(): <anonymous>
-//        ⌄ enclosing_range_start scip-java maven . . snapshots/`<anonymous object at 177>`#doStuff().
+//        ⌄ enclosing_range_start local 2
           fun doStuff() = Unit
-//            ^^^^^^^ definition scip-java maven . . snapshots/`<anonymous object at 177>`#doStuff().
+//            ^^^^^^^ definition local 2
 //                    display_name doStuff
 //                    signature_documentation
 //                    > public final fun doStuff(): Unit
-//                           ⌃ enclosing_range_end scip-java maven . . snapshots/`<anonymous object at 177>`#doStuff().
+//                           ⌃ enclosing_range_end local 2
         }
 //      ⌃ enclosing_range_end scip-java maven . . snapshots/Class#asdf.
 //      ⌃ enclosing_range_end scip-java maven . . snapshots/Class#getAsdf().
-//      ⌃ enclosing_range_end scip-java maven . . snapshots/`<anonymous object at 177>`#
-//      ⌃ enclosing_range_end scip-java maven . . snapshots/`<anonymous object at 177>`#`<init>`().
+//      ⌃ enclosing_range_end local 0
+//      ⌃ enclosing_range_end local 1
   
 //  ⌄ enclosing_range_start scip-java maven . . snapshots/Class#`<init>`(+1).
     constructor() : this(1, "")

@@ -39,26 +39,26 @@ class ScipTextDocumentBuilder(
 
     fun build(): Document = documentBuilder.build("kotlin", relativePath(), fileText)
 
+    context(context: CheckerContext)
     fun emitScipData(
         firBasedSymbol: FirBasedSymbol<*>?,
         symbol: Symbol,
         element: KtSourceElement,
         isDefinition: Boolean,
-        context: CheckerContext,
         enclosingSource: KtSourceElement? = null,
     ) {
         documentBuilder.addOccurrence(occurrence(symbol, element, isDefinition, enclosingSource))
         if (isDefinition) {
-            documentBuilder.addSymbol(symbolInformation(firBasedSymbol, symbol, element, context))
+            documentBuilder.addSymbol(symbolInformation(firBasedSymbol, symbol, element))
         }
     }
 
     @OptIn(SymbolInternals::class)
+    context(context: CheckerContext)
     private fun symbolInformation(
         firBasedSymbol: FirBasedSymbol<*>?,
         symbol: Symbol,
         element: KtSourceElement,
-        context: CheckerContext,
     ): SymbolInformation {
         val supers =
             when (firBasedSymbol) {
@@ -68,7 +68,7 @@ class ScipTextDocumentBuilder(
                         .mapNotNull { it.toClassLikeSymbol(firBasedSymbol.moduleData.session) }
                         .flatMap { cache[it] }
                 is FirFunctionSymbol<*> ->
-                    firBasedSymbol.directOverriddenSymbolsSafe(context).flatMap { cache[it] }
+                    firBasedSymbol.directOverriddenSymbolsSafe().flatMap { cache[it] }
                 else -> emptyList()
             }
         return symbolInformation {
@@ -184,13 +184,14 @@ class ScipTextDocumentBuilder(
     }
 
     companion object {
-        @OptIn(SymbolInternals::class)
+        @OptIn(SymbolInternals::class, RenderingInternals::class)
         private fun displayName(firBasedSymbol: FirBasedSymbol<*>): String =
             when (firBasedSymbol) {
                 is FirClassSymbol -> firBasedSymbol.classId.shortClassName.asString()
                 is FirPropertyAccessorSymbol -> firBasedSymbol.fir.propertySymbol.name.asString()
                 is FirFunctionSymbol -> firBasedSymbol.callableId.callableName.asString()
-                is FirPropertySymbol -> firBasedSymbol.callableId.callableName.asString()
+                is FirPropertySymbol ->
+                    firBasedSymbol.callableIdForRendering.callableName.asString()
                 is FirVariableSymbol -> firBasedSymbol.name.asString()
                 else -> firBasedSymbol.toString()
             }

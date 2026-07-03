@@ -502,7 +502,7 @@ class AnalyzerTest {
                 },
                 scipOccurrence {
                     role = DEFINITION
-                    symbol = "sample/`<anonymous object at 80>`#"
+                    symbol = "local 1"
                     range {
                         startLine = 7
                         startCharacter = 12
@@ -518,7 +518,7 @@ class AnalyzerTest {
                 },
                 scipOccurrence {
                     role = DEFINITION
-                    symbol = "sample/`<anonymous object at 80>`#`<init>`()."
+                    symbol = "local 2"
                     range {
                         startLine = 7
                         startCharacter = 12
@@ -544,7 +544,7 @@ class AnalyzerTest {
                 },
                 scipOccurrence {
                     role = DEFINITION
-                    symbol = "sample/`<anonymous object at 80>`#foo()."
+                    symbol = "local 3"
                     range {
                         startLine = 8
                         startCharacter = 21
@@ -560,7 +560,7 @@ class AnalyzerTest {
                 },
                 scipOccurrence {
                     role = DEFINITION
-                    symbol = "sample/`<anonymous object at 149>`#"
+                    symbol = "local 5"
                     range {
                         startLine = 10
                         startCharacter = 12
@@ -576,7 +576,7 @@ class AnalyzerTest {
                 },
                 scipOccurrence {
                     role = DEFINITION
-                    symbol = "sample/`<anonymous object at 149>`#`<init>`()."
+                    symbol = "local 6"
                     range {
                         startLine = 10
                         startCharacter = 12
@@ -602,7 +602,7 @@ class AnalyzerTest {
                 },
                 scipOccurrence {
                     role = DEFINITION
-                    symbol = "sample/`<anonymous object at 149>`#foo()."
+                    symbol = "local 7"
                     range {
                         startLine = 11
                         startCharacter = 21
@@ -627,25 +627,25 @@ class AnalyzerTest {
                     signatureText = "public abstract interface Interface : Any"
                 },
                 scipSymbol {
-                    symbol = "sample/`<anonymous object at 80>`#"
+                    symbol = "local 1"
                     displayName = "<anonymous>"
                     signatureText = "object : Interface"
                     addOverriddenSymbols("sample/Interface#")
                 },
                 scipSymbol {
-                    symbol = "sample/`<anonymous object at 80>`#foo()."
+                    symbol = "local 3"
                     displayName = "foo"
                     signatureText = "public open override fun foo(): Unit"
                     addOverriddenSymbols("sample/Interface#foo().")
                 },
                 scipSymbol {
-                    symbol = "sample/`<anonymous object at 149>`#"
+                    symbol = "local 5"
                     displayName = "<anonymous>"
                     signatureText = "object : Interface"
                     addOverriddenSymbols("sample/Interface#")
                 },
                 scipSymbol {
-                    symbol = "sample/`<anonymous object at 149>`#foo()."
+                    symbol = "local 7"
                     displayName = "foo"
                     signatureText = "public open override fun foo(): Unit"
                     addOverriddenSymbols("sample/Interface#foo().")
