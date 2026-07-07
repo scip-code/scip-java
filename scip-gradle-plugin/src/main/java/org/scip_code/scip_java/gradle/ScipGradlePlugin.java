@@ -3,11 +3,12 @@ package org.scip_code.scip_java.gradle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.gradle.api.InvalidUserCodeException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.initialization.Settings;
+import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.tasks.compile.JavaCompile;
 
 public class ScipGradlePlugin implements Plugin<Project> {
@@ -18,18 +19,18 @@ public class ScipGradlePlugin implements Plugin<Project> {
   }
 
   private void configureProject(Project project) {
-    // Inject Maven Central/local so the indexer (and plugins like protobuf that
-    // resolve their own artifacts) can resolve dependencies even when the build
-    // being indexed doesn't declare any repositories of its own.
-    try {
+    // See https://github.com/gradle/gradle/issues/27260
+    Settings settings = ((GradleInternal) (project.getGradle())).getSettings();
+
+    if (settings.getDependencyResolutionManagement().getRepositories().isEmpty()) {
+      // Inject Maven Central/local so the indexer (and plugins like protobuf that
+      // resolve their own artifacts) can resolve dependencies even when the build
+      // being indexed doesn't declare any repositories of its own.
       project.getRepositories().add(project.getRepositories().mavenCentral());
       project.getRepositories().add(project.getRepositories().mavenLocal());
-    } catch (InvalidUserCodeException exc) {
-      // FAIL_ON_PROJECT_REPOS forbids project repositories; they are declared
-      // in settings instead, so the injection isn't needed (issue #847).
-      project
-          .getLogger()
-          .info("scip-java: not injecting Maven Central/local repositories: " + exc.getMessage());
+    } else {
+      // repositories are declared in settings instead, so the injection isn't needed (issue #847).
+      project.getLogger().info("scip-java: not injecting Maven Central/local repositories");
     }
 
     Map<String, Object> extraProperties =
