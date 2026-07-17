@@ -66,3 +66,14 @@ jobs:
           export -f check_repo
 
           parallel -j4 check_repo ::: circe/circe indeedeng/iwf-java-sdk
+
+  ci-pass:
+    if: always()
+    needs: [format, kotlin_plugin, docker_test]
+    runs-on: ubuntu-latest
+    name: CI pass
+    steps:
+      - if: >-
+          contains(needs.*.result, 'failure') ||
+          contains(needs.*.result, 'cancelled')
+        run: exit 1

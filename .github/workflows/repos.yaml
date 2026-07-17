@@ -271,3 +271,15 @@ jobs:
             fi
             exit 1
           fi
+
+  repos-pass:
+    if: always()
+    needs: [build-cli, index-repo]
+    runs-on: ubuntu-latest
+    name: Repository indexing pass
+    steps:
+      - if: >-
+          contains(needs.*.result, 'failure') ||
+          contains(needs.*.result, 'cancelled')
+        shell: bash
+        run: exit 1

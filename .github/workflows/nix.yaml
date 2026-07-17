@@ -168,3 +168,15 @@ jobs:
 
       - run: du -h index.scip
         working-directory: examples/maven-example
+
+  nix-pass:
+    if: always()
+    needs: [flake-check, test, bazel, bazel_aspect, snapshots, maven]
+    runs-on: ubuntu-latest
+    name: Nix pass
+    steps:
+      - if: >-
+          contains(needs.*.result, 'failure') ||
+          contains(needs.*.result, 'cancelled')
+        shell: bash
+        run: exit 1
