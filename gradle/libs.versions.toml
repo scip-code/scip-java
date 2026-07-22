@@ -13,7 +13,7 @@ maven-project = "2.2.1"
 protobuf = "4.34.2"
 protobuf-plugin = "0.10.0"
 scip-bindings = "0.9.0"
-shadow = "9.6.0"
+shadow = "9.6.1"
 spotless = "8.8.0"
 vanniktech-maven-publish = "0.37.0"
 
