@@ -3,7 +3,7 @@ module(name = "scip_java")
 bazel_dep(name = "bazel_skylib", version = "1.9.0")
 bazel_dep(name = "protobuf", version = "35.1", repo_name = "com_google_protobuf")
 bazel_dep(name = "rules_java", version = "9.7.0")
-bazel_dep(name = "rules_jvm_external", version = "7.0")
+bazel_dep(name = "rules_jvm_external", version = "7.1")
 
 maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
 maven.install(
