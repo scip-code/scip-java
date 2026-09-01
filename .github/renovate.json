@@ -3,5 +3,6 @@
   "extends": [
     "config:recommended"
   ],
+  "automerge": true,
   "semanticCommits": false
 }
