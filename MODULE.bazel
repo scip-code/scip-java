@@ -1,7 +1,7 @@
 module(name = "scip_java")
 
 bazel_dep(name = "bazel_skylib", version = "1.9.2")
-bazel_dep(name = "protobuf", version = "35.1", repo_name = "com_google_protobuf")
+bazel_dep(name = "protobuf", version = "36.1.bcr.1", repo_name = "com_google_protobuf")
 bazel_dep(name = "rules_java", version = "9.9.0")
 bazel_dep(name = "rules_jvm_external", version = "7.1")
 
