@@ -9,7 +9,7 @@ maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
 maven.install(
     artifacts = [
         "com.google.protobuf:protobuf-java-util:4.36.1",
-        "org.projectlombok:lombok:1.18.46",
+        "org.projectlombok:lombok:1.18.48",
         "org.scip-code:scip-java-bindings:0.9.0",
     ],
     known_contributing_modules = ["protobuf"],
