@@ -27,7 +27,7 @@ jobs:
         with:
           summarize: false
 
-      - uses: DeterminateSystems/magic-nix-cache-action@v14
+      - uses: DeterminateSystems/magic-nix-cache-action@v15
 
       - run: nix flake check -L
 
@@ -47,7 +47,7 @@ jobs:
         with:
           summarize: false
 
-      - uses: DeterminateSystems/magic-nix-cache-action@v14
+      - uses: DeterminateSystems/magic-nix-cache-action@v15
 
       - name: Main project tests
         run: gradle test --no-daemon
@@ -74,7 +74,7 @@ jobs:
         with:
           summarize: false
 
-      - uses: DeterminateSystems/magic-nix-cache-action@v14
+      - uses: DeterminateSystems/magic-nix-cache-action@v15
 
       - run: bazelisk build //... ${{ matrix.javac_option }}
         working-directory: ${{ matrix.directory }}
@@ -92,7 +92,7 @@ jobs:
         with:
           summarize: false
 
-      - uses: DeterminateSystems/magic-nix-cache-action@v14
+      - uses: DeterminateSystems/magic-nix-cache-action@v15
 
       - run: gradle :scip-java:installDist --no-daemon
       - run: printf 'SCIP_JAVA_CLI=%s\n' "$PWD/scip-java/build/install/scip-java/bin/scip-java" >> "$GITHUB_ENV"
@@ -117,7 +117,7 @@ jobs:
         with:
           summarize: false
 
-      - uses: DeterminateSystems/magic-nix-cache-action@v14
+      - uses: DeterminateSystems/magic-nix-cache-action@v15
 
       - name: Regenerate snapshots
         run: gradle :scip-snapshots:saveSnapshots --no-daemon
@@ -143,7 +143,7 @@ jobs:
         with:
           summarize: false
 
-      - uses: DeterminateSystems/magic-nix-cache-action@v14
+      - uses: DeterminateSystems/magic-nix-cache-action@v15
 
       - run: |
           gradle --no-daemon :scip-java:installDist publishToMavenLocal

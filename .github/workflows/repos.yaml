@@ -32,7 +32,7 @@ jobs:
         with:
           summarize: false
 
-      - uses: DeterminateSystems/magic-nix-cache-action@v14
+      - uses: DeterminateSystems/magic-nix-cache-action@v15
 
       - name: Build distribution
         run: gradle :scip-java:installDist --no-daemon
@@ -145,7 +145,7 @@ jobs:
         with:
           summarize: false
 
-      - uses: DeterminateSystems/magic-nix-cache-action@v14
+      - uses: DeterminateSystems/magic-nix-cache-action@v15
 
       - uses: actions/download-artifact@v8
         with:
