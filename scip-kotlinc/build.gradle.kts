@@ -26,6 +26,20 @@ dependencies {
 
 tasks.named<Test>("test") {
     maxHeapSize = "2g"
+    dependsOn("testKotlin240")
+}
+
+// The plugin runs inside the indexed project's compiler, which can predate our build compiler.
+val kotlin240TestRuntime = configurations.create("kotlin240TestRuntime") {
+    extendsFrom(configurations.testRuntimeClasspath.get())
+    resolutionStrategy.force("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.4.0")
+}
+
+tasks.register<Test>("testKotlin240") {
+    useJUnitPlatform()
+    testClassesDirs = sourceSets.test.get().output.classesDirs
+    classpath = sourceSets.test.get().output + sourceSets.main.get().output + kotlin240TestRuntime
+    maxHeapSize = "2g"
 }
 
 tasks.named<ShadowJar>("shadowJar") {
