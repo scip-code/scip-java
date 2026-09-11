@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.fir.resolve.getContainingClassSymbol
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.resolve.toClassLikeSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirAnonymousObjectSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -74,7 +75,8 @@ open class AnalyzerCheckers(session: FirSession) : FirAdditionalCheckersExtensio
         override val classLikeCheckers: Set<FirClassLikeChecker> = setOf(SemanticClassLikeChecker())
         override val constructorCheckers: Set<FirConstructorChecker> =
             setOf(SemanticConstructorChecker())
-        override val simpleFunctionCheckers: Set<FirSimpleFunctionChecker> =
+        // The specialized checker property was renamed in Kotlin 2.4.20.
+        override val functionCheckers: Set<FirFunctionChecker> =
             setOf(SemanticSimpleFunctionChecker())
         override val anonymousFunctionCheckers: Set<FirAnonymousFunctionChecker> =
             setOf(SemanticAnonymousFunctionChecker())
@@ -278,9 +280,10 @@ open class AnalyzerCheckers(session: FirSession) : FirAdditionalCheckersExtensio
         }
     }
 
-    private class SemanticSimpleFunctionChecker : FirSimpleFunctionChecker(MppCheckerKind.Common) {
+    private class SemanticSimpleFunctionChecker : FirFunctionChecker(MppCheckerKind.Common) {
         context(context: CheckerContext, reporter: DiagnosticReporter)
-        override fun check(declaration: FirNamedFunction) {
+        override fun check(declaration: FirFunction) {
+            if (declaration !is FirNamedFunction) return
             val source = declaration.source ?: return
             val ktFile = context.containingFileSymbol?.sourceFile ?: return
             val visitor = visitors[ktFile]
@@ -388,9 +391,19 @@ open class AnalyzerCheckers(session: FirSession) : FirAdditionalCheckersExtensio
 
     private class SemanticResolvedQualifierChecker :
         FirResolvedQualifierChecker(MppCheckerKind.Common) {
+        companion object {
+            // Resolve once against the host compiler: symbol became qualifierSymbol in 2.4.20.
+            private val symbolGetter =
+                try {
+                    FirResolvedQualifier::class.java.getMethod("getQualifierSymbol")
+                } catch (_: NoSuchMethodException) {
+                    FirResolvedQualifier::class.java.getMethod("getSymbol")
+                }
+        }
+
         context(context: CheckerContext, reporter: DiagnosticReporter)
         override fun check(expression: FirResolvedQualifier) {
-            val symbol = expression.symbol ?: return
+            val symbol = symbolGetter.invoke(expression) as FirClassLikeSymbol<*>? ?: return
             val source = expression.source ?: return
             if (source.kind is KtFakeSourceElementKind) return
             val ktFile = context.containingFileSymbol?.sourceFile ?: return
