@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.cli.common.messages.MessageRenderer
 import org.jetbrains.kotlin.cli.common.messages.PrintingMessageCollector
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.config.MessageCollectorAccess
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.scip_code.scip.Document
 import org.scip_code.scip_java.shared.ScipShardPaths
@@ -61,6 +62,7 @@ class PostAnalysisExtension(
         return null
     }
 
+    @OptIn(MessageCollectorAccess::class)
     private val messageCollector =
         configuration.get(
             CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY,

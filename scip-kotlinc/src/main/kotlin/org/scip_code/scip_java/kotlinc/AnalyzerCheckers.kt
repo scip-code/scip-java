@@ -74,7 +74,7 @@ open class AnalyzerCheckers(session: FirSession) : FirAdditionalCheckersExtensio
         override val classLikeCheckers: Set<FirClassLikeChecker> = setOf(SemanticClassLikeChecker())
         override val constructorCheckers: Set<FirConstructorChecker> =
             setOf(SemanticConstructorChecker())
-        override val simpleFunctionCheckers: Set<FirSimpleFunctionChecker> =
+        override val namedFunctionCheckers: Set<FirNamedFunctionChecker> =
             setOf(SemanticSimpleFunctionChecker())
         override val anonymousFunctionCheckers: Set<FirAnonymousFunctionChecker> =
             setOf(SemanticAnonymousFunctionChecker())
@@ -278,7 +278,7 @@ open class AnalyzerCheckers(session: FirSession) : FirAdditionalCheckersExtensio
         }
     }
 
-    private class SemanticSimpleFunctionChecker : FirSimpleFunctionChecker(MppCheckerKind.Common) {
+    private class SemanticSimpleFunctionChecker : FirNamedFunctionChecker(MppCheckerKind.Common) {
         context(context: CheckerContext, reporter: DiagnosticReporter)
         override fun check(declaration: FirNamedFunction) {
             val source = declaration.source ?: return
@@ -390,7 +390,7 @@ open class AnalyzerCheckers(session: FirSession) : FirAdditionalCheckersExtensio
         FirResolvedQualifierChecker(MppCheckerKind.Common) {
         context(context: CheckerContext, reporter: DiagnosticReporter)
         override fun check(expression: FirResolvedQualifier) {
-            val symbol = expression.symbol ?: return
+            val symbol = expression.qualifierSymbol ?: return
             val source = expression.source ?: return
             if (source.kind is KtFakeSourceElementKind) return
             val ktFile = context.containingFileSymbol?.sourceFile ?: return
