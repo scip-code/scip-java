@@ -1,14 +1,14 @@
 module(name = "scip_java")
 
 bazel_dep(name = "bazel_skylib", version = "1.9.2")
-bazel_dep(name = "protobuf", version = "36.1.bcr.1", repo_name = "com_google_protobuf")
+bazel_dep(name = "protobuf", version = "36.2", repo_name = "com_google_protobuf")
 bazel_dep(name = "rules_java", version = "9.9.0")
 bazel_dep(name = "rules_jvm_external", version = "7.1")
 
 maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
 maven.install(
     artifacts = [
-        "com.google.protobuf:protobuf-java-util:4.36.1",
+        "com.google.protobuf:protobuf-java-util:4.36.2",
         "org.projectlombok:lombok:1.18.48",
         "org.scip-code:scip-java-bindings:0.10.0",
     ],
