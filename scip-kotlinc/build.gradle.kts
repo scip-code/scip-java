@@ -32,7 +32,7 @@ tasks.named<Test>("test") {
 // The plugin runs inside the indexed project's compiler, which can predate our build compiler.
 val kotlin240TestRuntime = configurations.create("kotlin240TestRuntime") {
     extendsFrom(configurations.testRuntimeClasspath.get())
-    resolutionStrategy.force("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.4.0")
+    resolutionStrategy.force("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.4.20")
 }
 
 tasks.register<Test>("testKotlin240") {
