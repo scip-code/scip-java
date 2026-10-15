@@ -37,15 +37,20 @@ fun main(args: Array<String>) {
     require(sourceroot != null) { "missing required flag: --sourceroot" }
     require(targetroot != null) { "missing required flag: --targetroot" }
     require(sourceRoots.isNotEmpty()) { "missing source files or directories" }
-    KotlinAnalysisIndexer(
-            sourceroot = sourceroot,
-            targetroot = targetroot,
-            sourceRoots = sourceRoots,
-            classpath = classpath,
-            jdkHome = jdkHome,
-        )
-        .run()
     // The Analysis API environment leaves non-daemon threads behind; exit
     // explicitly so callers are not left waiting on them.
+    try {
+        KotlinAnalysisIndexer(
+                sourceroot = sourceroot,
+                targetroot = targetroot,
+                sourceRoots = sourceRoots,
+                classpath = classpath,
+                jdkHome = jdkHome,
+            )
+            .run()
+    } catch (e: Throwable) {
+        e.printStackTrace()
+        exitProcess(1)
+    }
     exitProcess(0)
 }

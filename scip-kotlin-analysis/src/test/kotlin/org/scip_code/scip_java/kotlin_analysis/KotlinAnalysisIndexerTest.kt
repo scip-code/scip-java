@@ -93,6 +93,50 @@ class KotlinAnalysisIndexerTest {
         )
     }
 
+    @Test
+    fun `a top-level destructuring in a kt file is skipped, not the file or the run`() {
+        val sourceroot = Files.createTempDirectory("scip-kotlin-analysis").toRealPath()
+        val src = Files.createDirectories(sourceroot.resolve("src"))
+        Files.writeString(
+            src.resolve("Broken.kt"),
+            """
+            |package snapshots
+            |
+            |fun before(): Int = 1
+            |
+            |val (first, second) = Pair(1, 2)
+            |
+            |fun after(): Int = before()
+            """
+                .trimMargin(),
+        )
+        Files.writeString(
+            src.resolve("Other.kt"),
+            """
+            |package snapshots
+            |
+            |fun other(): Int = after()
+            """
+                .trimMargin(),
+        )
+        val documents =
+            KotlinAnalysisIndexer(
+                    sourceroot = sourceroot,
+                    targetroot = sourceroot.resolve("scip-targetroot"),
+                    sourceRoots = listOf(src),
+                    classpath = listOf(kotlinStdlibJar()),
+                )
+                .run()
+                .sortedBy { it.relativePath }
+
+        assertEquals(listOf("src/Broken.kt", "src/Other.kt"), documents.map { it.relativePath })
+        val broken = definitions(documents[0])
+        assertContains(broken, "snapshots/before().")
+        assertContains(broken, "snapshots/after().")
+        assertContains(references(documents[0]), "snapshots/before().")
+        assertContains(references(documents[1]), "snapshots/after().")
+    }
+
     private fun definitions(document: Document): List<String> =
         document.occurrencesList
             .filter { it.symbolRoles and SymbolRole.Definition.number != 0 }
