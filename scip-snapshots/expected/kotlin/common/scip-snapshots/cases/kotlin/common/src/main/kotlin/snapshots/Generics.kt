@@ -6,7 +6,7 @@
 //                ⌄ enclosing_range_start scip-java maven . . snapshots/Container#[T]
 //                                   ⌄ enclosing_range_start scip-java maven . . snapshots/Container#`<init>`().(items)
 //                                   ⌄ enclosing_range_start scip-java maven . . snapshots/Container#items.
-//                                   ⌄ enclosing_range_start scip-java maven . . snapshots/Container#getItems().
+//                                   ⌄ enclosing_range_start scip-java maven . . snapshots/Container#items.get().
   class Container<T : Comparable<T>>(private val items: MutableList<T>) {
 //      ^^^^^^^^^ definition scip-java maven . . snapshots/Container#
 //                kind Class
@@ -36,7 +36,7 @@
 //                                                     signature_documentation
 //                                                     > private final val items: MutableList<T>
 //                                               ^^^^^ reference scip-java maven . . snapshots/Container#`<init>`().(items)
-//                                               ^^^^^ definition scip-java maven . . snapshots/Container#getItems().
+//                                               ^^^^^ definition scip-java maven . . snapshots/Container#items.get().
 //                                                     kind Method
 //                                                     display_name items
 //                                                     signature_documentation
@@ -46,7 +46,7 @@
 //                                ⌃ enclosing_range_end scip-java maven . . snapshots/Container#[T]
 //                                                                   ⌃ enclosing_range_end scip-java maven . . snapshots/Container#`<init>`().(items)
 //                                                                   ⌃ enclosing_range_end scip-java maven . . snapshots/Container#items.
-//                                                                   ⌃ enclosing_range_end scip-java maven . . snapshots/Container#getItems().
+//                                                                   ⌃ enclosing_range_end scip-java maven . . snapshots/Container#items.get().
 //                                                                    ⌃ enclosing_range_end scip-java maven . . snapshots/Container#`<init>`().
 //    ⌄ enclosing_range_start scip-java maven . . snapshots/Container#add().
 //            ⌄ enclosing_range_start scip-java maven . . snapshots/Container#add().(item)
@@ -67,7 +67,7 @@
 //                  ⌃ enclosing_range_end scip-java maven . . snapshots/Container#add().(item)
           items.add(item)
 //        ^^^^^ reference scip-java maven . . snapshots/Container#items.
-//        ^^^^^ reference scip-java maven . . snapshots/Container#getItems().
+//        ^^^^^ reference scip-java maven . . snapshots/Container#items.get().
 //              ^^^ reference scip-java maven . . kotlin/collections/MutableList#add().
 //                  ^^^^ reference scip-java maven . . snapshots/Container#add().(item)
           return this
@@ -99,7 +99,7 @@
 //                                                  ^^^^ reference scip-java maven . . kotlin/collections/List#
 //                                                       ^ reference scip-java maven . . snapshots/Container#mapItems().[R]
 //                                                            ^^^^^ reference scip-java maven . . snapshots/Container#items.
-//                                                            ^^^^^ reference scip-java maven . . snapshots/Container#getItems().
+//                                                            ^^^^^ reference scip-java maven . . snapshots/Container#items.get().
 //                                                                  ^^^^^^^^^^ reference scip-java maven . . kotlin/collections/mapNotNull(+1).
 //                                                                             ^^^^^^^^^ reference scip-java maven . . snapshots/Container#mapItems().(transform)
 //               ⌃ enclosing_range_end scip-java maven . . snapshots/Container#mapItems().[R]

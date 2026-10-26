@@ -82,7 +82,7 @@ class KotlinAnalysisIndexerTest {
             enclosingSymbols["snapshots/Greeter#`<init>`().(name)"],
         )
         assertEquals("snapshots/Greeter#", enclosingSymbols["snapshots/Greeter#name."])
-        assertEquals("snapshots/Greeter#name.", enclosingSymbols["snapshots/Greeter#getName()."])
+        assertEquals("snapshots/Greeter#name.", enclosingSymbols["snapshots/Greeter#name.get()."])
 
         val mainDefinitions = definitions(main)
         assertContains(mainDefinitions, "snapshots/useGreeter().")

@@ -40,21 +40,21 @@
 //                 signature_documentation
 //                 > public abstract interface Animal : Any
 //    ⌄ enclosing_range_start scip-java maven . . snapshots/Animal#favoriteNumber.
-//    ⌄ enclosing_range_start scip-java maven . . snapshots/Animal#getFavoriteNumber().
+//    ⌄ enclosing_range_start scip-java maven . . snapshots/Animal#favoriteNumber.get().
       val favoriteNumber: Int
 //        ^^^^^^^^^^^^^^ definition scip-java maven . . snapshots/Animal#favoriteNumber.
 //                       kind Property
 //                       display_name favoriteNumber
 //                       signature_documentation
 //                       > public abstract val favoriteNumber: Int
-//        ^^^^^^^^^^^^^^ definition scip-java maven . . snapshots/Animal#getFavoriteNumber().
+//        ^^^^^^^^^^^^^^ definition scip-java maven . . snapshots/Animal#favoriteNumber.get().
 //                       kind Method
 //                       display_name favoriteNumber
 //                       signature_documentation
 //                       > public get(): Int
 //                        ^^^ reference scip-java maven . . kotlin/Int#
 //                          ⌃ enclosing_range_end scip-java maven . . snapshots/Animal#favoriteNumber.
-//                          ⌃ enclosing_range_end scip-java maven . . snapshots/Animal#getFavoriteNumber().
+//                          ⌃ enclosing_range_end scip-java maven . . snapshots/Animal#favoriteNumber.get().
 //    ⌄ enclosing_range_start scip-java maven . . snapshots/Animal#sound().
       fun sound(): String
 //        ^^^^^ definition scip-java maven . . snapshots/Animal#sound().
@@ -90,15 +90,15 @@
 //                                signature_documentation
 //                                > public open override val favoriteNumber: Int
 //                                 ^^^ reference scip-java maven . . kotlin/Int#
-//        ⌄ enclosing_range_start scip-java maven . . snapshots/Bird#getFavoriteNumber().
+//        ⌄ enclosing_range_start scip-java maven . . snapshots/Bird#favoriteNumber.get().
           get() = 42
-//        ^^^ definition scip-java maven . . snapshots/Bird#getFavoriteNumber().
+//        ^^^ definition scip-java maven . . snapshots/Bird#favoriteNumber.get().
 //            kind Method
 //            display_name favoriteNumber
 //            signature_documentation
 //            > public get(): Int
 //                 ⌃ enclosing_range_end scip-java maven . . snapshots/Bird#favoriteNumber.
-//                 ⌃ enclosing_range_end scip-java maven . . snapshots/Bird#getFavoriteNumber().
+//                 ⌃ enclosing_range_end scip-java maven . . snapshots/Bird#favoriteNumber.get().
   
 //    ⌄ enclosing_range_start scip-java maven . . snapshots/Bird#sound().
       override fun sound(): String {
@@ -138,15 +138,15 @@
 //                                signature_documentation
 //                                > public open override val favoriteNumber: Int
 //                                 ^^^ reference scip-java maven . . kotlin/Int#
-//        ⌄ enclosing_range_start scip-java maven . . snapshots/Seagull#getFavoriteNumber().
+//        ⌄ enclosing_range_start scip-java maven . . snapshots/Seagull#favoriteNumber.get().
           get() = 1337
-//        ^^^ definition scip-java maven . . snapshots/Seagull#getFavoriteNumber().
+//        ^^^ definition scip-java maven . . snapshots/Seagull#favoriteNumber.get().
 //            kind Method
 //            display_name favoriteNumber
 //            signature_documentation
 //            > public get(): Int
 //                   ⌃ enclosing_range_end scip-java maven . . snapshots/Seagull#favoriteNumber.
-//                   ⌃ enclosing_range_end scip-java maven . . snapshots/Seagull#getFavoriteNumber().
+//                   ⌃ enclosing_range_end scip-java maven . . snapshots/Seagull#favoriteNumber.get().
 //    ⌄ enclosing_range_start scip-java maven . . snapshots/Seagull#sound().
       override fun sound(): String {
 //                 ^^^^^ definition scip-java maven . . snapshots/Seagull#sound().
