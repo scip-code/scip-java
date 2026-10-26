@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.standalone.buildStandaloneAnalysisAPISession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
@@ -228,6 +229,20 @@ class KotlinAnalysisIndexer(
             if (target is KaPropertySymbol) {
                 propertyReferenceSymbols(target).forEach { addReference(it, range) }
                 return
+            }
+
+            // A class name standing for its companion object (`Bar.instance()`) references the
+            // class, like scip-kotlinc; `Bar.Companion` still references the companion.
+            if (
+                target is KaClassSymbol &&
+                    target.classKind == KaClassKind.COMPANION_OBJECT &&
+                    target.name?.asString() != referencedName
+            ) {
+                val containingClass = with(session) { target.containingSymbol }
+                if (containingClass != null) {
+                    addReference(cache.symbolForReference(session, containingClass), range)
+                    return
+                }
             }
 
             addReference(cache.symbolForReference(session, target), range)

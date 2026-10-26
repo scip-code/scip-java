@@ -48,7 +48,7 @@
 //             signature_documentation
 //             > public final fun create(): Int
 //                ^^^ reference scip-java maven . . kotlin/Int#
-//                      ^^^^^^^^^^^^^^ reference scip-java maven . . snapshots/CompanionOwner#Companion#
+//                      ^^^^^^^^^^^^^^ reference scip-java maven . . snapshots/CompanionOwner#
 //                                     ^^^^^^ reference scip-java maven . . snapshots/CompanionOwner#Companion#create().
 //                                              ^^^^^^^^ reference scip-java maven . . kotlin/Any#hashCode().
 //                                                       ⌃ enclosing_range_end scip-java maven . . snapshots/CompanionOwner#create().
