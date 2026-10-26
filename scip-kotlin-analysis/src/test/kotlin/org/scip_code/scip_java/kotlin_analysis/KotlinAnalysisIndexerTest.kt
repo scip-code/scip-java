@@ -1652,7 +1652,7 @@ class KotlinAnalysisIndexerTest {
                 },
                 scipOccurrence {
                     role = REFERENCE
-                    symbol = "sample/Bar#Companion#"
+                    symbol = "sample/Bar#"
                     range {
                         startLine = 7
                         startCharacter = 12
