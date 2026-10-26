@@ -7,6 +7,7 @@ import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import org.junit.jupiter.api.io.TempDir
 import org.scip_code.scip.Document
 import org.scip_code.scip.SymbolRole
 
@@ -90,6 +91,1509 @@ class KotlinAnalysisIndexerTest {
         assertTrue(
             Files.exists(targetroot.resolve("META-INF/scip/src/Main.kt.scip")),
             "expected SCIP shard for Main.kt",
+        )
+    }
+
+    @Test
+    fun `lambda parameters`(@TempDir path: Path) {
+        val document =
+            compileScip(
+                path,
+                """
+                    package sample
+
+                    fun use() {
+                        val f = { n: Int -> n * 2 }
+                    }
+                """,
+            )
+
+        val occurrences =
+            arrayOf(
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "local 0"
+                    range {
+                        startLine = 3
+                        startCharacter = 8
+                        endLine = 3
+                        endCharacter = 9
+                    }
+                    enclosingRange {
+                        startLine = 3
+                        startCharacter = 4
+                        endLine = 3
+                        endCharacter = 31
+                    }
+                },
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "local 1"
+                    range {
+                        startLine = 3
+                        startCharacter = 14
+                        endLine = 3
+                        endCharacter = 15
+                    }
+                    enclosingRange {
+                        startLine = 3
+                        startCharacter = 14
+                        endLine = 3
+                        endCharacter = 20
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "kotlin/Int#"
+                    range {
+                        startLine = 3
+                        startCharacter = 17
+                        endLine = 3
+                        endCharacter = 20
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "local 1"
+                    range {
+                        startLine = 3
+                        startCharacter = 24
+                        endLine = 3
+                        endCharacter = 25
+                    }
+                },
+            )
+        assertContainsAll(document.occurrencesList, *occurrences)
+
+        val symbols =
+            arrayOf(
+                scipSymbol {
+                    symbol = "sample/use()."
+                    displayName = "use"
+                    signatureText = "public final fun use(): Unit"
+                },
+                scipSymbol {
+                    symbol = "local 0"
+                    displayName = "f"
+                    signatureText = "local val f: (Int) -> Int"
+                },
+                scipSymbol {
+                    symbol = "local 1"
+                    displayName = "n"
+                    signatureText = "n: Int"
+                },
+            )
+        assertContainsAll(document.symbolsList, *symbols)
+    }
+
+    @Test
+    fun `local functions`(@TempDir path: Path) {
+        val document =
+            compileScip(
+                path,
+                """
+                    package sample
+
+                    fun outer() {
+                        fun inner() {}
+                        fun innerWithReturnType(): Int = 42
+                        inner()
+                    }
+                """,
+            )
+
+        val occurrences =
+            arrayOf(
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/outer()."
+                    range {
+                        startLine = 2
+                        startCharacter = 4
+                        endLine = 2
+                        endCharacter = 9
+                    }
+                    enclosingRange {
+                        startLine = 2
+                        startCharacter = 0
+                        endLine = 6
+                        endCharacter = 1
+                    }
+                },
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "local 0"
+                    range {
+                        startLine = 3
+                        startCharacter = 8
+                        endLine = 3
+                        endCharacter = 13
+                    }
+                    enclosingRange {
+                        startLine = 3
+                        startCharacter = 4
+                        endLine = 3
+                        endCharacter = 18
+                    }
+                },
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "local 1"
+                    range {
+                        startLine = 4
+                        startCharacter = 8
+                        endLine = 4
+                        endCharacter = 27
+                    }
+                    enclosingRange {
+                        startLine = 4
+                        startCharacter = 4
+                        endLine = 4
+                        endCharacter = 39
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "kotlin/Int#"
+                    range {
+                        startLine = 4
+                        startCharacter = 31
+                        endLine = 4
+                        endCharacter = 34
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "local 0"
+                    range {
+                        startLine = 5
+                        startCharacter = 4
+                        endLine = 5
+                        endCharacter = 9
+                    }
+                },
+            )
+        assertContainsAll(document.occurrencesList, *occurrences)
+    }
+
+    @Test
+    fun `user-defined class as return type`(@TempDir path: Path) {
+        val document =
+            compileScip(
+                path,
+                """
+                    package sample
+
+                    class MyClass
+
+                    fun bar(): MyClass = MyClass()
+                """,
+            )
+
+        val occurrences =
+            arrayOf(
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/bar()."
+                    range {
+                        startLine = 4
+                        startCharacter = 4
+                        endLine = 4
+                        endCharacter = 7
+                    }
+                    enclosingRange {
+                        startLine = 4
+                        startCharacter = 0
+                        endLine = 4
+                        endCharacter = 30
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "sample/MyClass#"
+                    range {
+                        startLine = 4
+                        startCharacter = 11
+                        endLine = 4
+                        endCharacter = 18
+                    }
+                },
+            )
+        assertContainsAll(document.occurrencesList, *occurrences)
+
+        val symbols =
+            arrayOf(
+                scipSymbol {
+                    symbol = "sample/bar()."
+                    displayName = "bar"
+                    signatureText = "public final fun bar(): MyClass"
+                }
+            )
+        assertContainsAll(document.symbolsList, *symbols)
+    }
+
+    @Test
+    fun `typealias`(@TempDir path: Path) {
+        val document =
+            compileScip(
+                path,
+                """
+                    package sample
+
+                    typealias MyAlias = Int
+                    val x: MyAlias = 42
+                """,
+            )
+
+        val occurrences =
+            arrayOf(
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/MyAlias#"
+                    range {
+                        startLine = 2
+                        startCharacter = 10
+                        endLine = 2
+                        endCharacter = 17
+                    }
+                    enclosingRange {
+                        startLine = 2
+                        startCharacter = 0
+                        endLine = 2
+                        endCharacter = 23
+                    }
+                },
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/x."
+                    range {
+                        startLine = 3
+                        startCharacter = 4
+                        endLine = 3
+                        endCharacter = 5
+                    }
+                    enclosingRange {
+                        startLine = 3
+                        startCharacter = 0
+                        endLine = 3
+                        endCharacter = 19
+                    }
+                },
+            )
+        assertContainsAll(document.occurrencesList, *occurrences)
+
+        val symbols =
+            arrayOf(
+                scipSymbol {
+                    symbol = "sample/MyAlias#"
+                    displayName = "MyAlias"
+                    signatureText = "public final typealias MyAlias = Int\n"
+                }
+            )
+        assertContainsAll(document.symbolsList, *symbols)
+    }
+
+    @Test
+    fun `type parameters`(@TempDir path: Path) {
+        val document =
+            compileScip(
+                path,
+                """
+                    package sample
+
+                    fun <T> identity(x: T): T = x
+                """,
+            )
+
+        val occurrences =
+            arrayOf(
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/identity()."
+                    range {
+                        startLine = 2
+                        startCharacter = 8
+                        endLine = 2
+                        endCharacter = 16
+                    }
+                    enclosingRange {
+                        startLine = 2
+                        startCharacter = 0
+                        endLine = 2
+                        endCharacter = 29
+                    }
+                },
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/identity().[T]"
+                    range {
+                        startLine = 2
+                        startCharacter = 5
+                        endLine = 2
+                        endCharacter = 6
+                    }
+                    enclosingRange {
+                        startLine = 2
+                        startCharacter = 5
+                        endLine = 2
+                        endCharacter = 6
+                    }
+                },
+            )
+        assertContainsAll(document.occurrencesList, *occurrences)
+
+        val symbols =
+            arrayOf(
+                scipSymbol {
+                    symbol = "sample/identity().[T]"
+                    displayName = "T"
+                    signatureText = "T"
+                }
+            )
+        assertContainsAll(document.symbolsList, *symbols)
+    }
+
+    @Test
+    fun `generic class declaration`(@TempDir path: Path) {
+        val document =
+            compileScip(
+                path,
+                """
+                    package sample
+
+                    class Box<T>(val value: T) {
+                        fun unwrap(): T = value
+                    }
+                """,
+            )
+
+        val occurrences =
+            arrayOf(
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/Box#"
+                    range {
+                        startLine = 2
+                        startCharacter = 6
+                        endLine = 2
+                        endCharacter = 9
+                    }
+                    enclosingRange {
+                        startLine = 2
+                        endLine = 4
+                        endCharacter = 1
+                    }
+                },
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/Box#[T]"
+                    range {
+                        startLine = 2
+                        startCharacter = 10
+                        endLine = 2
+                        endCharacter = 11
+                    }
+                    enclosingRange {
+                        startLine = 2
+                        startCharacter = 10
+                        endLine = 2
+                        endCharacter = 11
+                    }
+                },
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/Box#unwrap()."
+                    range {
+                        startLine = 3
+                        startCharacter = 8
+                        endLine = 3
+                        endCharacter = 14
+                    }
+                    enclosingRange {
+                        startLine = 3
+                        startCharacter = 4
+                        endLine = 3
+                        endCharacter = 27
+                    }
+                },
+            )
+        assertContainsAll(document.occurrencesList, *occurrences)
+    }
+
+    @Test
+    fun `type operators`(@TempDir path: Path) {
+        val document =
+            compileScip(
+                path,
+                """
+            package sample
+
+            fun foo(x: Any) {
+                when (x) {
+                    is Int -> true
+                    else -> x as Float
+                }
+            }
+
+            class Wrapper
+            fun classify(x: Any) {
+                if (x is Wrapper) {}
+                val s = x as? String
+                val w = x as Wrapper
+            }
+            """,
+            )
+
+        val occurrences =
+            arrayOf(
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "kotlin/Int#"
+                    range {
+                        startLine = 4
+                        startCharacter = 11
+                        endLine = 4
+                        endCharacter = 14
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "kotlin/Float#"
+                    range {
+                        startLine = 5
+                        startCharacter = 21
+                        endLine = 5
+                        endCharacter = 26
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "sample/Wrapper#"
+                    range {
+                        startLine = 11
+                        startCharacter = 13
+                        endLine = 11
+                        endCharacter = 20
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "kotlin/String#"
+                    range {
+                        startLine = 12
+                        startCharacter = 18
+                        endLine = 12
+                        endCharacter = 24
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "sample/Wrapper#"
+                    range {
+                        startLine = 13
+                        startCharacter = 17
+                        endLine = 13
+                        endCharacter = 24
+                    }
+                },
+            )
+        assertContainsAll(document.occurrencesList, *occurrences)
+    }
+
+    @Test
+    fun `extension receiver type reference`(@TempDir path: Path) {
+        val document =
+            compileScip(
+                path,
+                """
+                    package sample
+
+                    fun String.foo(): Int = 42
+                    fun use(s: String) = s.foo()
+                """,
+            )
+
+        val occurrences =
+            arrayOf(
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/foo()."
+                    range {
+                        startLine = 2
+                        startCharacter = 11
+                        endLine = 2
+                        endCharacter = 14
+                    }
+                    enclosingRange {
+                        startLine = 2
+                        startCharacter = 0
+                        endLine = 2
+                        endCharacter = 26
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "kotlin/String#"
+                    range {
+                        startLine = 2
+                        startCharacter = 4
+                        endLine = 2
+                        endCharacter = 10
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "kotlin/Int#"
+                    range {
+                        startLine = 2
+                        startCharacter = 18
+                        endLine = 2
+                        endCharacter = 21
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "sample/foo()."
+                    range {
+                        startLine = 3
+                        startCharacter = 23
+                        endLine = 3
+                        endCharacter = 26
+                    }
+                },
+            )
+        assertContainsAll(document.occurrencesList, *occurrences)
+    }
+
+    @Test
+    fun `extension property receiver type reference`(@TempDir path: Path) {
+        val document =
+            compileScip(
+                path,
+                """
+                    package sample
+
+                    val Int.asString: String get() = this.toString()
+                    fun use() = 42.asString
+                """,
+            )
+
+        val occurrences =
+            arrayOf(
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/asString."
+                    range {
+                        startLine = 2
+                        startCharacter = 8
+                        endLine = 2
+                        endCharacter = 16
+                    }
+                    enclosingRange {
+                        startLine = 2
+                        startCharacter = 0
+                        endLine = 2
+                        endCharacter = 48
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "kotlin/Int#"
+                    range {
+                        startLine = 2
+                        startCharacter = 4
+                        endLine = 2
+                        endCharacter = 7
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "kotlin/String#"
+                    range {
+                        startLine = 2
+                        startCharacter = 18
+                        endLine = 2
+                        endCharacter = 24
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "sample/asString."
+                    range {
+                        startLine = 3
+                        startCharacter = 15
+                        endLine = 3
+                        endCharacter = 23
+                    }
+                },
+            )
+        assertContainsAll(document.occurrencesList, *occurrences)
+    }
+
+    @Test
+    fun `extension overload disambiguator`(@TempDir path: Path) {
+        // A member foo() and an extension foo() on the same class produce distinct symbols.
+        val document =
+            compileScip(
+                path,
+                """
+                    package sample
+
+                    class MyClass {
+                        fun foo() {}
+                    }
+                    fun MyClass.foo(x: Int) {}
+                """,
+            )
+
+        val occurrences =
+            arrayOf(
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/MyClass#foo()."
+                    range {
+                        startLine = 3
+                        startCharacter = 8
+                        endLine = 3
+                        endCharacter = 11
+                    }
+                    enclosingRange {
+                        startLine = 3
+                        startCharacter = 4
+                        endLine = 3
+                        endCharacter = 16
+                    }
+                },
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/foo()."
+                    range {
+                        startLine = 5
+                        startCharacter = 12
+                        endLine = 5
+                        endCharacter = 15
+                    }
+                    enclosingRange {
+                        startLine = 5
+                        startCharacter = 0
+                        endLine = 5
+                        endCharacter = 26
+                    }
+                },
+            )
+        assertContainsAll(document.occurrencesList, *occurrences)
+    }
+
+    @Test
+    fun `enum entry definitions`(@TempDir path: Path) {
+        val document =
+            compileScip(
+                path,
+                """
+                    package sample
+
+                    enum class Color { RED, GREEN, BLUE }
+
+                    fun useEnum(): Color = Color.RED
+                """,
+            )
+
+        val occurrences =
+            arrayOf(
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/Color#"
+                    range {
+                        startLine = 2
+                        startCharacter = 11
+                        endLine = 2
+                        endCharacter = 16
+                    }
+                    enclosingRange {
+                        startLine = 2
+                        startCharacter = 0
+                        endLine = 2
+                        endCharacter = 37
+                    }
+                },
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/Color#RED."
+                    range {
+                        startLine = 2
+                        startCharacter = 19
+                        endLine = 2
+                        endCharacter = 22
+                    }
+                    enclosingRange {
+                        startLine = 2
+                        startCharacter = 19
+                        endLine = 2
+                        endCharacter = 23
+                    }
+                },
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/Color#GREEN."
+                    range {
+                        startLine = 2
+                        startCharacter = 24
+                        endLine = 2
+                        endCharacter = 29
+                    }
+                    enclosingRange {
+                        startLine = 2
+                        startCharacter = 24
+                        endLine = 2
+                        endCharacter = 30
+                    }
+                },
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/Color#BLUE."
+                    range {
+                        startLine = 2
+                        startCharacter = 31
+                        endLine = 2
+                        endCharacter = 35
+                    }
+                    enclosingRange {
+                        startLine = 2
+                        startCharacter = 31
+                        endLine = 2
+                        endCharacter = 35
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "sample/Color#"
+                    range {
+                        startLine = 4
+                        startCharacter = 23
+                        endLine = 4
+                        endCharacter = 28
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "sample/Color#RED."
+                    range {
+                        startLine = 4
+                        startCharacter = 29
+                        endLine = 4
+                        endCharacter = 32
+                    }
+                },
+            )
+        assertContainsAll(document.occurrencesList, *occurrences)
+
+        val symbols =
+            arrayOf(
+                scipSymbol {
+                    symbol = "sample/Color#"
+                    displayName = "Color"
+                    addOverriddenSymbols("kotlin/Enum#")
+                    signatureText = "public final enum class Color : Enum<Color>"
+                },
+                scipSymbol {
+                    symbol = "sample/Color#RED."
+                    displayName = "RED"
+                    signatureText = "public final val RED: Color"
+                },
+                scipSymbol {
+                    symbol = "sample/Color#GREEN."
+                    displayName = "GREEN"
+                    signatureText = "public final val GREEN: Color"
+                },
+                scipSymbol {
+                    symbol = "sample/Color#BLUE."
+                    displayName = "BLUE"
+                    signatureText = "public final val BLUE: Color"
+                },
+            )
+        assertContainsAll(document.symbolsList, *symbols)
+    }
+
+    @Test
+    fun `enum entry with body`(@TempDir path: Path) {
+        val document =
+            compileScip(
+                path,
+                """
+                    package sample
+
+                    enum class Op {
+                        PLUS {
+                            override fun apply(a: Int, b: Int) = a + b
+                        };
+
+                        abstract fun apply(a: Int, b: Int): Int
+                    }
+                """,
+            )
+
+        val occurrences =
+            arrayOf(
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/Op#PLUS."
+                    range {
+                        startLine = 3
+                        startCharacter = 4
+                        endLine = 3
+                        endCharacter = 8
+                    }
+                    // Body-having enum entry: enclosing_range covers PLUS through the
+                    // trailing `};` that terminates the entry list.
+                    enclosingRange {
+                        startLine = 3
+                        startCharacter = 4
+                        endLine = 5
+                        endCharacter = 6
+                    }
+                },
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/Op#PLUS.apply()."
+                    range {
+                        startLine = 4
+                        startCharacter = 21
+                        endLine = 4
+                        endCharacter = 26
+                    }
+                    enclosingRange {
+                        startLine = 4
+                        startCharacter = 8
+                        endLine = 4
+                        endCharacter = 50
+                    }
+                },
+            )
+        assertContainsAll(document.occurrencesList, *occurrences)
+
+        val symbols =
+            arrayOf(
+                scipSymbol {
+                    symbol = "sample/Op#PLUS.apply()."
+                    displayName = "apply"
+                    addOverriddenSymbols("sample/Op#apply().")
+                    signatureText = "public open override fun apply(a: Int, b: Int): Int"
+                }
+            )
+        assertContainsAll(document.symbolsList, *symbols)
+    }
+
+    @Test
+    fun `named object declarations`(@TempDir path: Path) {
+        val document =
+            compileScip(
+                path,
+                """
+                    package sample
+
+                    object MySingleton {
+                        fun hello(): String = "hi"
+                    }
+                    fun use() = MySingleton.hello()
+                """,
+            )
+
+        val occurrences =
+            arrayOf(
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/MySingleton#"
+                    range {
+                        startLine = 2
+                        startCharacter = 7
+                        endLine = 2
+                        endCharacter = 18
+                    }
+                    enclosingRange {
+                        startLine = 2
+                        startCharacter = 0
+                        endLine = 4
+                        endCharacter = 1
+                    }
+                },
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/MySingleton#hello()."
+                    range {
+                        startLine = 3
+                        startCharacter = 8
+                        endLine = 3
+                        endCharacter = 13
+                    }
+                    enclosingRange {
+                        startLine = 3
+                        startCharacter = 4
+                        endLine = 3
+                        endCharacter = 30
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "sample/MySingleton#"
+                    range {
+                        startLine = 5
+                        startCharacter = 12
+                        endLine = 5
+                        endCharacter = 23
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "sample/MySingleton#hello()."
+                    range {
+                        startLine = 5
+                        startCharacter = 24
+                        endLine = 5
+                        endCharacter = 29
+                    }
+                },
+            )
+        assertContainsAll(document.occurrencesList, *occurrences)
+
+        val symbols =
+            arrayOf(
+                scipSymbol {
+                    symbol = "sample/MySingleton#"
+                    displayName = "MySingleton"
+                    signatureText = "public final object MySingleton : Any"
+                },
+                scipSymbol {
+                    symbol = "sample/MySingleton#hello()."
+                    displayName = "hello"
+                    signatureText = "public final fun hello(): String"
+                },
+            )
+        assertContainsAll(document.symbolsList, *symbols)
+    }
+
+    @Test
+    fun `companion object`(@TempDir path: Path) {
+        val document =
+            compileScip(
+                path,
+                """
+                    package sample
+
+                    class Foo {
+                        companion object Factory {
+                            fun create(): Foo = Foo()
+                        }
+                    }
+                    fun use() = Foo.Factory.create()
+                """,
+            )
+
+        val occurrences =
+            arrayOf(
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/Foo#"
+                    range {
+                        startLine = 2
+                        startCharacter = 6
+                        endLine = 2
+                        endCharacter = 9
+                    }
+                    enclosingRange {
+                        startLine = 2
+                        startCharacter = 0
+                        endLine = 6
+                        endCharacter = 1
+                    }
+                },
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/Foo#Factory#"
+                    range {
+                        startLine = 3
+                        startCharacter = 21
+                        endLine = 3
+                        endCharacter = 28
+                    }
+                    enclosingRange {
+                        startLine = 3
+                        startCharacter = 4
+                        endLine = 5
+                        endCharacter = 5
+                    }
+                },
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/Foo#Factory#create()."
+                    range {
+                        startLine = 4
+                        startCharacter = 12
+                        endLine = 4
+                        endCharacter = 18
+                    }
+                    enclosingRange {
+                        startLine = 4
+                        startCharacter = 8
+                        endLine = 4
+                        endCharacter = 33
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "sample/Foo#"
+                    range {
+                        startLine = 7
+                        startCharacter = 12
+                        endLine = 7
+                        endCharacter = 15
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "sample/Foo#Factory#"
+                    range {
+                        startLine = 7
+                        startCharacter = 16
+                        endLine = 7
+                        endCharacter = 23
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "sample/Foo#Factory#create()."
+                    range {
+                        startLine = 7
+                        startCharacter = 24
+                        endLine = 7
+                        endCharacter = 30
+                    }
+                },
+            )
+        assertContainsAll(document.occurrencesList, *occurrences)
+
+        val symbols =
+            arrayOf(
+                scipSymbol {
+                    symbol = "sample/Foo#"
+                    displayName = "Foo"
+                    signatureText = "public final class Foo : Any"
+                },
+                scipSymbol {
+                    symbol = "sample/Foo#Factory#"
+                    displayName = "Factory"
+                    signatureText = "public final companion object Factory : Any"
+                },
+                scipSymbol {
+                    symbol = "sample/Foo#Factory#create()."
+                    displayName = "create"
+                    signatureText = "public final fun create(): Foo"
+                },
+            )
+        assertContainsAll(document.symbolsList, *symbols)
+    }
+
+    @Test
+    fun `unnamed companion object`(@TempDir path: Path) {
+        val document =
+            compileScip(
+                path,
+                """
+                    package sample
+
+                    class Bar {
+                        companion object {
+                            fun instance(): Bar = Bar()
+                        }
+                    }
+                    fun use() = Bar.instance()
+                """,
+            )
+
+        val occurrences =
+            arrayOf(
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/Bar#"
+                    range {
+                        startLine = 2
+                        startCharacter = 6
+                        endLine = 2
+                        endCharacter = 9
+                    }
+                    enclosingRange {
+                        startLine = 2
+                        startCharacter = 0
+                        endLine = 6
+                        endCharacter = 1
+                    }
+                },
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/Bar#Companion#instance()."
+                    range {
+                        startLine = 4
+                        startCharacter = 12
+                        endLine = 4
+                        endCharacter = 20
+                    }
+                    enclosingRange {
+                        startLine = 4
+                        startCharacter = 8
+                        endLine = 4
+                        endCharacter = 35
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "sample/Bar#Companion#"
+                    range {
+                        startLine = 7
+                        startCharacter = 12
+                        endLine = 7
+                        endCharacter = 15
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "sample/Bar#Companion#instance()."
+                    range {
+                        startLine = 7
+                        startCharacter = 16
+                        endLine = 7
+                        endCharacter = 24
+                    }
+                },
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/Bar#Companion#"
+                    range {
+                        startLine = 3
+                        startCharacter = 4
+                        endLine = 3
+                        endCharacter = 22
+                    }
+                    enclosingRange {
+                        startLine = 3
+                        startCharacter = 4
+                        endLine = 5
+                        endCharacter = 5
+                    }
+                },
+            )
+        assertContainsAll(document.occurrencesList, *occurrences)
+
+        val symbols =
+            arrayOf(
+                scipSymbol {
+                    symbol = "sample/Bar#"
+                    displayName = "Bar"
+                    signatureText = "public final class Bar : Any"
+                },
+                scipSymbol {
+                    symbol = "sample/Bar#Companion#"
+                    displayName = "Companion"
+                    signatureText = "public final companion object Companion : Any"
+                },
+                scipSymbol {
+                    symbol = "sample/Bar#Companion#instance()."
+                    displayName = "instance"
+                    signatureText = "public final fun instance(): Bar"
+                },
+            )
+        assertContainsAll(document.symbolsList, *symbols)
+    }
+
+    @Test
+    fun `string template references`(@TempDir path: Path) {
+        val document =
+            compileScip(
+                path,
+                """
+                    package sample
+
+                    fun greet(name: String) = "Hello, ${'$'}name!"
+                """,
+            )
+
+        val occurrences =
+            arrayOf(
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/greet()."
+                    range {
+                        startLine = 2
+                        startCharacter = 4
+                        endLine = 2
+                        endCharacter = 9
+                    }
+                    enclosingRange {
+                        startLine = 2
+                        startCharacter = 0
+                        endLine = 2
+                        endCharacter = 41
+                    }
+                },
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/greet().(name)"
+                    range {
+                        startLine = 2
+                        startCharacter = 10
+                        endLine = 2
+                        endCharacter = 14
+                    }
+                    enclosingRange {
+                        startLine = 2
+                        startCharacter = 10
+                        endLine = 2
+                        endCharacter = 22
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "sample/greet().(name)"
+                    range {
+                        startLine = 2
+                        startCharacter = 35
+                        endLine = 2
+                        endCharacter = 39
+                    }
+                },
+            )
+        assertContainsAll(document.occurrencesList, *occurrences)
+
+        val symbols =
+            arrayOf(
+                scipSymbol {
+                    symbol = "sample/greet()."
+                    displayName = "greet"
+                    signatureText = "public final fun greet(name: String): String"
+                }
+            )
+        assertContainsAll(document.symbolsList, *symbols)
+    }
+
+    @Test
+    fun `multiple supertype references`(@TempDir path: Path) {
+        val document =
+            compileScip(
+                path,
+                """
+                    package sample
+
+                    interface Named
+                    interface Speakable
+                    class Person : Named, Speakable
+                    fun use(p: Person): Named = p
+                """,
+            )
+
+        val occurrences =
+            arrayOf(
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/Person#"
+                    range {
+                        startLine = 4
+                        startCharacter = 6
+                        endLine = 4
+                        endCharacter = 12
+                    }
+                    enclosingRange {
+                        startLine = 4
+                        startCharacter = 0
+                        endLine = 4
+                        endCharacter = 31
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "sample/Named#"
+                    range {
+                        startLine = 4
+                        startCharacter = 15
+                        endLine = 4
+                        endCharacter = 20
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "sample/Speakable#"
+                    range {
+                        startLine = 4
+                        startCharacter = 22
+                        endLine = 4
+                        endCharacter = 31
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "sample/Named#"
+                    range {
+                        startLine = 5
+                        startCharacter = 20
+                        endLine = 5
+                        endCharacter = 25
+                    }
+                },
+            )
+        assertContainsAll(document.occurrencesList, *occurrences)
+
+        val symbols =
+            arrayOf(
+                scipSymbol {
+                    symbol = "sample/Person#"
+                    displayName = "Person"
+                    addOverriddenSymbols("sample/Named#")
+                    addOverriddenSymbols("sample/Speakable#")
+                    signatureText = "public final class Person : Named, Speakable"
+                }
+            )
+        assertContainsAll(document.symbolsList, *symbols)
+    }
+
+    @Test
+    fun `three-way overload disambiguator`(@TempDir path: Path) {
+        val document =
+            compileScip(
+                path,
+                """
+                    package sample
+
+                    fun add(x: Int, y: Int): Int = x + y
+                    fun add(x: Double, y: Double): Double = x + y
+                    fun add(x: String, y: String): String = x + y
+                    fun use() {
+                        add(1, 2)
+                        add(1.0, 2.0)
+                        add("a", "b")
+                    }
+                """,
+            )
+
+        val occurrences =
+            arrayOf(
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/add()."
+                    range {
+                        startLine = 2
+                        startCharacter = 4
+                        endLine = 2
+                        endCharacter = 7
+                    }
+                    enclosingRange {
+                        startLine = 2
+                        startCharacter = 0
+                        endLine = 2
+                        endCharacter = 36
+                    }
+                },
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/add(+1)."
+                    range {
+                        startLine = 3
+                        startCharacter = 4
+                        endLine = 3
+                        endCharacter = 7
+                    }
+                    enclosingRange {
+                        startLine = 3
+                        startCharacter = 0
+                        endLine = 3
+                        endCharacter = 45
+                    }
+                },
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/add(+2)."
+                    range {
+                        startLine = 4
+                        startCharacter = 4
+                        endLine = 4
+                        endCharacter = 7
+                    }
+                    enclosingRange {
+                        startLine = 4
+                        startCharacter = 0
+                        endLine = 4
+                        endCharacter = 45
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "sample/add()."
+                    range {
+                        startLine = 6
+                        startCharacter = 4
+                        endLine = 6
+                        endCharacter = 7
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "sample/add(+1)."
+                    range {
+                        startLine = 7
+                        startCharacter = 4
+                        endLine = 7
+                        endCharacter = 7
+                    }
+                },
+                scipOccurrence {
+                    role = REFERENCE
+                    symbol = "sample/add(+2)."
+                    range {
+                        startLine = 8
+                        startCharacter = 4
+                        endLine = 8
+                        endCharacter = 7
+                    }
+                },
+            )
+        assertContainsAll(document.occurrencesList, *occurrences)
+
+        val symbols =
+            arrayOf(
+                scipSymbol {
+                    symbol = "sample/add()."
+                    displayName = "add"
+                    signatureText = "public final fun add(x: Int, y: Int): Int"
+                },
+                scipSymbol {
+                    symbol = "sample/add(+1)."
+                    displayName = "add"
+                    signatureText = "public final fun add(x: Double, y: Double): Double"
+                },
+                scipSymbol {
+                    symbol = "sample/add(+2)."
+                    displayName = "add"
+                    signatureText = "public final fun add(x: String, y: String): String"
+                },
+            )
+        assertContainsAll(document.symbolsList, *symbols)
+    }
+
+    private fun compileScip(path: Path, code: String): Document {
+        val sourceroot = path.toRealPath()
+        val source = Files.createDirectories(sourceroot.resolve("src")).resolve("Test.kt")
+        Files.writeString(source, code.trimIndent())
+        return KotlinAnalysisIndexer(
+                sourceroot = sourceroot,
+                targetroot = sourceroot.resolve("scip-targetroot"),
+                sourceRoots = listOf(source),
+                classpath = listOf(kotlinStdlibJar()),
+            )
+            .run()
+            .single()
+    }
+
+    private fun <T> assertContainsAll(actual: List<T>, vararg expected: T) {
+        val missing = expected.filterNot { it in actual }
+        assertTrue(
+            missing.isEmpty(),
+            "missing:\n${missing.joinToString("\n")}\nactual:\n${actual.joinToString("\n")}",
         )
     }
 
