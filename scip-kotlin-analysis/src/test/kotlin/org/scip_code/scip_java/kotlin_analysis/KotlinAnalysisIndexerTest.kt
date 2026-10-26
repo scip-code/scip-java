@@ -201,6 +201,13 @@ class KotlinAnalysisIndexerTest {
                     signatureText = "public final fun foo(): Unit"
                 },
                 scipSymbol {
+                    symbol = "local 0"
+                    kind = Kind.Class
+                    enclosingSymbol = "sample/foo()."
+                    displayName = "LocalClass"
+                    signatureText = "local final class LocalClass : Any"
+                },
+                scipSymbol {
                     symbol = "local 1"
                     kind = Kind.Constructor
                     enclosingSymbol = "local 0"
@@ -579,6 +586,7 @@ class KotlinAnalysisIndexerTest {
                         endCharacter = 1
                     }
                 },
+                // inner() — local named function gets a local symbol
                 scipOccurrence {
                     role = DEFINITION
                     symbol = "local 0"
@@ -595,6 +603,7 @@ class KotlinAnalysisIndexerTest {
                         endCharacter = 18
                     }
                 },
+                // innerWithReturnType() — local named function with explicit return type
                 scipOccurrence {
                     role = DEFINITION
                     symbol = "local 1"
@@ -611,6 +620,7 @@ class KotlinAnalysisIndexerTest {
                         endCharacter = 39
                     }
                 },
+                // Int return-type reference
                 scipOccurrence {
                     role = REFERENCE
                     symbol = "kotlin/Int#"
@@ -621,6 +631,7 @@ class KotlinAnalysisIndexerTest {
                         endCharacter = 34
                     }
                 },
+                // call site inner() references the same local symbol
                 scipOccurrence {
                     role = REFERENCE
                     symbol = "local 0"
@@ -633,6 +644,25 @@ class KotlinAnalysisIndexerTest {
                 },
             )
         assertContainsAll(document.occurrencesList, *occurrences)
+
+        val symbols =
+            arrayOf(
+                scipSymbol {
+                    symbol = "local 0"
+                    kind = Kind.Method
+                    enclosingSymbol = "sample/outer()."
+                    displayName = "inner"
+                    signatureText = "local final fun inner(): Unit"
+                },
+                scipSymbol {
+                    symbol = "local 1"
+                    kind = Kind.Method
+                    enclosingSymbol = "sample/outer()."
+                    displayName = "innerWithReturnType"
+                    signatureText = "local final fun innerWithReturnType(): Int"
+                },
+            )
+        assertContainsAll(document.symbolsList, *symbols)
     }
 
     @Test
@@ -1032,6 +1062,18 @@ class KotlinAnalysisIndexerTest {
                 },
             )
         assertContainsAll(document.occurrencesList, *occurrences)
+
+        val symbols =
+            arrayOf(
+                scipSymbol {
+                    symbol = "sample/String#foo()."
+                    kind = Kind.Method
+                    enclosingSymbol = "sample/"
+                    displayName = "foo"
+                    signatureText = "public final fun String.foo(): Int"
+                }
+            )
+        assertContainsAll(document.symbolsList, *symbols)
     }
 
     @Test
@@ -1097,6 +1139,18 @@ class KotlinAnalysisIndexerTest {
                 },
             )
         assertContainsAll(document.occurrencesList, *occurrences)
+
+        val symbols =
+            arrayOf(
+                scipSymbol {
+                    symbol = "sample/Int#asString."
+                    kind = Kind.Property
+                    enclosingSymbol = "sample/"
+                    displayName = "asString"
+                    signatureText = "public final val Int.asString: String"
+                }
+            )
+        assertContainsAll(document.symbolsList, *symbols)
     }
 
     @Test
@@ -1275,21 +1329,21 @@ class KotlinAnalysisIndexerTest {
                     kind = Kind.EnumMember
                     enclosingSymbol = "sample/Color#"
                     displayName = "RED"
-                    signatureText = "public final val RED: Color"
+                    signatureText = "public final static enum entry RED: Color"
                 },
                 scipSymbol {
                     symbol = "sample/Color#GREEN."
                     kind = Kind.EnumMember
                     enclosingSymbol = "sample/Color#"
                     displayName = "GREEN"
-                    signatureText = "public final val GREEN: Color"
+                    signatureText = "public final static enum entry GREEN: Color"
                 },
                 scipSymbol {
                     symbol = "sample/Color#BLUE."
                     kind = Kind.EnumMember
                     enclosingSymbol = "sample/Color#"
                     displayName = "BLUE"
-                    signatureText = "public final val BLUE: Color"
+                    signatureText = "public final static enum entry BLUE: Color"
                 },
             )
         assertContainsAll(document.symbolsList, *symbols)

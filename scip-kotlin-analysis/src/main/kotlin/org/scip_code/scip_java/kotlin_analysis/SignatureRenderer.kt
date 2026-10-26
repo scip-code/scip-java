@@ -5,10 +5,13 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
@@ -69,7 +72,7 @@ internal class SignatureRenderer(private val session: KaSession) {
         val typeParameters = declaration.typeParameterList?.text?.let { "$it " }.orEmpty()
         val signature =
             "${annotationsPrefix(declaration)}${visibility(declaration)} " +
-                "${memberModality(declaration)}fun $typeParameters" +
+                "${memberModality(declaration)}fun $typeParameters${receiverPrefix(declaration)}" +
                 "${declaration.name.orEmpty()}(${parametersText(declaration.valueParameters)}): " +
                 returnType
         // FirRenderer emitted a trailing newline for functions without a body
@@ -90,7 +93,11 @@ internal class SignatureRenderer(private val session: KaSession) {
     fun enumEntriesSignature(name: String): String =
         "public final static val entries: EnumEntries<$name>"
 
-    fun enumGetEntriesSignature(name: String): String = "public get(): EnumEntries<$name>"
+    fun enumGetEntriesSignature(name: String): String = "public static get(): EnumEntries<$name>"
+
+    fun enumEntrySignature(entry: KtEnumEntry): String =
+        "${annotationsPrefix(entry)}public final static enum entry ${entry.name.orEmpty()}: " +
+            ownerName(entry.containingClassOrObject)
 
     fun dataCopySignature(declaration: KtClass): String {
         val parameters =
@@ -142,7 +149,9 @@ internal class SignatureRenderer(private val session: KaSession) {
         val lateinit = if (declaration.hasModifier(KtTokens.LATEINIT_KEYWORD)) "lateinit " else ""
         val valOrVar = if (isVar(declaration)) "var" else "val"
         val type = explicitPropertyType(declaration) ?: renderedReturnType(declaration) ?: "Any"
-        return "${visibility(declaration)} ${memberModality(declaration)}$const$lateinit$valOrVar $name: $type"
+        val receiver = (declaration as? KtProperty)?.let(::receiverPrefix).orEmpty()
+        return "${visibility(declaration)} ${memberModality(declaration)}$const$lateinit$valOrVar " +
+            "$receiver$name: $type"
     }
 
     fun localVariableSignature(declaration: KtVariableDeclaration): String {
@@ -244,8 +253,17 @@ internal class SignatureRenderer(private val session: KaSession) {
             else -> false
         }
 
+    /**
+     * Functions and classes declared in a code block render as `local`, like FirRenderer; members
+     * of local classes do not.
+     */
     private fun visibility(declaration: KtDeclaration): String =
-        explicitVisibility(declaration) ?: "public"
+        explicitVisibility(declaration)
+            ?: if (declaration.parent is KtBlockExpression) "local" else "public"
+
+    /** The extension receiver of [declaration] with a trailing dot (`String.`), if any. */
+    private fun receiverPrefix(declaration: KtCallableDeclaration): String =
+        declaration.receiverTypeReference?.let { "${it.text}." }.orEmpty()
 
     private fun explicitVisibility(declaration: KtDeclaration): String? =
         when {

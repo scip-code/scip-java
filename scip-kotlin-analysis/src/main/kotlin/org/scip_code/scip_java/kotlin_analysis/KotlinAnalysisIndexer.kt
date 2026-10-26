@@ -402,7 +402,7 @@ class KotlinAnalysisIndexer(
                 enclosingSymbol = enclosingSymbol(declaration),
                 enclosing = declaration.textRange,
                 displayName = declaration.name.orEmpty(),
-                signatureText = signatures.propertySignature(declaration),
+                signatureText = signatures.enumEntrySignature(declaration),
                 documentation = docComment(declaration),
             )
             if (declaration.body != null) emitEnumEntryBody(declaration, symbol, identifier)

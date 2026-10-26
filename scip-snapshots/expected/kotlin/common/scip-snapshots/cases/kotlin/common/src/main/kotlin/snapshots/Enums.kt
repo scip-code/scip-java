@@ -47,7 +47,7 @@
 //                kind Method
 //                display_name entries
 //                signature_documentation
-//                > public get(): EnumEntries<Suit>
+//                > public static get(): EnumEntries<Suit>
 //                    ^^^^^^ definition scip-java maven . . snapshots/Suit#`<init>`().(symbol)
 //                           kind Parameter
 //                           display_name symbol
@@ -75,7 +75,7 @@
 //           kind EnumMember
 //           display_name HEARTS
 //           signature_documentation
-//           > public final val HEARTS: Suit
+//           > public final static enum entry HEARTS: Suit
 //               ⌃ enclosing_range_end scip-java maven . . snapshots/Suit#HEARTS.
 //    ⌄ enclosing_range_start scip-java maven . . snapshots/Suit#SPADES.
       SPADES('s');
@@ -83,7 +83,7 @@
 //           kind EnumMember
 //           display_name SPADES
 //           signature_documentation
-//           > public final val SPADES: Suit
+//           > public final static enum entry SPADES: Suit
 //               ⌃ enclosing_range_end scip-java maven . . snapshots/Suit#SPADES.
   
 //    ⌄ enclosing_range_start scip-java maven . . snapshots/Suit#isRed().
