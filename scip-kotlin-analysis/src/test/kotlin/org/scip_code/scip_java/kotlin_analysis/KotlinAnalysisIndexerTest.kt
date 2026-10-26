@@ -1677,7 +1677,7 @@ class KotlinAnalysisIndexerTest {
                         startLine = 3
                         startCharacter = 4
                         endLine = 3
-                        endCharacter = 22
+                        endCharacter = 13
                     }
                     enclosingRange {
                         startLine = 3
