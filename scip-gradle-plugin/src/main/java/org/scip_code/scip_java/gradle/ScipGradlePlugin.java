@@ -115,11 +115,13 @@ public class ScipGradlePlugin implements Plugin<Project> {
         triggers.add("compileKotlin");
         triggers.add("compileTestKotlin");
       }
-
-      project
-          .getTasks()
-          .configureEach(task -> configureKotlinCompileTask(task, sourceRoot, targetRoot));
     }
+
+    // Not limited to the plugin checks above: AGP 9's built-in Kotlin adds
+    // Kotlin compile tasks to Android modules without applying a Kotlin plugin.
+    project
+        .getTasks()
+        .configureEach(task -> configureKotlinCompileTask(task, sourceRoot, targetRoot));
 
     project.getTasks().create("scipCompileAll").dependsOn(triggers);
 
