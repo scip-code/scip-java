@@ -37,7 +37,9 @@ public class ScipGradlePlugin implements Plugin<Project> {
         project.getExtensions().getExtraProperties().getProperties();
 
     String targetRoot = requiredExtra(extraProperties, "scipTarget").toString();
-    String sourceRoot = project.getRootDir().toString();
+    // The CLI's working directory, not project.getRootDir(): buildSrc and
+    // included builds have their own root directory.
+    String sourceRoot = requiredExtra(extraProperties, "scipSourceroot").toString();
 
     // Compilation tasks we need to trigger to index all the sources we care
     // about. Built up as we detect the java and kotlin plugins.
