@@ -130,7 +130,7 @@
 //                                      ^^^^ reference scip-java maven . . snapshots/Suit#
 //                                              ^^^^^^^ reference scip-java maven . . snapshots/Suit#entries.
 //                                              ^^^^^^^ reference scip-java maven . . snapshots/Suit#entries.get().
-//                                                      ^^^^ reference scip-java maven . . kotlin/collections/find(+9).
+//                                                      ^^^^ reference scip-java maven . . kotlin/collections/Iterable#find().
 //                                                           ^^^^^^^^^^^^^^^^^^^^^^^ definition local 0
 //                                                                                   kind Parameter
 //                                                                                   display_name it

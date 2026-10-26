@@ -18,7 +18,7 @@
 //      > public get(): Unit
 //        ^^^^^^^^^^^ reference scip-java maven . . kotlin/collections/arrayListOf().
 //                    ^^^^^^ reference scip-java maven . . kotlin/String#
-//                              ^^^^^^^^^^^^^^ reference scip-java maven . . kotlin/collections/forEachIndexed(+9).
+//                              ^^^^^^^^^^^^^^ reference scip-java maven . . kotlin/collections/Iterable#forEachIndexed().
 //                                               ^ definition local 0
 //                                                 kind Parameter
 //                                                 display_name i
@@ -51,7 +51,7 @@
 //      signature_documentation
 //      > public get(): ByteArray
 //               ^^^ reference scip-java maven . . kotlin/run(+1).
-//                          ^^^^^^^^^^^ reference scip-java maven . . kotlin/text/toByteArray().
+//                          ^^^^^^^^^^^ reference scip-java maven . . kotlin/text/String#toByteArray().
 //                                        ⌃ enclosing_range_end scip-java maven . . snapshots/y.
 //                                        ⌃ enclosing_range_end scip-java maven . . snapshots/y.get().
   

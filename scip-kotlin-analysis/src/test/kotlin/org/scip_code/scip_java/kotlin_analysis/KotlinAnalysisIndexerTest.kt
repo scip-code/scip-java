@@ -623,6 +623,10 @@ class KotlinAnalysisIndexerTest {
 
     @Test
     fun `extension receiver type reference`(@TempDir path: Path) {
+        // String is from the kotlin package; our extension in sample gets
+        // symbol sample/String#foo(). — distinct from kotlin/String#foo().
+        // This means extensions on cross-package types never collide with
+        // the receiver class's own methods in the symbol table.
         val document =
             compileScip(
                 path,
@@ -638,7 +642,7 @@ class KotlinAnalysisIndexerTest {
             arrayOf(
                 scipOccurrence {
                     role = DEFINITION
-                    symbol = "sample/foo()."
+                    symbol = "sample/String#foo()."
                     range {
                         startLine = 2
                         startCharacter = 11
@@ -674,7 +678,7 @@ class KotlinAnalysisIndexerTest {
                 },
                 scipOccurrence {
                     role = REFERENCE
-                    symbol = "sample/foo()."
+                    symbol = "sample/String#foo()."
                     range {
                         startLine = 3
                         startCharacter = 23
@@ -703,7 +707,7 @@ class KotlinAnalysisIndexerTest {
             arrayOf(
                 scipOccurrence {
                     role = DEFINITION
-                    symbol = "sample/asString."
+                    symbol = "sample/Int#asString."
                     range {
                         startLine = 2
                         startCharacter = 8
@@ -739,7 +743,7 @@ class KotlinAnalysisIndexerTest {
                 },
                 scipOccurrence {
                     role = REFERENCE
-                    symbol = "sample/asString."
+                    symbol = "sample/Int#asString."
                     range {
                         startLine = 3
                         startCharacter = 15
@@ -753,7 +757,11 @@ class KotlinAnalysisIndexerTest {
 
     @Test
     fun `extension overload disambiguator`(@TempDir path: Path) {
-        // A member foo() and an extension foo() on the same class produce distinct symbols.
+        // When a class already has a member named foo() and an extension also
+        // adds foo(), the extension is counted after the member in the combined
+        // sibling list (class members + same-package extensions on the same
+        // receiver type), so the extension gets the (+1) disambiguator and the
+        // two produce distinct symbols.
         val document =
             compileScip(
                 path,
@@ -787,7 +795,7 @@ class KotlinAnalysisIndexerTest {
                 },
                 scipOccurrence {
                     role = DEFINITION
-                    symbol = "sample/foo()."
+                    symbol = "sample/MyClass#foo(+1)."
                     range {
                         startLine = 5
                         startCharacter = 12
