@@ -10,10 +10,12 @@
 //⌄ enclosing_range_start scip-java maven . . snapshots/DocstringSuperclass#`<init>`().
   abstract class DocstringSuperclass
 //               ^^^^^^^^^^^^^^^^^^^ definition scip-java maven . . snapshots/DocstringSuperclass#
+//                                   kind Class
 //                                   display_name DocstringSuperclass
 //                                   signature_documentation
 //                                   > public abstract class DocstringSuperclass : Any
 //               ^^^^^^^^^^^^^^^^^^^ definition scip-java maven . . snapshots/DocstringSuperclass#`<init>`().
+//                                   kind Constructor
 //                                   display_name DocstringSuperclass
 //                                   signature_documentation
 //                                   > public constructor(): DocstringSuperclass
@@ -24,6 +26,7 @@
   /** Example class docstring. */
   class Docstrings :  DocstringSuperclass(), Serializable {
 //      ^^^^^^^^^^ definition scip-java maven . . snapshots/Docstrings#
+//                 kind Class
 //                 display_name Docstrings
 //                 signature_documentation
 //                 > public final class Docstrings : DocstringSuperclass, Serializable
@@ -32,6 +35,7 @@
 //                 relationship scip-java maven . . snapshots/DocstringSuperclass# implementation
 //                 relationship scip-java maven jdk 17 java/io/Serializable# implementation
 //      ^^^^^^^^^^ definition scip-java maven . . snapshots/Docstrings#`<init>`().
+//                 kind Constructor
 //                 display_name Docstrings
 //                 signature_documentation
 //                 > public constructor(): Docstrings
@@ -47,6 +51,7 @@
   /** Example method docstring. */
   fun docstrings() { }
 //    ^^^^^^^^^^ definition scip-java maven . . snapshots/docstrings().
+//               kind Method
 //               display_name docstrings
 //               signature_documentation
 //               > public final fun docstrings(): Unit

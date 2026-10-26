@@ -9,6 +9,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import org.junit.jupiter.api.io.TempDir
 import org.scip_code.scip.Document
+import org.scip_code.scip.SymbolInformation.Kind
 import org.scip_code.scip.SymbolRole
 
 class KotlinAnalysisIndexerTest {
@@ -73,6 +74,15 @@ class KotlinAnalysisIndexerTest {
         assertContains(references(greeter), "snapshots/Greeter#greet().")
         // The stdlib type reference resolves to a classpath symbol.
         assertContains(references(greeter), "kotlin/String#")
+        // A `val` constructor parameter's property belongs to the class, and its
+        // synthetic getter to the property.
+        val enclosingSymbols = greeter.symbolsList.associate { it.symbol to it.enclosingSymbol }
+        assertEquals(
+            "snapshots/Greeter#`<init>`().",
+            enclosingSymbols["snapshots/Greeter#`<init>`().(name)"],
+        )
+        assertEquals("snapshots/Greeter#", enclosingSymbols["snapshots/Greeter#name."])
+        assertEquals("snapshots/Greeter#name.", enclosingSymbols["snapshots/Greeter#getName()."])
 
         val mainDefinitions = definitions(main)
         assertContains(mainDefinitions, "snapshots/useGreeter().")
@@ -169,16 +179,21 @@ class KotlinAnalysisIndexerTest {
             arrayOf(
                 scipSymbol {
                     symbol = "sample/use()."
+                    kind = Kind.Method
+                    enclosingSymbol = "sample/"
                     displayName = "use"
                     signatureText = "public final fun use(): Unit"
                 },
                 scipSymbol {
                     symbol = "local 0"
+                    kind = Kind.Property
+                    enclosingSymbol = "sample/use()."
                     displayName = "f"
                     signatureText = "local val f: (Int) -> Int"
                 },
                 scipSymbol {
                     symbol = "local 1"
+                    kind = Kind.Parameter
                     displayName = "n"
                     signatureText = "n: Int"
                 },
@@ -325,6 +340,8 @@ class KotlinAnalysisIndexerTest {
             arrayOf(
                 scipSymbol {
                     symbol = "sample/bar()."
+                    kind = Kind.Method
+                    enclosingSymbol = "sample/"
                     displayName = "bar"
                     signatureText = "public final fun bar(): MyClass"
                 }
@@ -386,6 +403,8 @@ class KotlinAnalysisIndexerTest {
             arrayOf(
                 scipSymbol {
                     symbol = "sample/MyAlias#"
+                    kind = Kind.TypeAlias
+                    enclosingSymbol = "sample/"
                     displayName = "MyAlias"
                     signatureText = "public final typealias MyAlias = Int\n"
                 }
@@ -446,6 +465,8 @@ class KotlinAnalysisIndexerTest {
             arrayOf(
                 scipSymbol {
                     symbol = "sample/identity().[T]"
+                    kind = Kind.TypeParameter
+                    enclosingSymbol = "sample/identity()."
                     displayName = "T"
                     signatureText = "T"
                 }
@@ -891,22 +912,30 @@ class KotlinAnalysisIndexerTest {
             arrayOf(
                 scipSymbol {
                     symbol = "sample/Color#"
+                    kind = Kind.Class
+                    enclosingSymbol = "sample/"
                     displayName = "Color"
                     addOverriddenSymbols("kotlin/Enum#")
                     signatureText = "public final enum class Color : Enum<Color>"
                 },
                 scipSymbol {
                     symbol = "sample/Color#RED."
+                    kind = Kind.EnumMember
+                    enclosingSymbol = "sample/Color#"
                     displayName = "RED"
                     signatureText = "public final val RED: Color"
                 },
                 scipSymbol {
                     symbol = "sample/Color#GREEN."
+                    kind = Kind.EnumMember
+                    enclosingSymbol = "sample/Color#"
                     displayName = "GREEN"
                     signatureText = "public final val GREEN: Color"
                 },
                 scipSymbol {
                     symbol = "sample/Color#BLUE."
+                    kind = Kind.EnumMember
+                    enclosingSymbol = "sample/Color#"
                     displayName = "BLUE"
                     signatureText = "public final val BLUE: Color"
                 },
@@ -975,6 +1004,8 @@ class KotlinAnalysisIndexerTest {
             arrayOf(
                 scipSymbol {
                     symbol = "sample/Op#PLUS.apply()."
+                    kind = Kind.Method
+                    enclosingSymbol = "sample/Op#PLUS."
                     displayName = "apply"
                     addOverriddenSymbols("sample/Op#apply().")
                     signatureText = "public open override fun apply(a: Int, b: Int): Int"
@@ -1059,11 +1090,15 @@ class KotlinAnalysisIndexerTest {
             arrayOf(
                 scipSymbol {
                     symbol = "sample/MySingleton#"
+                    kind = Kind.Class
+                    enclosingSymbol = "sample/"
                     displayName = "MySingleton"
                     signatureText = "public final object MySingleton : Any"
                 },
                 scipSymbol {
                     symbol = "sample/MySingleton#hello()."
+                    kind = Kind.Method
+                    enclosingSymbol = "sample/MySingleton#"
                     displayName = "hello"
                     signatureText = "public final fun hello(): String"
                 },
@@ -1175,16 +1210,22 @@ class KotlinAnalysisIndexerTest {
             arrayOf(
                 scipSymbol {
                     symbol = "sample/Foo#"
+                    kind = Kind.Class
+                    enclosingSymbol = "sample/"
                     displayName = "Foo"
                     signatureText = "public final class Foo : Any"
                 },
                 scipSymbol {
                     symbol = "sample/Foo#Factory#"
+                    kind = Kind.Class
+                    enclosingSymbol = "sample/Foo#"
                     displayName = "Factory"
                     signatureText = "public final companion object Factory : Any"
                 },
                 scipSymbol {
                     symbol = "sample/Foo#Factory#create()."
+                    kind = Kind.Method
+                    enclosingSymbol = "sample/Foo#Factory#"
                     displayName = "create"
                     signatureText = "public final fun create(): Foo"
                 },
@@ -1286,16 +1327,22 @@ class KotlinAnalysisIndexerTest {
             arrayOf(
                 scipSymbol {
                     symbol = "sample/Bar#"
+                    kind = Kind.Class
+                    enclosingSymbol = "sample/"
                     displayName = "Bar"
                     signatureText = "public final class Bar : Any"
                 },
                 scipSymbol {
                     symbol = "sample/Bar#Companion#"
+                    kind = Kind.Class
+                    enclosingSymbol = "sample/Bar#"
                     displayName = "Companion"
                     signatureText = "public final companion object Companion : Any"
                 },
                 scipSymbol {
                     symbol = "sample/Bar#Companion#instance()."
+                    kind = Kind.Method
+                    enclosingSymbol = "sample/Bar#Companion#"
                     displayName = "instance"
                     signatureText = "public final fun instance(): Bar"
                 },
@@ -1366,6 +1413,8 @@ class KotlinAnalysisIndexerTest {
             arrayOf(
                 scipSymbol {
                     symbol = "sample/greet()."
+                    kind = Kind.Method
+                    enclosingSymbol = "sample/"
                     displayName = "greet"
                     signatureText = "public final fun greet(name: String): String"
                 }
@@ -1443,6 +1492,8 @@ class KotlinAnalysisIndexerTest {
             arrayOf(
                 scipSymbol {
                     symbol = "sample/Person#"
+                    kind = Kind.Class
+                    enclosingSymbol = "sample/"
                     displayName = "Person"
                     addOverriddenSymbols("sample/Named#")
                     addOverriddenSymbols("sample/Speakable#")
@@ -1558,16 +1609,22 @@ class KotlinAnalysisIndexerTest {
             arrayOf(
                 scipSymbol {
                     symbol = "sample/add()."
+                    kind = Kind.Method
+                    enclosingSymbol = "sample/"
                     displayName = "add"
                     signatureText = "public final fun add(x: Int, y: Int): Int"
                 },
                 scipSymbol {
                     symbol = "sample/add(+1)."
+                    kind = Kind.Method
+                    enclosingSymbol = "sample/"
                     displayName = "add"
                     signatureText = "public final fun add(x: Double, y: Double): Double"
                 },
                 scipSymbol {
                     symbol = "sample/add(+2)."
+                    kind = Kind.Method
+                    enclosingSymbol = "sample/"
                     displayName = "add"
                     signatureText = "public final fun add(x: String, y: String): String"
                 },

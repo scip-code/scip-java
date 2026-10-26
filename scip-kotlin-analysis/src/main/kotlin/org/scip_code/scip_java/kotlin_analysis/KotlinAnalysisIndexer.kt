@@ -2,6 +2,7 @@ package org.scip_code.scip_java.kotlin_analysis
 
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElement
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.Arrays
@@ -58,6 +59,7 @@ import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.types.Variance
 import org.scip_code.scip.Document
 import org.scip_code.scip.Occurrence
+import org.scip_code.scip.SymbolInformation.Kind
 import org.scip_code.scip.SymbolRole
 import org.scip_code.scip.relationship
 import org.scip_code.scip.signature
@@ -246,6 +248,10 @@ class KotlinAnalysisIndexer(
             emitDefinition(
                 symbol = symbol,
                 range = range,
+                kind =
+                    if (declaration is KtClass && declaration.isInterface()) Kind.Interface
+                    else Kind.Class,
+                enclosingSymbol = enclosingSymbol(declaration),
                 enclosing = declaration.textRange,
                 displayName = displayName,
                 signatureText = signatures.classSignature(declaration),
@@ -262,6 +268,8 @@ class KotlinAnalysisIndexer(
                 emitDefinition(
                     symbol = cache.implicitConstructorSymbol(declaration),
                     range = range,
+                    kind = Kind.Constructor,
+                    enclosingSymbol = symbol,
                     enclosing = declaration.textRange,
                     displayName = displayName,
                     signatureText = signatures.implicitConstructorSignature(declaration),
@@ -273,6 +281,8 @@ class KotlinAnalysisIndexer(
                 emitDefinition(
                     symbol = cache.symbolForDeclaration(primaryConstructor),
                     range = range,
+                    kind = Kind.Constructor,
+                    enclosingSymbol = symbol,
                     // Span from the definition anchor through the parameter list so the
                     // enclosing range contains its own anchor (scip-kotlinc's
                     // parameter-list-only range did not).
@@ -291,6 +301,8 @@ class KotlinAnalysisIndexer(
                     emitDefinition(
                         symbol = cache.memberMethodSymbol(declaration, "copy"),
                         range = constructor.textRange,
+                        kind = Kind.Method,
+                        enclosingSymbol = symbol,
                         enclosing = constructor.textRange,
                         displayName = "copy",
                         signatureText = signatures.dataCopySignature(declaration),
@@ -307,10 +319,13 @@ class KotlinAnalysisIndexer(
          */
         private fun emitEnumSynthetics(declaration: KtClass, range: TextRange) {
             val name = declaration.name.orEmpty()
+            val owner = cache.symbolForDeclaration(declaration)
             val enclosing = declaration.textRange
             emitDefinition(
                 symbol = cache.memberMethodSymbol(declaration, "values"),
                 range = range,
+                kind = Kind.Method,
+                enclosingSymbol = owner,
                 enclosing = enclosing,
                 displayName = "values",
                 signatureText = signatures.enumValuesSignature(name),
@@ -320,6 +335,8 @@ class KotlinAnalysisIndexer(
             emitDefinition(
                 symbol = valueOf,
                 range = range,
+                kind = Kind.Method,
+                enclosingSymbol = owner,
                 enclosing = enclosing,
                 displayName = "valueOf",
                 signatureText = signatures.enumValueOfSignature(name),
@@ -328,14 +345,19 @@ class KotlinAnalysisIndexer(
             emitDefinition(
                 symbol = cache.methodParameterSymbol(valueOf, "value"),
                 range = range,
+                kind = Kind.Parameter,
+                enclosingSymbol = valueOf,
                 enclosing = enclosing,
                 displayName = "value",
                 signatureText = "value: String",
                 documentation = null,
             )
+            val entries = cache.memberTermSymbol(declaration, "entries")
             emitDefinition(
-                symbol = cache.memberTermSymbol(declaration, "entries"),
+                symbol = entries,
                 range = range,
+                kind = Kind.Property,
+                enclosingSymbol = owner,
                 enclosing = enclosing,
                 displayName = "entries",
                 signatureText = signatures.enumEntriesSignature(name),
@@ -344,6 +366,8 @@ class KotlinAnalysisIndexer(
             emitDefinition(
                 symbol = cache.memberMethodSymbol(declaration, "getEntries"),
                 range = range,
+                kind = Kind.Method,
+                enclosingSymbol = entries,
                 enclosing = enclosing,
                 displayName = "entries",
                 signatureText = signatures.enumGetEntriesSignature(name),
@@ -356,6 +380,8 @@ class KotlinAnalysisIndexer(
             emitDefinition(
                 symbol = cache.symbolForDeclaration(declaration),
                 range = identifier.textRange,
+                kind = Kind.EnumMember,
+                enclosingSymbol = enclosingSymbol(declaration),
                 enclosing = declaration.textRange,
                 displayName = declaration.name.orEmpty(),
                 signatureText = signatures.propertySignature(declaration),
@@ -375,6 +401,8 @@ class KotlinAnalysisIndexer(
             emitDefinition(
                 symbol = cache.symbolForDeclaration(declaration),
                 range = range,
+                kind = Kind.Constructor,
+                enclosingSymbol = enclosingSymbol(declaration),
                 enclosing = declaration.textRange,
                 displayName = declaration.containingClassOrObject?.name ?: "<anonymous>",
                 signatureText = signatures.constructorSignature(declaration),
@@ -393,6 +421,8 @@ class KotlinAnalysisIndexer(
             emitDefinition(
                 symbol = cache.symbolForDeclaration(declaration),
                 range = identifier.textRange,
+                kind = Kind.Method,
+                enclosingSymbol = enclosingSymbol(declaration),
                 enclosing = declaration.textRange,
                 displayName = declaration.name.orEmpty(),
                 signatureText = signatures.functionSignature(declaration),
@@ -408,6 +438,8 @@ class KotlinAnalysisIndexer(
                 emitDefinition(
                     symbol = symbol,
                     range = identifier.textRange,
+                    kind = Kind.Property,
+                    enclosingSymbol = enclosingSymbol(declaration),
                     enclosing = declaration.textRange,
                     displayName = declaration.name.orEmpty(),
                     signatureText = signatures.localVariableSignature(declaration),
@@ -418,6 +450,8 @@ class KotlinAnalysisIndexer(
             emitDefinition(
                 symbol = symbol,
                 range = identifier.textRange,
+                kind = Kind.Property,
+                enclosingSymbol = enclosingSymbol(declaration),
                 enclosing = declaration.textRange,
                 displayName = declaration.name.orEmpty(),
                 signatureText = signatures.propertySignature(declaration),
@@ -447,6 +481,8 @@ class KotlinAnalysisIndexer(
                     emitDefinition(
                         symbol = cache.symbolForDeclaration(declaration),
                         range = loopOrCatchIdentifier.textRange,
+                        kind = Kind.Property,
+                        enclosingSymbol = enclosingSymbol(declaration),
                         enclosing = declaration.textRange,
                         displayName = declaration.name.orEmpty(),
                         signatureText = "local val ${declaration.name.orEmpty()}: $type",
@@ -458,6 +494,8 @@ class KotlinAnalysisIndexer(
                     emitDefinition(
                         symbol = cache.symbolForDeclaration(declaration),
                         range = loopOrCatchIdentifier.textRange,
+                        kind = Kind.Property,
+                        enclosingSymbol = enclosingSymbol(declaration),
                         enclosing = declaration.textRange,
                         displayName = declaration.name.orEmpty(),
                         signatureText = signatures.parameterSignature(declaration),
@@ -473,6 +511,8 @@ class KotlinAnalysisIndexer(
             emitDefinition(
                 symbol = symbol,
                 range = identifier.textRange,
+                kind = Kind.Parameter,
+                enclosingSymbol = enclosingSymbol(declaration),
                 enclosing = declaration.textRange,
                 displayName = declaration.name.orEmpty(),
                 signatureText = signatures.parameterSignature(declaration),
@@ -485,6 +525,8 @@ class KotlinAnalysisIndexer(
                 emitDefinition(
                     symbol = cache.parameterPropertySymbol(declaration),
                     range = identifier.textRange,
+                    kind = Kind.Property,
+                    enclosingSymbol = enclosingSymbol(declaration.ownerFunction ?: declaration),
                     enclosing = declaration.textRange,
                     displayName = declaration.name.orEmpty(),
                     signatureText = signatures.propertySignature(declaration),
@@ -518,18 +560,19 @@ class KotlinAnalysisIndexer(
             emitDefinition(
                 symbol = cache.memberMethodSymbol(containingClass, "component${index + 1}"),
                 range = range,
+                kind = Kind.Method,
+                enclosingSymbol = cache.symbolForDeclaration(containingClass),
                 enclosing = declaration.textRange,
                 displayName = "component${index + 1}",
                 signatureText = signatures.dataComponentSignature(index + 1, declaration),
                 documentation = null,
             )
+            val copy = cache.memberMethodSymbol(containingClass, "copy")
             emitDefinition(
-                symbol =
-                    cache.methodParameterSymbol(
-                        cache.memberMethodSymbol(containingClass, "copy"),
-                        declaration.name.orEmpty(),
-                    ),
+                symbol = cache.methodParameterSymbol(copy, declaration.name.orEmpty()),
                 range = range,
+                kind = Kind.Parameter,
+                enclosingSymbol = copy,
                 enclosing = declaration.textRange,
                 displayName = declaration.name.orEmpty(),
                 signatureText = signatures.dataCopyParameterSignature(declaration),
@@ -547,6 +590,8 @@ class KotlinAnalysisIndexer(
             emitDefinition(
                 symbol = cache.symbolForDeclaration(declaration),
                 range = identifier.textRange,
+                kind = Kind.TypeAlias,
+                enclosingSymbol = enclosingSymbol(declaration),
                 enclosing = declaration.textRange,
                 displayName = declaration.name.orEmpty(),
                 signatureText = signatures.typeAliasSignature(declaration),
@@ -565,6 +610,8 @@ class KotlinAnalysisIndexer(
                 emitDefinition(
                     symbol = cache.syntheticLocalSymbol(expression),
                     range = subject.textRange,
+                    kind = Kind.Property,
+                    enclosingSymbol = enclosingSymbol(expression),
                     enclosing = subject.textRange,
                     displayName = "<when-subject>",
                     signatureText =
@@ -593,6 +640,8 @@ class KotlinAnalysisIndexer(
             emitDefinition(
                 symbol = cache.syntheticLocalSymbol(destructuringDeclaration),
                 range = destructuringDeclaration.textRange,
+                kind = if (isParameter) Kind.Parameter else Kind.Property,
+                enclosingSymbol = enclosingSymbol(destructuringDeclaration),
                 enclosing = destructuringDeclaration.textRange,
                 displayName = "<destruct>",
                 signatureText = signatures.destructSignature(type, isParameter),
@@ -678,10 +727,15 @@ class KotlinAnalysisIndexer(
             hasExplicitSetter: Boolean,
             isVar: Boolean,
         ) {
+            val propertySymbol =
+                if (property is KtParameter) cache.parameterPropertySymbol(property)
+                else cache.symbolForDeclaration(property)
             if (!hasExplicitGetter) {
                 emitDefinition(
                     symbol = cache.syntheticAccessorSymbol(property, setter = false),
                     range = nameRange,
+                    kind = Kind.Method,
+                    enclosingSymbol = propertySymbol,
                     enclosing = enclosing,
                     displayName = displayName,
                     signatureText = signatures.syntheticAccessorSignature(property, setter = false),
@@ -689,9 +743,12 @@ class KotlinAnalysisIndexer(
                 )
             }
             if (isVar && !hasExplicitSetter) {
+                val setter = cache.syntheticAccessorSymbol(property, setter = true)
                 emitDefinition(
-                    symbol = cache.syntheticAccessorSymbol(property, setter = true),
+                    symbol = setter,
                     range = nameRange,
+                    kind = Kind.Method,
+                    enclosingSymbol = propertySymbol,
                     enclosing = enclosing,
                     displayName = displayName,
                     signatureText = signatures.syntheticAccessorSignature(property, setter = true),
@@ -700,6 +757,8 @@ class KotlinAnalysisIndexer(
                 emitDefinition(
                     symbol = cache.syntheticSetterValueSymbol(property),
                     range = nameRange,
+                    kind = Kind.Parameter,
+                    enclosingSymbol = setter,
                     enclosing = enclosing,
                     displayName = "value",
                     signatureText = signatures.setterValueSignature(property),
@@ -712,6 +771,8 @@ class KotlinAnalysisIndexer(
             emitDefinition(
                 symbol = cache.symbolForDeclaration(declaration),
                 range = declaration.namePlaceholder.textRange,
+                kind = Kind.Method,
+                enclosingSymbol = enclosingSymbol(declaration),
                 enclosing = declaration.textRange,
                 displayName = declaration.property.name.orEmpty(),
                 signatureText = signatures.accessorSignature(declaration),
@@ -724,6 +785,8 @@ class KotlinAnalysisIndexer(
             emitDefinition(
                 symbol = cache.symbolForDeclaration(declaration),
                 range = identifier.textRange,
+                kind = Kind.TypeParameter,
+                enclosingSymbol = enclosingSymbol(declaration),
                 enclosing = declaration.textRange,
                 displayName = declaration.name.orEmpty(),
                 signatureText = declaration.text,
@@ -736,6 +799,8 @@ class KotlinAnalysisIndexer(
             emitDefinition(
                 symbol = cache.symbolForDeclaration(declaration),
                 range = identifier.textRange,
+                kind = Kind.Property,
+                enclosingSymbol = enclosingSymbol(declaration),
                 enclosing = declaration.textRange,
                 displayName = declaration.name.orEmpty(),
                 signatureText = signatures.localVariableSignature(declaration),
@@ -754,6 +819,8 @@ class KotlinAnalysisIndexer(
             emitDefinition(
                 symbol = cache.implicitItSymbol(literal),
                 range = literal.textRange,
+                kind = Kind.Parameter,
+                enclosingSymbol = Symbol.NONE,
                 enclosing = literal.textRange,
                 displayName = "it",
                 signatureText = signatures.implicitItSignature(target),
@@ -817,6 +884,8 @@ class KotlinAnalysisIndexer(
         private fun emitDefinition(
             symbol: Symbol,
             range: TextRange,
+            kind: Kind,
+            enclosingSymbol: Symbol,
             enclosing: TextRange?,
             displayName: String,
             signatureText: String?,
@@ -843,6 +912,8 @@ class KotlinAnalysisIndexer(
             out.addSymbol(
                 symbolInformation {
                     this.symbol = symbol.toString()
+                    this.kind = kind
+                    this.enclosingSymbol = enclosingSymbol.toString()
                     this.displayName = displayName
                     if (signatureText != null) {
                         this.signatureDocumentation = signature {
@@ -861,6 +932,26 @@ class KotlinAnalysisIndexer(
                     }
                 }
             )
+        }
+
+        /**
+         * The symbol of the nearest declaration containing [element], or the package for top-level
+         * declarations. Lambdas have no symbol, so declarations inside them have none either.
+         */
+        private fun enclosingSymbol(element: PsiElement): Symbol {
+            for (parent in element.parents) {
+                when (parent) {
+                    is KtFunctionLiteral -> return Symbol.NONE
+                    is KtClassOrObject,
+                    is KtNamedFunction,
+                    is KtConstructor<*>,
+                    is KtProperty,
+                    is KtPropertyAccessor ->
+                        return cache.symbolForDeclaration(parent as KtDeclaration)
+                    is KtFile -> return cache.packageSymbol(parent.packageFqName)
+                }
+            }
+            return Symbol.NONE
         }
 
         private fun addReference(symbol: Symbol, range: TextRange) {
