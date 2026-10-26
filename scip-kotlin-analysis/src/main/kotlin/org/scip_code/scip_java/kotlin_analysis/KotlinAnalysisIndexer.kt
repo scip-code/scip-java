@@ -255,7 +255,10 @@ class KotlinAnalysisIndexer(
                     declaration.nameIdentifier != null -> declaration.nameIdentifier!!.textRange
                     isAnonymous ->
                         declaration.getObjectKeyword()?.textRange ?: declaration.textRange
-                    else -> declaration.textRange // unnamed companion object
+                    // An unnamed companion object is anchored at its `companion` keyword.
+                    else ->
+                        declaration.modifierList?.getModifier(KtTokens.COMPANION_KEYWORD)?.textRange
+                            ?: declaration.textRange
                 }
             val displayName = if (isAnonymous) "<anonymous>" else declaration.name ?: "Companion"
             val symbol = cache.symbolForDeclaration(declaration)
