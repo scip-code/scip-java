@@ -10,10 +10,12 @@
 //⌄ enclosing_range_start scip-java maven . . snapshots/ObjectKt#`<init>`().
   object ObjectKt {
 //       ^^^^^^^^ definition scip-java maven . . snapshots/ObjectKt#
+//                kind Class
 //                display_name ObjectKt
 //                signature_documentation
 //                > public final object ObjectKt : Any
 //       ^^^^^^^^ definition scip-java maven . . snapshots/ObjectKt#`<init>`().
+//                kind Constructor
 //                display_name ObjectKt
 //                signature_documentation
 //                > private constructor(): ObjectKt
@@ -21,10 +23,12 @@
 //           ⌄ enclosing_range_start scip-java maven . . snapshots/ObjectKt#fail().(message)
     fun fail(message: String?): Nothing {
 //      ^^^^ definition scip-java maven . . snapshots/ObjectKt#fail().
+//           kind Method
 //           display_name fail
 //           signature_documentation
 //           > public final fun fail(message: String?): Nothing
 //           ^^^^^^^ definition scip-java maven . . snapshots/ObjectKt#fail().(message)
+//                   kind Parameter
 //                   display_name message
 //                   signature_documentation
 //                   > message: String?
