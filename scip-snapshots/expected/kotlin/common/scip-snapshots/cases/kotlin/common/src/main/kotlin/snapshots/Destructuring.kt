@@ -162,7 +162,7 @@
 //              signature_documentation
 //              > local val total: Int
 //                ^^^^^^^ reference local 3
-//                        ^^^^^ reference scip-java maven . . kotlin/collections/sumOf(+66).
+//                        ^^^^^ reference scip-java maven . . kotlin/collections/Iterable#sumOf(+3).
 //                                ^^^^^^^^^^^^^^ definition local 5
 //                                               kind Parameter
 //                                               display_name <destruct>

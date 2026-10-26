@@ -7,14 +7,17 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtAnonymousInitializer
 import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassBody
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtConstructor
@@ -45,12 +48,13 @@ import org.scip_code.scip_java.shared.LocalSymbolsCache as SharedLocalSymbolsCac
  * Computes SCIP symbol strings for Kotlin declarations and resolved references.
  *
  * Declarations with Kotlin source are classified from their PSI structure, which keeps the
- * version-sensitive Analysis API surface minimal. References that resolve to declarations without
- * Kotlin source (classpath or JDK symbols) fall back to `ClassId`/`CallableId`-derived symbols.
+ * version-sensitive Analysis API surface minimal; only extension receivers are resolved. References
+ * that resolve to declarations without Kotlin source (classpath or JDK symbols) fall back to
+ * `ClassId`/`CallableId`-derived symbols.
  *
  * Instantiate one cache per indexed file: local symbols are numbered per SCIP document.
  */
-class SymbolsCache {
+class SymbolsCache(private val session: KaSession) {
     private val globals = HashMap<PsiElement, Symbol>()
     private val packages = HashMap<FqName, Symbol>()
     private val locals =
@@ -297,8 +301,60 @@ class SymbolsCache {
             is KtPropertyAccessor -> symbolForDeclaration(declaration.property)
             else ->
                 declaration.containingClassOrObject?.let { symbolForDeclaration(it) }
+                    ?: sourceExtensionReceiver(declaration)?.let {
+                        extensionOwnerSymbol(declaration.containingKtFile.packageFqName, it)
+                    }
                     ?: packageSymbol(declaration.containingKtFile.packageFqName)
         }
+
+    /**
+     * Top-level extensions are owned by their receiver type, nested in the extension's own package
+     * (`sample/String#foo().` for `fun String.foo()` in `sample`), like scip-kotlinc.
+     */
+    private fun extensionOwnerSymbol(packageFqName: FqName, receiver: ClassId): Symbol =
+        Symbol.createGlobal(
+            packageSymbol(packageFqName),
+            ScipSymbolDescriptor(Kind.TYPE, receiver.shortClassName.asString()),
+        )
+
+    private fun sourceExtensionReceiver(declaration: KtDeclaration): ClassId? {
+        if (declaration !is KtCallableDeclaration || declaration.receiverTypeReference == null) {
+            return null
+        }
+        return with(session) { declaration.symbol as? KaCallableSymbol }?.let(::receiverClassId)
+    }
+
+    private fun receiverClassId(callable: KaCallableSymbol): ClassId? =
+        with(session) { (callable.receiverParameter?.returnType as? KaClassType)?.classId }
+
+    /**
+     * The disambiguator of a top-level extension function: like scip-kotlinc, it counts the
+     * same-named members of the receiver class (when it is in the extension's package) followed by
+     * the same-named extensions on that receiver in the package.
+     */
+    private fun extensionDisambiguator(
+        function: KaCallableSymbol,
+        packageFqName: FqName,
+        name: Name,
+        receiver: ClassId,
+    ): String {
+        val extensions =
+            with(session) {
+                findTopLevelCallables(packageFqName, name)
+                    .filter { it is KaNamedFunctionSymbol && receiverClassId(it) == receiver }
+                    .toList()
+            }
+        val index = extensions.indexOf(function)
+        if (index < 0) return "()"
+        val members =
+            if (receiver.packageFqName != packageFqName) 0
+            else
+                with(session) {
+                    findClass(receiver)?.declaredMemberScope?.callables(name)?.count() ?: 0
+                }
+        val count = members + index
+        return if (count == 0) "()" else "(+$count)"
+    }
 
     private fun scipDescriptor(declaration: KtDeclaration): ScipSymbolDescriptor =
         when {
@@ -342,6 +398,17 @@ class SymbolsCache {
      */
     private fun methodDisambiguator(function: KtNamedFunction): String {
         val name = function.name ?: return "()"
+        if (function.containingClassOrObject == null) {
+            sourceExtensionReceiver(function)?.let { receiver ->
+                val symbol = with(session) { function.symbol }
+                return extensionDisambiguator(
+                    symbol,
+                    function.containingKtFile.packageFqName,
+                    Name.identifier(name),
+                    receiver,
+                )
+            }
+        }
         var count = 0
         var found = false
         for (sibling in siblingDeclarations(function)) {
@@ -390,7 +457,10 @@ class SymbolsCache {
      */
     private fun externalCallableSymbol(session: KaSession, target: KaCallableSymbol): Symbol {
         val callableId = target.callableId ?: return Symbol.NONE
-        val owner = callableId.classId?.let(::classSymbol) ?: packageSymbol(callableId.packageName)
+        val owner =
+            callableId.classId?.let(::classSymbol)
+                ?: receiverClassId(target)?.let { extensionOwnerSymbol(callableId.packageName, it) }
+                ?: packageSymbol(callableId.packageName)
         val name = callableId.callableName.asString()
         val descriptor =
             when (target) {
@@ -411,6 +481,14 @@ class SymbolsCache {
             with(session) {
                 val classId = callableId.classId
                 if (classId == null) {
+                    receiverClassId(target)?.let { receiver ->
+                        return extensionDisambiguator(
+                            target,
+                            callableId.packageName,
+                            callableId.callableName,
+                            receiver,
+                        )
+                    }
                     findTopLevelCallables(callableId.packageName, callableId.callableName).toList()
                 } else {
                     val classSymbol = findClass(classId) ?: return "()"

@@ -100,7 +100,7 @@
 //                                                       ^ reference scip-java maven . . snapshots/Container#mapItems().[R]
 //                                                            ^^^^^ reference scip-java maven . . snapshots/Container#items.
 //                                                            ^^^^^ reference scip-java maven . . snapshots/Container#items.get().
-//                                                                  ^^^^^^^^^^ reference scip-java maven . . kotlin/collections/mapNotNull(+1).
+//                                                                  ^^^^^^^^^^ reference scip-java maven . . kotlin/collections/Iterable#mapNotNull().
 //                                                                             ^^^^^^^^^ reference scip-java maven . . snapshots/Container#mapItems().(transform)
 //               ⌃ enclosing_range_end scip-java maven . . snapshots/Container#mapItems().[R]
 //                                              ⌃ enclosing_range_end scip-java maven . . snapshots/Container#mapItems().(transform)
@@ -138,7 +138,7 @@
 //                                              ^ reference scip-java maven . . snapshots/firstOrSelf().[T]
 //                                                  ^ reference scip-java maven . . snapshots/firstOrSelf().[T]
 //                                                      ^^^^^ reference scip-java maven . . snapshots/firstOrSelf().(items)
-//                                                            ^^^^^^^^^^^ reference scip-java maven . . kotlin/collections/firstOrNull(+19).
+//                                                            ^^^^^^^^^^^ reference scip-java maven . . kotlin/collections/List#firstOrNull().
 //                                                                             ^^^^^^^^ reference scip-java maven . . snapshots/firstOrSelf().(fallback)
 //     ⌃ enclosing_range_end scip-java maven . . snapshots/firstOrSelf().[T]
 //                                 ⌃ enclosing_range_end scip-java maven . . snapshots/firstOrSelf().(items)

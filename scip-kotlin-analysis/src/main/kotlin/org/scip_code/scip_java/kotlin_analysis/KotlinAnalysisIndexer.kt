@@ -140,11 +140,10 @@ class KotlinAnalysisIndexer(
     }
 
     private fun indexFile(ktFile: KtFile): Document {
-        val cache = SymbolsCache()
         val text = ktFile.text
         val lines = LineIndex(text)
         val builder = ScipDocumentBuilder()
-        analyze(ktFile) { ktFile.accept(IndexingVisitor(this, cache, lines, builder)) }
+        analyze(ktFile) { ktFile.accept(IndexingVisitor(this, SymbolsCache(this), lines, builder)) }
         val relativePath =
             ScipShardPaths.relativePath(sourceroot, Paths.get(ktFile.virtualFilePath))
         return builder.build("kotlin", relativePath, text)
