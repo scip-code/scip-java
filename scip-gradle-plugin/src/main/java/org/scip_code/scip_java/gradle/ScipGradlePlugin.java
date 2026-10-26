@@ -212,6 +212,19 @@ public class ScipGradlePlugin implements Plugin<Project> {
                 sources++;
               }
             }
+            // Java sources of the same module are listed too, so Kotlin
+            // references to them resolve. The indexer only emits Kotlin files.
+            try {
+              FileCollection javaSources =
+                  (FileCollection) task.getClass().getMethod("getJavaSources").invoke(task);
+              for (File file : javaSources.getFiles()) {
+                if (file.getName().endsWith(".java")) {
+                  lines.add("source " + file.getAbsolutePath());
+                }
+              }
+            } catch (ReflectiveOperationException exc) {
+              // Kotlin Gradle Plugin without javaSources (pre 1.7).
+            }
             if (sources == 0) {
               return;
             }
