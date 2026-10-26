@@ -85,13 +85,30 @@ class SymbolsCache(private val session: KaSession) {
 
     /**
      * The SCIP symbol of the implicit primary constructor of [classOrObject], which has no PSI of
-     * its own. Explicit constructors go through [symbolForDeclaration].
+     * its own. Explicit constructors go through [symbolForDeclaration]. Local classes get a local
+     * constructor, keyed by their name or `object` keyword.
      */
-    fun implicitConstructorSymbol(classOrObject: KtClassOrObject): Symbol =
-        Symbol.createGlobal(
-            symbolForDeclaration(classOrObject),
-            ScipSymbolDescriptor(Kind.METHOD, "<init>"),
-        )
+    fun implicitConstructorSymbol(classOrObject: KtClassOrObject): Symbol {
+        val owner = symbolForDeclaration(classOrObject)
+        if (owner.isLocal()) {
+            return syntheticLocalSymbol(
+                classOrObject.nameIdentifier
+                    ?: (classOrObject as? KtObjectDeclaration)?.getObjectKeyword()
+                    ?: classOrObject
+            )
+        }
+        return Symbol.createGlobal(owner, ScipSymbolDescriptor(Kind.METHOD, "<init>"))
+    }
+
+    /**
+     * The anonymous class an enum entry body declares, which owns the body's members, as in FIR.
+     * Keyed by the body.
+     */
+    fun enumEntryBodySymbol(entry: KtEnumEntry): Symbol = syntheticLocalSymbol(entry.body ?: entry)
+
+    /** The local constructor of the anonymous class of an enum entry body. */
+    fun enumEntryBodyConstructorSymbol(entry: KtEnumEntry): Symbol =
+        syntheticLocalSymbol(entry.nameIdentifier ?: entry)
 
     /**
      * The synthetic getter/setter of a property (or `val`/`var` constructor parameter) without
@@ -247,12 +264,9 @@ class SymbolsCache(private val session: KaSession) {
         if (declaration is KtFunctionLiteral) return Symbol.NONE
         if (declaration is KtNamedFunction && declaration.name == null) return Symbol.NONE
 
-        // Anonymous objects are global symbols owned by the file's package, mirroring FIR.
+        // Anonymous objects are local, like their members.
         if (declaration is KtObjectDeclaration && declaration.isObjectLiteral()) {
-            return Symbol.createGlobal(
-                packageSymbol(declaration.containingKtFile.packageFqName),
-                scipDescriptor(declaration),
-            )
+            return locals.put(declaration)
         }
 
         if (isLocalMember(declaration)) return locals.put(declaration)
@@ -300,7 +314,9 @@ class SymbolsCache(private val session: KaSession) {
                     ?: Symbol.NONE
             is KtPropertyAccessor -> symbolForDeclaration(declaration.property)
             else ->
-                declaration.containingClassOrObject?.let { symbolForDeclaration(it) }
+                declaration.containingClassOrObject?.let {
+                    if (it is KtEnumEntry) enumEntryBodySymbol(it) else symbolForDeclaration(it)
+                }
                     ?: sourceExtensionReceiver(declaration)?.let {
                         extensionOwnerSymbol(declaration.containingKtFile.packageFqName, it)
                     }
@@ -358,11 +374,6 @@ class SymbolsCache(private val session: KaSession) {
 
     private fun scipDescriptor(declaration: KtDeclaration): ScipSymbolDescriptor =
         when {
-            declaration is KtObjectDeclaration && declaration.isObjectLiteral() ->
-                ScipSymbolDescriptor(
-                    Kind.TYPE,
-                    "<anonymous object at ${declaration.textRange.startOffset}>",
-                )
             declaration is KtEnumEntry ->
                 ScipSymbolDescriptor(Kind.TERM, declaration.name.orEmpty())
             declaration is KtObjectDeclaration && declaration.isCompanion() ->

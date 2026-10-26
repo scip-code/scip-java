@@ -376,8 +376,9 @@ class KotlinAnalysisIndexer(
 
         private fun emitEnumEntry(declaration: KtEnumEntry) {
             val identifier = declaration.nameIdentifier ?: return
+            val symbol = cache.symbolForDeclaration(declaration)
             emitDefinition(
-                symbol = cache.symbolForDeclaration(declaration),
+                symbol = symbol,
                 range = identifier.textRange,
                 kind = Kind.EnumMember,
                 enclosingSymbol = enclosingSymbol(declaration),
@@ -385,6 +386,41 @@ class KotlinAnalysisIndexer(
                 displayName = declaration.name.orEmpty(),
                 signatureText = signatures.propertySignature(declaration),
                 documentation = docComment(declaration),
+            )
+            if (declaration.body != null) emitEnumEntryBody(declaration, symbol, identifier)
+        }
+
+        /**
+         * An enum entry body declares an anonymous subclass of the enum, as in FIR: a local class
+         * and its constructor, both anchored at the entry identifier.
+         */
+        private fun emitEnumEntryBody(
+            declaration: KtEnumEntry,
+            entry: Symbol,
+            identifier: PsiElement,
+        ) {
+            val enumClass = declaration.containingClassOrObject ?: return
+            val anonymousClass = cache.enumEntryBodySymbol(declaration)
+            emitDefinition(
+                symbol = anonymousClass,
+                range = identifier.textRange,
+                kind = Kind.Class,
+                enclosingSymbol = entry,
+                enclosing = declaration.textRange,
+                displayName = "<anonymous>",
+                signatureText = "object : ${enumClass.name.orEmpty()}",
+                documentation = null,
+                relationships = listOf(cache.symbolForDeclaration(enumClass)),
+            )
+            emitDefinition(
+                symbol = cache.enumEntryBodyConstructorSymbol(declaration),
+                range = identifier.textRange,
+                kind = Kind.Constructor,
+                enclosingSymbol = anonymousClass,
+                enclosing = declaration.textRange,
+                displayName = declaration.name.orEmpty(),
+                signatureText = "private constructor(): <anonymous>",
+                documentation = null,
             )
         }
 
@@ -941,6 +977,7 @@ class KotlinAnalysisIndexer(
             for (parent in element.parents) {
                 when (parent) {
                     is KtFunctionLiteral -> return Symbol.NONE
+                    is KtEnumEntry -> return cache.enumEntryBodySymbol(parent)
                     is KtClassOrObject,
                     is KtNamedFunction,
                     is KtConstructor<*>,
