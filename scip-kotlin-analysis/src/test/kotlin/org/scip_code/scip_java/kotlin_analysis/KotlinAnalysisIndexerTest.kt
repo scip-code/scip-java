@@ -104,6 +104,90 @@ class KotlinAnalysisIndexerTest {
         )
     }
 
+    // Compiled by the test build, so references use classpath symbols rather than source PSI.
+    open class Base<T>(open var state: T) {
+        open fun find(value: T): T = value
+
+        fun find(index: Int): T = state
+    }
+
+    open class Middle : Base<String>("")
+
+    class Leaf : Middle()
+
+    class Overriding : Middle() {
+        override var state: String = "override"
+
+        override fun find(value: String): String = value
+    }
+
+    @Test
+    fun `inherited binary members reference their declarations`(@TempDir path: Path) {
+        val sourceroot = path.toRealPath()
+        val library = Paths.get(Leaf::class.java.protectionDomain.codeSource.location.toURI())
+        val code =
+            """
+            package sample
+
+            import org.scip_code.scip_java.kotlin_analysis.KotlinAnalysisIndexerTest.Leaf
+            import org.scip_code.scip_java.kotlin_analysis.KotlinAnalysisIndexerTest.Overriding
+
+            fun use(leaf: Leaf, overriding: Overriding) {
+                leaf.find("value")
+                leaf.find(1)
+                leaf.state = "updated"
+                overriding.find("value")
+                overriding.find(1)
+                overriding.state = "updated"
+            }
+            """
+                .trimIndent()
+        val source = sourceroot.resolve("Use.kt")
+        Files.writeString(source, code)
+        val document =
+            KotlinAnalysisIndexer(
+                    sourceroot = sourceroot,
+                    targetroot = sourceroot.resolve("scip-targetroot"),
+                    sourceRoots = listOf(source),
+                    classpath = listOf(kotlinStdlibJar(), library),
+                )
+                .run()
+                .single()
+        val prefix = "org/scip_code/scip_java/kotlin_analysis/KotlinAnalysisIndexerTest#"
+        val expectedReferences =
+            mapOf(
+                "leaf.find(\"value\")" to setOf("${prefix}Base#find()."),
+                "leaf.find(1)" to setOf("${prefix}Base#find(+1)."),
+                "leaf.state" to
+                    setOf(
+                        "${prefix}Base#state.",
+                        "${prefix}Base#state.get().",
+                        "${prefix}Base#state.set().",
+                    ),
+                "overriding.find(\"value\")" to setOf("${prefix}Overriding#find()."),
+                "overriding.find(1)" to setOf("${prefix}Base#find(+1)."),
+                "overriding.state" to
+                    setOf(
+                        "${prefix}Overriding#state.",
+                        "${prefix}Overriding#state.get().",
+                        "${prefix}Overriding#state.set().",
+                    ),
+            )
+        for ((expression, expected) in expectedReferences) {
+            val line = code.lines().indexOfFirst { expression in it }
+            val start = code.lines()[line].indexOf(expression) + expression.indexOf('.') + 1
+            val actual =
+                document.occurrencesList
+                    .filter {
+                        it.singleLineRange.line == line &&
+                            it.singleLineRange.startCharacter == start
+                    }
+                    .map { it.symbol }
+                    .toSet()
+            assertEquals(expected, actual, expression)
+        }
+    }
+
     @Test
     fun `classes and properties are not overloads of same-named functions`(@TempDir path: Path) {
         val document =
