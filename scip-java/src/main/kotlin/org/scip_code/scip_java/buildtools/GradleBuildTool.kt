@@ -49,7 +49,7 @@ This means our SCIP compiler plugin was not attached to one or more JavaCompile 
   2. Another Gradle plugin is replacing the compiler arguments we add (rather than appending).
      Verify with:  ./gradlew compileJava --info | grep -- '-Xplugin:scip'
      If '-Xplugin:scip' is missing from the printed javac command, another plugin
-     is overwriting JavaCompile.options.compilerArgs.
+     is overwriting JavaCompile.options.compilerArgumentProviders.
 """
         )
         return 1
