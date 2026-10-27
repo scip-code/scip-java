@@ -1,5 +1,6 @@
 package tests
 
+import com.sourcegraph.scip_java.BuildInfo
 import com.sourcegraph.scip_java.buildtools.SbtBuildTool
 import com.sourcegraph.scip_java.buildtools.SbtVersionParser
 
@@ -43,4 +44,12 @@ class SbtVersionParserSuite extends munit.FunSuite {
     checkFailed("")
   }
 
+  test("sbt-sourcegraph version") {
+    import SbtBuildTool.{sbtSourcegraphVersion => pick}
+    assertEquals(pick(Some("1.3.3")), "0.4.3")
+    assertEquals(pick(Some("1.8.3")), "0.4.3")
+    assertEquals(pick(Some("1.9.0")), BuildInfo.sbtSourcegraphVersion)
+    assertEquals(pick(Some("1.10.0-RC1")), BuildInfo.sbtSourcegraphVersion)
+    assertEquals(pick(None), BuildInfo.sbtSourcegraphVersion)
+  }
 }

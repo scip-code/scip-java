@@ -96,7 +96,7 @@ class SbtBuildTool(index: IndexCommand) extends BuildTool("sbt", index) {
       .workingDirectory
       .resolve("project")
       .resolve("sourcegraph_generated.sbt")
-    val version = BuildInfo.sbtSourcegraphVersion
+    val version = SbtBuildTool.sbtSourcegraphVersion(sbtVersion())
     AutoDeletedFile.fromPath(
       addSbtPluginFile,
       s"""addSbtPlugin("com.sourcegraph" % "sbt-sourcegraph" % "$version")
@@ -106,6 +106,18 @@ class SbtBuildTool(index: IndexCommand) extends BuildTool("sbt", index) {
 }
 
 object SbtBuildTool {
+  // sbt-sourcegraph 0.4.4 is published to Maven Central only under the
+  // Maven-compatible file names that sbt 1.9 introduced, so earlier sbt
+  // versions cannot download it. 0.4.3, the version that scip-java 0.11.x
+  // used, is also published under the legacy names.
+  def sbtSourcegraphVersion(sbtVersion: Option[String]): String =
+    sbtVersion.map(SbtVersionParser.versionSegments) match {
+      case Some(1 :: minor :: _) if minor < 9 =>
+        "0.4.3"
+      case _ =>
+        BuildInfo.sbtSourcegraphVersion
+    }
+
   def isSupportedSbtVersion(version: String): Either[String, Boolean] = {
     SbtVersionParser.versionSegments(version) match {
       case major :: minor :: _ :: _ =>
