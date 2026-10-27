@@ -126,6 +126,92 @@ class KotlinAnalysisIndexerTest {
     }
 
     @Test
+    fun `synthetic members of local classes have distinct local symbols`(@TempDir path: Path) {
+        val code =
+            """
+            package sample
+
+            fun use() {
+                data class First(var version: Int, val label: String)
+                data class Second(val version: Int)
+                val first = First(1, "one")
+                val second = Second(2)
+                first.version = 3
+                println(second.version)
+                first.copy()
+                second.copy()
+                first.component1()
+                first.component2()
+                second.component1()
+                val list = object : java.util.ArrayList<String>() {}
+                list.clear()
+            }
+            """
+                .trimIndent()
+        val document = compileScip(path, code)
+        val locals = document.symbolsList.filter { it.symbol.startsWith("local ") }
+        val allSymbols =
+            document.occurrencesList.map { it.symbol } +
+                document.symbolsList.flatMap {
+                    listOf(it.symbol, it.enclosingSymbol) + it.relationshipsList.map { it.symbol }
+                }
+        assertTrue(
+            allSymbols.filter { it.startsWith("local ") }.all { it.matches(Regex("local [0-9]+")) },
+            "malformed locals: ${allSymbols.filter { it.startsWith("local ") }.distinct()}",
+        )
+        assertEquals(locals.size, locals.map { it.symbol }.distinct().size)
+        val localDefinitions = definitions(document).filter { it.startsWith("local ") }.toSet()
+        assertTrue(
+            references(document).filter { it.startsWith("local ") }.all { it in localDefinitions }
+        )
+
+        for ((className, receiver) in listOf("First" to "first", "Second" to "second")) {
+            val owner = locals.single { it.kind == Kind.Class && it.displayName == className }
+            val members = locals.filter { it.enclosingSymbol == owner.symbol }
+            val property =
+                members.single { it.kind == Kind.Property && it.displayName == "version" }
+            val accessors = locals.filter { it.enclosingSymbol == property.symbol }
+            assertEquals(if (className == "First") 2 else 1, accessors.size)
+            if (className == "First") {
+                val setter = accessors.single { it.signatureDocumentation.text.contains("set(") }
+                assertEquals(
+                    1,
+                    locals.count {
+                        it.enclosingSymbol == setter.symbol && it.kind == Kind.Parameter
+                    },
+                )
+            }
+            val copy = members.single { it.kind == Kind.Method && it.displayName == "copy" }
+            assertEquals(
+                if (className == "First") setOf("version", "label") else setOf("version"),
+                locals.filter { it.enclosingSymbol == copy.symbol }.map { it.displayName }.toSet(),
+            )
+            val expectedReferences =
+                mapOf(
+                    "$receiver.version" to (setOf(property.symbol) + accessors.map { it.symbol }),
+                    "$receiver.copy()" to setOf(copy.symbol),
+                ) +
+                    members
+                        .filter { it.displayName.startsWith("component") }
+                        .associate { "$receiver.${it.displayName}()" to setOf(it.symbol) }
+            assertEquals(if (className == "First") 4 else 3, expectedReferences.size)
+            for ((expression, expected) in expectedReferences) {
+                val line = code.lines().indexOfFirst { expression in it }
+                val start = code.lines()[line].indexOf(expression) + receiver.length + 1
+                val actual =
+                    document.occurrencesList
+                        .filter {
+                            it.singleLineRange.line == line &&
+                                it.singleLineRange.startCharacter == start
+                        }
+                        .map { it.symbol }
+                        .toSet()
+                assertEquals(expected, actual, expression)
+            }
+        }
+    }
+
+    @Test
     fun `local classes`(@TempDir path: Path) {
         val document =
             compileScip(
