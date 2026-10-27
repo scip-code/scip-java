@@ -2,7 +2,11 @@
 set -eux
 curl -fLo /usr/local/bin/coursier https://github.com/coursier/coursier/releases/download/v2.1.5/coursier
 chmod +x /usr/local/bin/coursier
-coursier setup --yes --apps coursier,sbt
+# Pin the launchers that the 0.12.3 image shipped with. coursier 2.1.26 and
+# later need Java 17, but scip-java-docker-script.sh runs coursier on the JDK
+# selected by the previous attempt, so a newer coursier breaks falling back to
+# JDK 8. Without a version, sbt would also move to the sbt 2 runner.
+coursier setup --yes --apps coursier:2.1.25-M24,sbt:1.12.8
 
 curl -fLo maven.zip https://archive.apache.org/dist/maven/maven-3/3.9.1/binaries/apache-maven-3.9.1-bin.zip 
 unzip -d /opt/maven maven.zip
