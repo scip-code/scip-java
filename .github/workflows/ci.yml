@@ -159,7 +159,7 @@ jobs:
           echo "SCIP_JAVA_CLI=$PWD/out/bin/scip-java" >> $GITHUB_ENV
 
       - run: |
-          mvn clean verify -DskipTests -Dscip-java.version=$SCIP_JAVA_VERSION sourcegraph:sourcegraphDependencies
+          mvn clean verify -DskipTests -Dscip-java.version=$SCIP_JAVA_VERSION com.sourcegraph:maven-plugin:$SCIP_JAVA_VERSION:sourcegraphDependencies
         working-directory: examples/maven-example
 
       - run: $SCIP_JAVA_CLI index-semanticdb target/semanticdb-targetroot
