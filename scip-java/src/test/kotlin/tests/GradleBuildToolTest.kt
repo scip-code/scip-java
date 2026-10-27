@@ -82,6 +82,15 @@ class GradleBuildToolTest : BuildToolHarness() {
                 expectedScipFiles = 1,
             )
         )
+        // Regression test: a build that replaces compilerArgs after the plugin
+        // ran must still load the SCIP javac plugin.
+        add(
+            checkGradleBuild(
+                "replaced-compiler-args",
+                "gradle/replaced-compiler-args",
+                expectedScipFiles = 1,
+            )
+        )
         add(
             checkGradleBuild(
                 "publishing",

@@ -9,7 +9,10 @@ import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.initialization.Settings;
 import org.gradle.api.internal.GradleInternal;
+import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.compile.CompileOptions;
 import org.gradle.api.tasks.compile.JavaCompile;
+import org.gradle.process.CommandLineArgumentProvider;
 
 public class ScipGradlePlugin implements Plugin<Project> {
 
@@ -61,35 +64,26 @@ public class ScipGradlePlugin implements Plugin<Project> {
                 task.getOptions().setIncremental(false);
 
                 if (pluginAdded) {
-                  // Groovy build scripts can append interpolated strings
-                  // (GString) to compilerArgs, so despite the List<String>
-                  // signature the list may hold non-String elements. Iterate
-                  // through a wildcard reference so elements are not implicitly
-                  // cast to String, which throws ClassCastException (issue
-                  // #801).
-                  List<?> args = task.getOptions().getCompilerArgs();
-
-                  // It's important we don't add the plugin configuration more
-                  // than once, as javac considers that an error.
-                  boolean alreadyAdded =
-                      args.stream()
-                          .anyMatch(arg -> String.valueOf(arg).startsWith("-Xplugin:scip"));
-                  if (!alreadyAdded) {
-                    // The random timestamp ensures the sources are _always_
-                    // recompiled, so Gradle doesn't cache any state.
-                    // TODO: before this plugin is published to Maven Central, we
-                    // will need to revert this change - as it can have
-                    // detrimental effect on people's builds.
-                    task.getOptions()
-                        .getCompilerArgs()
-                        .add(
-                            "-Xplugin:scip -targetroot:"
-                                + targetRoot
-                                + " -sourceroot:"
-                                + sourceRoot
-                                + " -randomtimestamp="
-                                + System.nanoTime());
-                  }
+                  // An argument provider rather than compilerArgs, because builds
+                  // may replace compilerArgs after we run (Spring's conventions
+                  // call setCompilerArgs in afterEvaluate), which would silently
+                  // drop the plugin.
+                  // The random timestamp ensures the sources are _always_
+                  // recompiled, so Gradle doesn't cache any state.
+                  // TODO: before this plugin is published to Maven Central, we
+                  // will need to revert this change - as it can have
+                  // detrimental effect on people's builds.
+                  task.getOptions()
+                      .getCompilerArgumentProviders()
+                      .add(
+                          new JavacPluginArgument(
+                              task.getOptions(),
+                              "-Xplugin:scip -targetroot:"
+                                  + targetRoot
+                                  + " -sourceroot:"
+                                  + sourceRoot
+                                  + " -randomtimestamp="
+                                  + System.nanoTime()));
                 }
               });
     }
@@ -214,5 +208,36 @@ public class ScipGradlePlugin implements Plugin<Project> {
           name + " extra property must be set by the scip-java Gradle init script");
     }
     return value;
+  }
+
+  /** Passes the SCIP javac plugin argument, unless the build already passes one itself. */
+  private static class JavacPluginArgument implements CommandLineArgumentProvider {
+    private final CompileOptions options;
+    private final String argument;
+
+    JavacPluginArgument(CompileOptions options, String argument) {
+      this.options = options;
+      this.argument = argument;
+    }
+
+    @Input
+    public String getArgument() {
+      return argument;
+    }
+
+    @Override
+    public Iterable<String> asArguments() {
+      // Groovy build scripts can append interpolated strings (GString) to
+      // compilerArgs, so despite the List<String> signature the list may hold
+      // non-String elements. Iterate through a wildcard reference so elements
+      // are not implicitly cast to String, which throws ClassCastException
+      // (issue #801).
+      List<?> args = options.getCompilerArgs();
+
+      // javac rejects the plugin configuration if it's given more than once.
+      boolean alreadyAdded =
+          args.stream().anyMatch(arg -> String.valueOf(arg).startsWith("-Xplugin:scip"));
+      return alreadyAdded ? List.of() : List.of(argument);
+    }
   }
 }
