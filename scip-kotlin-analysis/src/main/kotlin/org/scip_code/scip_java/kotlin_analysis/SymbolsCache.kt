@@ -56,8 +56,14 @@ import org.scip_code.scip_java.shared.LocalSymbolsCache as SharedLocalSymbolsCac
 class SymbolsCache(private val session: KaSession) {
     private val globals = HashMap<PsiElement, Symbol>()
     private val packages = HashMap<FqName, Symbol>()
-    private val locals =
-        SharedLocalSymbolsCache<PsiElement, Symbol>(HashMap()) { Symbol.createLocal(it) }
+    private val locals = SharedLocalSymbolsCache<Any, Symbol>(HashMap()) { Symbol.createLocal(it) }
+
+    /** Synthetic members of locals need their own IDs, not global descriptor suffixes. */
+    private fun memberSymbol(owner: Symbol, descriptor: ScipSymbolDescriptor): Symbol {
+        if (!owner.isLocal()) return Symbol.createGlobal(owner, descriptor)
+        val key = owner to descriptor
+        return locals.get(key) ?: locals.put(key)
+    }
 
     fun packageSymbol(fqName: FqName): Symbol {
         if (fqName.isRoot) return Symbol.ROOT_PACKAGE
@@ -122,11 +128,11 @@ class SymbolsCache(private val session: KaSession) {
 
     /** The getter or setter of [property] (`Class#banana.get().`, `Class#banana.set().`). */
     fun accessorSymbol(property: Symbol, setter: Boolean): Symbol =
-        Symbol.createGlobal(property, accessorDescriptor(setter))
+        memberSymbol(property, accessorDescriptor(setter))
 
     /** The property symbol declared by a `val`/`var` constructor parameter (`Class#banana.`). */
     fun parameterPropertySymbol(parameter: KtParameter): Symbol =
-        Symbol.createGlobal(
+        memberSymbol(
             propertyOwnerSymbol(parameter),
             ScipSymbolDescriptor(Kind.TERM, parameter.name.orEmpty()),
         )
@@ -155,15 +161,15 @@ class SymbolsCache(private val session: KaSession) {
 
     /** Symbol of a compiler-generated member method (enum `values()`, data-class `copy()`, …). */
     fun memberMethodSymbol(owner: KtClassOrObject, name: String): Symbol =
-        Symbol.createGlobal(symbolForDeclaration(owner), ScipSymbolDescriptor(Kind.METHOD, name))
+        memberSymbol(symbolForDeclaration(owner), ScipSymbolDescriptor(Kind.METHOD, name))
 
     /** Symbol of a compiler-generated member property (enum `entries`). */
     fun memberTermSymbol(owner: KtClassOrObject, name: String): Symbol =
-        Symbol.createGlobal(symbolForDeclaration(owner), ScipSymbolDescriptor(Kind.TERM, name))
+        memberSymbol(symbolForDeclaration(owner), ScipSymbolDescriptor(Kind.TERM, name))
 
     /** Symbol of a parameter of a compiler-generated method. */
     fun methodParameterSymbol(method: Symbol, name: String): Symbol =
-        Symbol.createGlobal(method, ScipSymbolDescriptor(Kind.PARAMETER, name))
+        memberSymbol(method, ScipSymbolDescriptor(Kind.PARAMETER, name))
 
     /**
      * A per-document local symbol for a compiler-generated declaration without dedicated PSI
@@ -178,7 +184,7 @@ class SymbolsCache(private val session: KaSession) {
 
     /** The `(value)` parameter symbol of a synthetic setter. */
     fun syntheticSetterValueSymbol(property: KtDeclaration): Symbol =
-        Symbol.createGlobal(
+        memberSymbol(
             syntheticAccessorSymbol(property, setter = true),
             ScipSymbolDescriptor(Kind.PARAMETER, "value"),
         )
@@ -216,6 +222,14 @@ class SymbolsCache(private val session: KaSession) {
                     psi !is KtPropertyAccessor &&
                     psi !is KtFunctionLiteral
             ) {
+                // Generated functions of local classes have no callable ID. Use
+                // the same owner/name key as their synthetic definitions.
+                if (target is KaNamedFunctionSymbol) {
+                    val owner = with(session) { target.containingSymbol?.psi } as? KtClassOrObject
+                    if (owner != null && symbolForDeclaration(owner).isLocal()) {
+                        return memberMethodSymbol(owner, target.name.asString())
+                    }
+                }
                 return externalCallableSymbol(session, target)
             }
             if (target is KaCallableSymbol && psi is KtClassOrObject) {
