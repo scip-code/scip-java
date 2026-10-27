@@ -1,26 +1,52 @@
 name: Release Docker
+
+# Maintenance releases of 0.12.x, the last line that supports JDK 8 and sbt.
+# They are published to GHCR under their own version only. `latest` belongs to
+# the current release line on main and must never point at this branch.
 on:
   push:
-    branches:
-      - main
-    tags: ["*"]
+    tags: ["v0.12.*"]
+
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
+
+      - name: Resolve Docker tag
+        id: tag
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          version="${GITHUB_REF_NAME#v}"
+          if [[ ! "$version" =~ ^0\.12\.[0-9]+(-rc\.[0-9]+)?$ ]]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} is not a 0.12.x maintenance release"
+            exit 1
+          fi
+          echo "tag=ghcr.io/scip-code/scip-java:${version}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v4
         with:
-          fetch-depth: 0
-      - uses: actions/setup-java@v3
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # linux/amd64 only, like the 0.12.3 image.
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v7
         with:
-          distribution: 'temurin'
-          java-version: 8
-          cache: 'sbt'
-      - uses: sbt/setup-sbt@v1
-      - uses: docker/setup-buildx-action@v1
-      - name: Login to DockerHub
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-      - run: DOCKER_BUILDKIT=0 sbt cli/dockerBuildAndPush
+          context: .
+          push: true
+          platforms: linux/amd64
+          tags: ${{ steps.tag.outputs.tag }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/scip-code/scip-java
+            org.opencontainers.image.revision=${{ github.sha }}
