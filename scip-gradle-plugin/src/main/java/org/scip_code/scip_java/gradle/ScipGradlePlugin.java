@@ -130,7 +130,9 @@ public class ScipGradlePlugin implements Plugin<Project> {
   private static boolean hasAnnotationProcessors(Project project, String configurationName) {
     try {
       Configuration config = project.getConfigurations().getByName(configurationName);
-      return config.isCanBeResolved() && !config.getDependencies().isEmpty();
+      // All dependencies, including inherited ones: the Error Prone Gradle
+      // plugin makes annotationProcessor extend its own configuration.
+      return config.isCanBeResolved() && !config.getAllDependencies().isEmpty();
     } catch (Exception exc) {
       return false;
     }

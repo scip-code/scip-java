@@ -68,6 +68,15 @@ class GradleBuildToolTest : BuildToolHarness() {
                 expectedScipFiles = 2,
             )
         )
+        // Regression test: processors inherited from another configuration (as
+        // with the Error Prone Gradle plugin) also make Gradle pass -processorpath.
+        add(
+            checkGradleBuild(
+                "inherited-annotation-path",
+                "gradle/inherited-annotation-path",
+                expectedScipFiles = 2,
+            )
+        )
         add(
             checkGradleBuild("build-with-Werror", "gradle/build-with-Werror", expectedScipFiles = 2)
         )
