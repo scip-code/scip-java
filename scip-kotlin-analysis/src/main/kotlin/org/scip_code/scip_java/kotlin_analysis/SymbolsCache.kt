@@ -473,7 +473,9 @@ class SymbolsCache(private val session: KaSession) {
      * callables of their container — mirroring FIR, which consulted the class's declared members or
      * the top-level symbol provider (e.g. `kotlin/collections/forEachIndexed(+9).`).
      */
-    private fun externalCallableSymbol(session: KaSession, target: KaCallableSymbol): Symbol {
+    private fun externalCallableSymbol(session: KaSession, resolved: KaCallableSymbol): Symbol {
+        // Inherited members must use their declaration's owner and overload number.
+        val target = with(session) { resolved.fakeOverrideOriginal }
         val callableId = target.callableId ?: return Symbol.NONE
         val owner =
             callableId.classId?.let(::classSymbol)
