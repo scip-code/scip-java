@@ -2,6 +2,10 @@
 //        ^^^^^^^^^ reference scip-java maven . . snapshots/
   
 //⌄ enclosing_range_start scip-java maven . . snapshots/Point#
+//⌄ enclosing_range_start scip-java maven . . snapshots/Point#equals().
+//⌄ enclosing_range_start scip-java maven . . snapshots/Point#equals().(other)
+//⌄ enclosing_range_start scip-java maven . . snapshots/Point#hashCode().
+//⌄ enclosing_range_start scip-java maven . . snapshots/Point#toString().
 //           ⌄ enclosing_range_start scip-java maven . . snapshots/Point#`<init>`().
 //                ⌄ enclosing_range_start scip-java maven . . snapshots/Point#copy().
 //                 ⌄ enclosing_range_start scip-java maven . . snapshots/Point#`<init>`().(x)
@@ -25,6 +29,29 @@
 //                 display_name Point
 //                 signature_documentation
 //                 > public constructor(x: Int, y: Int): Point
+//           ^^^^^ definition scip-java maven . . snapshots/Point#equals().
+//                 kind Method
+//                 display_name equals
+//                 signature_documentation
+//                 > public open override operator fun equals(other: Any?): Boolean
+//                 relationship scip-java maven . . kotlin/Any#equals(). implementation
+//           ^^^^^ definition scip-java maven . . snapshots/Point#equals().(other)
+//                 kind Parameter
+//                 display_name other
+//                 signature_documentation
+//                 > other: Any?
+//           ^^^^^ definition scip-java maven . . snapshots/Point#hashCode().
+//                 kind Method
+//                 display_name hashCode
+//                 signature_documentation
+//                 > public open override fun hashCode(): Int
+//                 relationship scip-java maven . . kotlin/Any#hashCode(). implementation
+//           ^^^^^ definition scip-java maven . . snapshots/Point#toString().
+//                 kind Method
+//                 display_name toString
+//                 signature_documentation
+//                 > public open override fun toString(): String
+//                 relationship scip-java maven . . kotlin/Any#toString(). implementation
 //                ^^^^^^^^^^^^^^^^^^^^^^^^ definition scip-java maven . . snapshots/Point#copy().
 //                                         kind Method
 //                                         display_name copy
@@ -103,6 +130,10 @@
 //                                      ⌃ enclosing_range_end scip-java maven . . snapshots/Point#copy().(y)
 //                                       ⌃ enclosing_range_end scip-java maven . . snapshots/Point#
 //                                       ⌃ enclosing_range_end scip-java maven . . snapshots/Point#`<init>`().
+//                                       ⌃ enclosing_range_end scip-java maven . . snapshots/Point#equals().
+//                                       ⌃ enclosing_range_end scip-java maven . . snapshots/Point#equals().(other)
+//                                       ⌃ enclosing_range_end scip-java maven . . snapshots/Point#hashCode().
+//                                       ⌃ enclosing_range_end scip-java maven . . snapshots/Point#toString().
 //                                       ⌃ enclosing_range_end scip-java maven . . snapshots/Point#copy().
   
 //⌄ enclosing_range_start scip-java maven . . snapshots/destructure().

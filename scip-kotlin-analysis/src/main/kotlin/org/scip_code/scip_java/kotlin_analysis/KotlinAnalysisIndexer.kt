@@ -16,7 +16,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.project.structure.builder.buildKtLibraryModule
 import org.jetbrains.kotlin.analysis.project.structure.builder.buildKtSdkModule
@@ -325,6 +327,52 @@ class KotlinAnalysisIndexer(
                         signatureText = signatures.dataCopySignature(declaration),
                         documentation = null,
                     )
+                }
+                emitDataClassObjectMethods(declaration, range)
+            }
+        }
+
+        /** Emit only methods Kotlin generates, not explicit or inherited final implementations. */
+        private fun emitDataClassObjectMethods(declaration: KtClass, range: TextRange) {
+            with(session) {
+                val owner = declaration.symbol as? KaClassSymbol ?: return@with
+                val scope = owner.memberScope
+                for (name in listOf("equals", "hashCode", "toString")) {
+                    for (method in
+                        scope
+                            .callables(Name.identifier(name))
+                            .filterIsInstance<KaNamedFunctionSymbol>()) {
+                        if (method.origin != KaSymbolOrigin.SOURCE_MEMBER_GENERATED) continue
+                        // Use reference resolution so same-named overloads get the same numbering.
+                        val symbol = cache.symbolForReference(session, method)
+                        emitDefinition(
+                            symbol = symbol,
+                            range = range,
+                            kind = Kind.Method,
+                            enclosingSymbol = cache.symbolForDeclaration(declaration),
+                            enclosing = declaration.textRange,
+                            displayName = name,
+                            signatureText = signatures.generatedFunctionSignature(method),
+                            documentation = null,
+                            relationships =
+                                method.directlyOverriddenSymbols
+                                    .map { cache.symbolForReference(session, it) }
+                                    .toList(),
+                        )
+                        for (parameter in method.valueParameters) {
+                            emitDefinition(
+                                symbol =
+                                    cache.methodParameterSymbol(symbol, parameter.name.asString()),
+                                range = range,
+                                kind = Kind.Parameter,
+                                enclosingSymbol = symbol,
+                                enclosing = declaration.textRange,
+                                displayName = parameter.name.asString(),
+                                signatureText = signatures.parameterSignature(parameter),
+                                documentation = null,
+                            )
+                        }
+                    }
                 }
             }
         }

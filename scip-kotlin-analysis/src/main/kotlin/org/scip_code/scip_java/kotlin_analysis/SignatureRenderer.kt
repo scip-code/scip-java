@@ -4,6 +4,8 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -112,6 +114,23 @@ internal class SignatureRenderer(private val session: KaSession) {
 
     fun dataCopyParameterSignature(parameter: KtParameter): String =
         "${parameter.name.orEmpty()}: ${parameter.typeReference?.text ?: "Any"} = ..."
+
+    fun generatedFunctionSignature(function: KaNamedFunctionSymbol): String =
+        with(session) {
+            val parameters = function.valueParameters.joinToString(", ") { parameterSignature(it) }
+            val returnType =
+                function.returnType.render(
+                    KaTypeRendererForSource.WITH_SHORT_NAMES,
+                    position = Variance.INVARIANT,
+                )
+            val operator = if (function.isOperator) "operator " else ""
+            return "public ${function.modality.name.lowercase()} override ${operator}fun ${function.name}($parameters): $returnType"
+        }
+
+    fun parameterSignature(parameter: KaValueParameterSymbol): String =
+        with(session) {
+            "${parameter.name}: ${parameter.returnType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)}"
+        }
 
     fun whenSubjectSignature(type: String): String = "local val <when-subject>: $type"
 
