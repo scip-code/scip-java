@@ -210,6 +210,61 @@ class KotlinAnalysisIndexerTest {
     }
 
     @Test
+    fun `data class object methods are defined only when generated`(@TempDir path: Path) {
+        val document =
+            compileScip(
+                path,
+                """
+            package sample
+
+            data class Generated(val value: Int) {
+                fun equals(value: Int): Boolean = this.value == value
+                fun hashCode(seed: Int): Int = seed
+                fun toString(prefix: String): String = prefix
+            }
+            data class Explicit(val value: Int) {
+                override fun equals(other: Any?): Boolean = false
+                override fun hashCode(): Int = value
+                override fun toString(): String = "explicit"
+            }
+            open class FinalBase {
+                final override fun equals(other: Any?): Boolean = false
+                final override fun hashCode(): Int = 1
+                final override fun toString(): String = "inherited"
+            }
+            data class Inherited(val value: Int) : FinalBase()
+            fun use(generated: Generated, explicit: Explicit, inherited: Inherited) {
+                generated.equals(null)
+                generated.hashCode()
+                generated.toString()
+                explicit.equals(null)
+                explicit.hashCode()
+                explicit.toString()
+                inherited.equals(null)
+                inherited.hashCode()
+                inherited.toString()
+            }
+        """,
+            )
+        val defined = definitions(document)
+        for (name in listOf("equals", "hashCode", "toString")) {
+            // Same-named overloads must not suppress or collide with the generated method.
+            for (symbol in
+                listOf(
+                    "sample/Generated#$name(+1).",
+                    "sample/Explicit#$name().",
+                    "sample/FinalBase#$name().",
+                )) {
+                assertEquals(1, defined.count { it == symbol }, symbol)
+                assertContains(references(document), symbol)
+            }
+            assertContains(defined, "sample/Generated#$name().")
+            assertTrue(defined.none { it.startsWith("sample/Inherited#$name(") })
+        }
+        assertContains(defined, "sample/Generated#equals(+1).(other)")
+    }
+
+    @Test
     fun `synthetic members of local classes have distinct local symbols`(@TempDir path: Path) {
         val code =
             """
@@ -227,6 +282,12 @@ class KotlinAnalysisIndexerTest {
                 first.component1()
                 first.component2()
                 second.component1()
+                first.equals(null)
+                first.hashCode()
+                first.toString()
+                second.equals(null)
+                second.hashCode()
+                second.toString()
                 val list = object : java.util.ArrayList<String>() {}
                 list.clear()
             }
@@ -274,11 +335,16 @@ class KotlinAnalysisIndexerTest {
                 mapOf(
                     "$receiver.version" to (setOf(property.symbol) + accessors.map { it.symbol }),
                     "$receiver.copy()" to setOf(copy.symbol),
+                    "$receiver.equals(null)" to
+                        setOf(members.single { it.displayName == "equals" }.symbol),
                 ) +
                     members
-                        .filter { it.displayName.startsWith("component") }
+                        .filter {
+                            it.displayName.startsWith("component") ||
+                                it.displayName in setOf("hashCode", "toString")
+                        }
                         .associate { "$receiver.${it.displayName}()" to setOf(it.symbol) }
-            assertEquals(if (className == "First") 4 else 3, expectedReferences.size)
+            assertEquals(if (className == "First") 7 else 6, expectedReferences.size)
             for ((expression, expected) in expectedReferences) {
                 val line = code.lines().indexOfFirst { expression in it }
                 val start = code.lines()[line].indexOf(expression) + receiver.length + 1

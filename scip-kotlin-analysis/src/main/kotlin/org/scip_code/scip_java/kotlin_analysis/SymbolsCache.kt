@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.name.ClassId
@@ -521,6 +522,11 @@ class SymbolsCache(private val session: KaSession) {
                 }
             }
         val index = overloads.indexOfFirst { it == target }
+        // Source declaredMemberScope omits generated Any overrides. They follow
+        // the explicit overloads in the compiled class, rather than sharing index 0.
+        if (index < 0 && target.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED) {
+            return if (overloads.isEmpty()) "()" else "(+${overloads.size})"
+        }
         return if (index <= 0) "()" else "(+$index)"
     }
 }
