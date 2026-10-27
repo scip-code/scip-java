@@ -10,6 +10,8 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.initialization.Settings;
 import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.SourceSet;
+import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.compile.CompileOptions;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.process.CommandLineArgumentProvider;
@@ -121,11 +123,11 @@ public class ScipGradlePlugin implements Plugin<Project> {
   /**
    * javac discovers {@code -Xplugin:} plugins from the annotation processor path when {@code
    * -processorpath} is set, and only falls back to the classpath when it isn't. Gradle populates
-   * {@code -processorpath} from the {@code annotationProcessor} (main) and {@code
-   * testAnnotationProcessor} (test) configurations, so whenever one of them declares a processor we
-   * must add the SCIP javac plugin to that same configuration or the corresponding compile task
-   * fails with "plug-in not found: scip". The two configurations are independent (test does not
-   * extend main), so each is checked separately.
+   * {@code -processorpath} from each source set's annotation processor configuration ({@code
+   * annotationProcessor} for main, {@code testAnnotationProcessor} for test), so whenever one of
+   * them declares a processor we must add the SCIP javac plugin to that same configuration or the
+   * corresponding compile task fails with "plug-in not found: scip". The configurations are
+   * independent (test does not extend main), so each is checked separately.
    */
   private static boolean hasAnnotationProcessors(Project project, String configurationName) {
     try {
@@ -140,13 +142,14 @@ public class ScipGradlePlugin implements Plugin<Project> {
 
   private static boolean tryAddJavacPlugin(Project project, Object javacPluginDep) {
     try {
-      project.getDependencies().add("compileOnly", javacPluginDep);
-      project.getDependencies().add("testCompileOnly", javacPluginDep);
-      if (hasAnnotationProcessors(project, "annotationProcessor")) {
-        project.getDependencies().add("annotationProcessor", javacPluginDep);
-      }
-      if (hasAnnotationProcessors(project, "testAnnotationProcessor")) {
-        project.getDependencies().add("testAnnotationProcessor", javacPluginDep);
+      // Every source set, not just main and test: the plugin argument is added
+      // to every JavaCompile task.
+      for (SourceSet sourceSet : project.getExtensions().getByType(SourceSetContainer.class)) {
+        project.getDependencies().add(sourceSet.getCompileOnlyConfigurationName(), javacPluginDep);
+        String processors = sourceSet.getAnnotationProcessorConfigurationName();
+        if (hasAnnotationProcessors(project, processors)) {
+          project.getDependencies().add(processors, javacPluginDep);
+        }
       }
       return true;
     } catch (Exception exc) {

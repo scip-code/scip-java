@@ -100,6 +100,11 @@ class GradleBuildToolTest : BuildToolHarness() {
                 expectedScipFiles = 1,
             )
         )
+        // Regression test: source sets other than main and test need the SCIP
+        // javac plugin on their classpath too.
+        add(
+            checkGradleBuild("custom-source-set", "gradle/custom-source-set", expectedScipFiles = 2)
+        )
         add(
             checkGradleBuild(
                 "publishing",
