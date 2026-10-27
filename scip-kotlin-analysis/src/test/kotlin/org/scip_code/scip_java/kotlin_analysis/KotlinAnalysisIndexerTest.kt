@@ -105,6 +105,27 @@ class KotlinAnalysisIndexerTest {
     }
 
     @Test
+    fun `classes and properties are not overloads of same-named functions`(@TempDir path: Path) {
+        val document =
+            compileScip(
+                path,
+                """
+                    package sample
+
+                    class Offset(val seconds: Int) {
+                        val shift: Int = 0
+                        fun shift(by: Int): Int = by
+                    }
+
+                    fun Offset(): Offset = Offset(0)
+                """,
+            )
+
+        // References to compiled classes number only functions, as does javac.
+        assertContainsAll(definitions(document), "sample/Offset().", "sample/Offset#shift().")
+    }
+
+    @Test
     fun `local classes`(@TempDir path: Path) {
         val document =
             compileScip(

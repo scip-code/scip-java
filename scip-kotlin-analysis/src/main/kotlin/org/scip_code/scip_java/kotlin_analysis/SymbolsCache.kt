@@ -26,7 +26,6 @@ import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
@@ -404,8 +403,9 @@ class SymbolsCache(private val session: KaSession) {
         }
 
     /**
-     * Port of FIR's `methodDisambiguator`: the N-th preceding declaration with the same name in the
-     * containing scope yields `(+N)`, the first one yields `()`.
+     * Port of FIR's `methodDisambiguator`: the N-th preceding function with the same name in the
+     * containing scope yields `(+N)`, the first one yields `()`. Classes and properties of the same
+     * name don't count, as in [externalMethodDisambiguator] and the javac indexer.
      */
     private fun methodDisambiguator(function: KtNamedFunction): String {
         val name = function.name ?: return "()"
@@ -427,7 +427,7 @@ class SymbolsCache(private val session: KaSession) {
                 found = true
                 break
             }
-            if (declaredName(sibling) == name) count++
+            if (sibling is KtNamedFunction && sibling.name == name) count++
         }
         if (count == 0 || !found) return "()"
         return "(+$count)"
@@ -446,13 +446,6 @@ class SymbolsCache(private val session: KaSession) {
         when (val containingClass = declaration.containingClassOrObject) {
             null -> declaration.containingKtFile.declarations
             else -> listOfNotNull(containingClass.primaryConstructor) + containingClass.declarations
-        }
-
-    private fun declaredName(declaration: KtDeclaration): String? =
-        when (declaration) {
-            is KtConstructor<*> -> "<init>"
-            is KtNamedDeclaration -> declaration.name
-            else -> null
         }
 
     private fun ownerDeclarationOfParameter(parameter: KtParameter): KtDeclaration? =
@@ -500,10 +493,15 @@ class SymbolsCache(private val session: KaSession) {
                             receiver,
                         )
                     }
-                    findTopLevelCallables(callableId.packageName, callableId.callableName).toList()
+                    findTopLevelCallables(callableId.packageName, callableId.callableName)
+                        .filterIsInstance<KaFunctionSymbol>()
+                        .toList()
                 } else {
                     val classSymbol = findClass(classId) ?: return "()"
-                    classSymbol.declaredMemberScope.callables(callableId.callableName).toList()
+                    classSymbol.declaredMemberScope
+                        .callables(callableId.callableName)
+                        .filterIsInstance<KaFunctionSymbol>()
+                        .toList()
                 }
             }
         val index = overloads.indexOfFirst { it == target }
