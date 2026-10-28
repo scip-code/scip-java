@@ -14,3 +14,12 @@ fun <T> firstOrSelf(items: List<T>, fallback: T): T = items.firstOrNull() ?: fal
 typealias StringContainer = Container<String>
 
 fun useContainer(container: StringContainer): StringContainer = container.add("hello")
+
+typealias MyAlias = Int
+val aliasValue: MyAlias = 42
+
+fun <T> identity(x: T): T = x
+
+class Box<T>(val value: T) {
+    fun unwrap(): T = value
+}

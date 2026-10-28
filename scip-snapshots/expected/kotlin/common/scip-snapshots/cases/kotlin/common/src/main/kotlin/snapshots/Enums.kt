@@ -196,3 +196,221 @@
       }
 //    ⌃ enclosing_range_end scip-java maven . . snapshots/describe().
   
+//⌄ enclosing_range_start scip-java maven . . snapshots/Color#
+//⌄ enclosing_range_start scip-java maven . . snapshots/Color#`<init>`().
+//⌄ enclosing_range_start scip-java maven . . snapshots/Color#values().
+//⌄ enclosing_range_start scip-java maven . . snapshots/Color#valueOf().
+//⌄ enclosing_range_start scip-java maven . . snapshots/Color#valueOf().(value)
+//⌄ enclosing_range_start scip-java maven . . snapshots/Color#entries.
+//⌄ enclosing_range_start scip-java maven . . snapshots/Color#entries.get().
+//                   ⌄ enclosing_range_start scip-java maven . . snapshots/Color#RED.
+//                        ⌄ enclosing_range_start scip-java maven . . snapshots/Color#GREEN.
+//                               ⌄ enclosing_range_start scip-java maven . . snapshots/Color#BLUE.
+  enum class Color { RED, GREEN, BLUE }
+//           ^^^^^ definition scip-java maven . . snapshots/Color#
+//                 kind Class
+//                 display_name Color
+//                 signature_documentation
+//                 > public final enum class Color : Enum<Color>
+//                 relationship scip-java maven . . kotlin/Enum# implementation
+//           ^^^^^ definition scip-java maven . . snapshots/Color#`<init>`().
+//                 kind Constructor
+//                 display_name Color
+//                 signature_documentation
+//                 > private constructor(): Color
+//           ^^^^^ definition scip-java maven . . snapshots/Color#values().
+//                 kind Method
+//                 display_name values
+//                 signature_documentation
+//                 > public final static fun values(): Array<Color>
+//           ^^^^^ definition scip-java maven . . snapshots/Color#valueOf().
+//                 kind Method
+//                 display_name valueOf
+//                 signature_documentation
+//                 > public final static fun valueOf(value: String): Color
+//           ^^^^^ definition scip-java maven . . snapshots/Color#valueOf().(value)
+//                 kind Parameter
+//                 display_name value
+//                 signature_documentation
+//                 > value: String
+//           ^^^^^ definition scip-java maven . . snapshots/Color#entries.
+//                 kind Property
+//                 display_name entries
+//                 signature_documentation
+//                 > public final static val entries: EnumEntries<Color>
+//           ^^^^^ definition scip-java maven . . snapshots/Color#entries.get().
+//                 kind Method
+//                 display_name entries
+//                 signature_documentation
+//                 > public static get(): EnumEntries<Color>
+//                   ^^^ definition scip-java maven . . snapshots/Color#RED.
+//                       kind EnumMember
+//                       display_name RED
+//                       signature_documentation
+//                       > public final static enum entry RED: Color
+//                        ^^^^^ definition scip-java maven . . snapshots/Color#GREEN.
+//                              kind EnumMember
+//                              display_name GREEN
+//                              signature_documentation
+//                              > public final static enum entry GREEN: Color
+//                               ^^^^ definition scip-java maven . . snapshots/Color#BLUE.
+//                                    kind EnumMember
+//                                    display_name BLUE
+//                                    signature_documentation
+//                                    > public final static enum entry BLUE: Color
+//                      ⌃ enclosing_range_end scip-java maven . . snapshots/Color#RED.
+//                             ⌃ enclosing_range_end scip-java maven . . snapshots/Color#GREEN.
+//                                  ⌃ enclosing_range_end scip-java maven . . snapshots/Color#BLUE.
+//                                    ⌃ enclosing_range_end scip-java maven . . snapshots/Color#
+//                                    ⌃ enclosing_range_end scip-java maven . . snapshots/Color#`<init>`().
+//                                    ⌃ enclosing_range_end scip-java maven . . snapshots/Color#values().
+//                                    ⌃ enclosing_range_end scip-java maven . . snapshots/Color#valueOf().
+//                                    ⌃ enclosing_range_end scip-java maven . . snapshots/Color#valueOf().(value)
+//                                    ⌃ enclosing_range_end scip-java maven . . snapshots/Color#entries.
+//                                    ⌃ enclosing_range_end scip-java maven . . snapshots/Color#entries.get().
+  
+//⌄ enclosing_range_start scip-java maven . . snapshots/useEnum().
+  fun useEnum(): Color = Color.RED
+//    ^^^^^^^ definition scip-java maven . . snapshots/useEnum().
+//            kind Method
+//            display_name useEnum
+//            signature_documentation
+//            > public final fun useEnum(): Color
+//               ^^^^^ reference scip-java maven . . snapshots/Color#
+//                       ^^^^^ reference scip-java maven . . snapshots/Color#
+//                             ^^^ reference scip-java maven . . snapshots/Color#RED.
+//                               ⌃ enclosing_range_end scip-java maven . . snapshots/useEnum().
+  
+//⌄ enclosing_range_start scip-java maven . . snapshots/Op#
+//⌄ enclosing_range_start scip-java maven . . snapshots/Op#`<init>`().
+//⌄ enclosing_range_start scip-java maven . . snapshots/Op#values().
+//⌄ enclosing_range_start scip-java maven . . snapshots/Op#valueOf().
+//⌄ enclosing_range_start scip-java maven . . snapshots/Op#valueOf().(value)
+//⌄ enclosing_range_start scip-java maven . . snapshots/Op#entries.
+//⌄ enclosing_range_start scip-java maven . . snapshots/Op#entries.get().
+  enum class Op {
+//           ^^ definition scip-java maven . . snapshots/Op#
+//              kind Class
+//              display_name Op
+//              signature_documentation
+//              > public final enum class Op : Enum<Op>
+//              relationship scip-java maven . . kotlin/Enum# implementation
+//           ^^ definition scip-java maven . . snapshots/Op#`<init>`().
+//              kind Constructor
+//              display_name Op
+//              signature_documentation
+//              > private constructor(): Op
+//           ^^ definition scip-java maven . . snapshots/Op#values().
+//              kind Method
+//              display_name values
+//              signature_documentation
+//              > public final static fun values(): Array<Op>
+//           ^^ definition scip-java maven . . snapshots/Op#valueOf().
+//              kind Method
+//              display_name valueOf
+//              signature_documentation
+//              > public final static fun valueOf(value: String): Op
+//           ^^ definition scip-java maven . . snapshots/Op#valueOf().(value)
+//              kind Parameter
+//              display_name value
+//              signature_documentation
+//              > value: String
+//           ^^ definition scip-java maven . . snapshots/Op#entries.
+//              kind Property
+//              display_name entries
+//              signature_documentation
+//              > public final static val entries: EnumEntries<Op>
+//           ^^ definition scip-java maven . . snapshots/Op#entries.get().
+//              kind Method
+//              display_name entries
+//              signature_documentation
+//              > public static get(): EnumEntries<Op>
+//    ⌄ enclosing_range_start scip-java maven . . snapshots/Op#PLUS.
+//    ⌄ enclosing_range_start local 2
+//    ⌄ enclosing_range_start local 3
+      // The entry body is an anonymous subclass; its override has a local symbol.
+      PLUS {
+//    ^^^^ definition scip-java maven . . snapshots/Op#PLUS.
+//         kind EnumMember
+//         display_name PLUS
+//         signature_documentation
+//         > public final static enum entry PLUS: Op
+//    ^^^^ definition local 2
+//         kind Class
+//         display_name <anonymous>
+//         signature_documentation
+//         > object : Op
+//         relationship scip-java maven . . snapshots/Op# implementation
+//    ^^^^ definition local 3
+//         kind Constructor
+//         display_name PLUS
+//         signature_documentation
+//         > private constructor(): <anonymous>
+//        ⌄ enclosing_range_start local 4
+//                           ⌄ enclosing_range_start local 5
+//                                   ⌄ enclosing_range_start local 6
+          override fun apply(a: Int, b: Int) = a + b
+//                     ^^^^^ definition local 4
+//                           kind Method
+//                           display_name apply
+//                           signature_documentation
+//                           > public open override fun apply(a: Int, b: Int): Int
+//                           relationship scip-java maven . . snapshots/Op#apply(). implementation
+//                           ^ definition local 5
+//                             kind Parameter
+//                             display_name a
+//                             signature_documentation
+//                             > a: Int
+//                              ^^^ reference scip-java maven . . kotlin/Int#
+//                                   ^ definition local 6
+//                                     kind Parameter
+//                                     display_name b
+//                                     signature_documentation
+//                                     > b: Int
+//                                      ^^^ reference scip-java maven . . kotlin/Int#
+//                                             ^ reference local 5
+//                                               ^ reference scip-java maven . . kotlin/Int#plus(+2).
+//                                                 ^ reference local 6
+//                                ⌃ enclosing_range_end local 5
+//                                        ⌃ enclosing_range_end local 6
+//                                                 ⌃ enclosing_range_end local 4
+      };
+//     ⌃ enclosing_range_end scip-java maven . . snapshots/Op#PLUS.
+//     ⌃ enclosing_range_end local 2
+//     ⌃ enclosing_range_end local 3
+  
+//    ⌄ enclosing_range_start scip-java maven . . snapshots/Op#apply().
+//                       ⌄ enclosing_range_start scip-java maven . . snapshots/Op#apply().(a)
+//                               ⌄ enclosing_range_start scip-java maven . . snapshots/Op#apply().(b)
+      abstract fun apply(a: Int, b: Int): Int
+//                 ^^^^^ definition scip-java maven . . snapshots/Op#apply().
+//                       kind Method
+//                       display_name apply
+//                       signature_documentation
+//                       > public abstract fun apply(a: Int, b: Int): Int
+//                       > 
+//                       ^ definition scip-java maven . . snapshots/Op#apply().(a)
+//                         kind Parameter
+//                         display_name a
+//                         signature_documentation
+//                         > a: Int
+//                          ^^^ reference scip-java maven . . kotlin/Int#
+//                               ^ definition scip-java maven . . snapshots/Op#apply().(b)
+//                                 kind Parameter
+//                                 display_name b
+//                                 signature_documentation
+//                                 > b: Int
+//                                  ^^^ reference scip-java maven . . kotlin/Int#
+//                                        ^^^ reference scip-java maven . . kotlin/Int#
+//                            ⌃ enclosing_range_end scip-java maven . . snapshots/Op#apply().(a)
+//                                    ⌃ enclosing_range_end scip-java maven . . snapshots/Op#apply().(b)
+//                                          ⌃ enclosing_range_end scip-java maven . . snapshots/Op#apply().
+  }
+//⌃ enclosing_range_end scip-java maven . . snapshots/Op#
+//⌃ enclosing_range_end scip-java maven . . snapshots/Op#`<init>`().
+//⌃ enclosing_range_end scip-java maven . . snapshots/Op#values().
+//⌃ enclosing_range_end scip-java maven . . snapshots/Op#valueOf().
+//⌃ enclosing_range_end scip-java maven . . snapshots/Op#valueOf().(value)
+//⌃ enclosing_range_end scip-java maven . . snapshots/Op#entries.
+//⌃ enclosing_range_end scip-java maven . . snapshots/Op#entries.get().
+  

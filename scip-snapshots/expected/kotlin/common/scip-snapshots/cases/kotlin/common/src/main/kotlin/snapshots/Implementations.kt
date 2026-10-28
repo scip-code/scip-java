@@ -163,3 +163,57 @@
 //⌃ enclosing_range_end scip-java maven . . snapshots/Seagull#
 //⌃ enclosing_range_end scip-java maven . . snapshots/Seagull#`<init>`().
   
+//⌄ enclosing_range_start scip-java maven . . snapshots/Named#
+  interface Named
+//          ^^^^^ definition scip-java maven . . snapshots/Named#
+//                kind Interface
+//                display_name Named
+//                signature_documentation
+//                > public abstract interface Named : Any
+//              ⌃ enclosing_range_end scip-java maven . . snapshots/Named#
+//⌄ enclosing_range_start scip-java maven . . snapshots/Speakable#
+  interface Speakable
+//          ^^^^^^^^^ definition scip-java maven . . snapshots/Speakable#
+//                    kind Interface
+//                    display_name Speakable
+//                    signature_documentation
+//                    > public abstract interface Speakable : Any
+//                  ⌃ enclosing_range_end scip-java maven . . snapshots/Speakable#
+//⌄ enclosing_range_start scip-java maven . . snapshots/Person#
+//⌄ enclosing_range_start scip-java maven . . snapshots/Person#`<init>`().
+  class Person : Named, Speakable
+//      ^^^^^^ definition scip-java maven . . snapshots/Person#
+//             kind Class
+//             display_name Person
+//             signature_documentation
+//             > public final class Person : Named, Speakable
+//             relationship scip-java maven . . snapshots/Named# implementation
+//             relationship scip-java maven . . snapshots/Speakable# implementation
+//      ^^^^^^ definition scip-java maven . . snapshots/Person#`<init>`().
+//             kind Constructor
+//             display_name Person
+//             signature_documentation
+//             > public constructor(): Person
+//               ^^^^^ reference scip-java maven . . snapshots/Named#
+//                      ^^^^^^^^^ reference scip-java maven . . snapshots/Speakable#
+//                              ⌃ enclosing_range_end scip-java maven . . snapshots/Person#
+//                              ⌃ enclosing_range_end scip-java maven . . snapshots/Person#`<init>`().
+//⌄ enclosing_range_start scip-java maven . . snapshots/usePerson().
+//              ⌄ enclosing_range_start scip-java maven . . snapshots/usePerson().(p)
+  fun usePerson(p: Person): Named = p
+//    ^^^^^^^^^ definition scip-java maven . . snapshots/usePerson().
+//              kind Method
+//              display_name usePerson
+//              signature_documentation
+//              > public final fun usePerson(p: Person): Named
+//              ^ definition scip-java maven . . snapshots/usePerson().(p)
+//                kind Parameter
+//                display_name p
+//                signature_documentation
+//                > p: Person
+//                 ^^^^^^ reference scip-java maven . . snapshots/Person#
+//                          ^^^^^ reference scip-java maven . . snapshots/Named#
+//                                  ^ reference scip-java maven . . snapshots/usePerson().(p)
+//                      ⌃ enclosing_range_end scip-java maven . . snapshots/usePerson().(p)
+//                                  ⌃ enclosing_range_end scip-java maven . . snapshots/usePerson().
+  
