@@ -312,6 +312,9 @@ class KotlinAnalysisIndexer(
                     documentation = docComment(primaryConstructor),
                 )
             }
+            if (declaration is KtObjectDeclaration && !isAnonymous) {
+                emitObjectField(declaration, range)
+            }
             if (declaration is KtClass && declaration.isEnum()) {
                 emitEnumSynthetics(declaration, range)
             }
@@ -330,6 +333,28 @@ class KotlinAnalysisIndexer(
                 }
                 emitDataClassObjectMethods(declaration, range)
             }
+        }
+
+        /**
+         * The static field Java code reaches an object through: `INSTANCE` on the object itself, or
+         * the companion's name on its containing class.
+         */
+        private fun emitObjectField(declaration: KtObjectDeclaration, range: TextRange) {
+            val owner =
+                if (declaration.isCompanion()) declaration.containingClassOrObject ?: return
+                else declaration
+            val name =
+                if (declaration.isCompanion()) declaration.name ?: "Companion" else "INSTANCE"
+            emitDefinition(
+                symbol = cache.memberTermSymbol(owner, name),
+                range = range,
+                kind = Kind.StaticField,
+                enclosingSymbol = cache.symbolForDeclaration(owner),
+                enclosing = declaration.textRange,
+                displayName = name,
+                signatureText = signatures.objectFieldSignature(name, declaration),
+                documentation = null,
+            )
         }
 
         /** Emit only methods Kotlin generates, not explicit or inherited final implementations. */
