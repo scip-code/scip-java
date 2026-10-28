@@ -131,7 +131,16 @@ class KotlinAnalysisIndexer(
             val documents = mutableListOf<Document>()
             val ktFiles = session.modulesWithFiles.values.flatten().filterIsInstance<KtFile>()
             for (ktFile in ktFiles) {
-                val document = indexFile(ktFile)
+                val document =
+                    try {
+                        indexFile(ktFile)
+                    } catch (e: Exception) {
+                        val reason = e.message?.lineSequence()?.firstOrNull()
+                        System.err.println(
+                            "scip-kotlin-analysis: skipped ${ktFile.virtualFilePath}: ${e.javaClass.name}: $reason"
+                        )
+                        continue
+                    }
                 writeShard(ktFile, document)
                 callback(document)
                 documents.add(document)
