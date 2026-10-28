@@ -25,3 +25,8 @@ class Seagull : Bird() {
         return "squawk"
     }
 }
+
+interface Named
+interface Speakable
+class Person : Named, Speakable
+fun usePerson(p: Person): Named = p

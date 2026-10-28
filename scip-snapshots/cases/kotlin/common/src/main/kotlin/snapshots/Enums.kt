@@ -16,3 +16,16 @@ fun describe(suit: Suit): String =
         Suit.HEARTS -> "red"
         Suit.SPADES -> "black"
     }
+
+enum class Color { RED, GREEN, BLUE }
+
+fun useEnum(): Color = Color.RED
+
+enum class Op {
+    // The entry body is an anonymous subclass; its override has a local symbol.
+    PLUS {
+        override fun apply(a: Int, b: Int) = a + b
+    };
+
+    abstract fun apply(a: Int, b: Int): Int
+}
