@@ -2,6 +2,7 @@ package org.scip_code.scip_java.kotlin_analysis
 
 import com.intellij.psi.PsiElement
 import java.lang.System.err
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
@@ -139,7 +140,9 @@ class SymbolsCache(private val session: KaSession) {
         )
 
     /** The class symbol owning a constructor reference (`class Seagull : Bird()` → `Bird#`). */
-    fun constructorOwnerSymbol(session: KaSession, target: KaConstructorSymbol): Symbol {
+    @OptIn(KaExperimentalApi::class)
+    fun constructorOwnerSymbol(session: KaSession, constructor: KaConstructorSymbol): Symbol {
+        val target = with(session) { constructor.originalConstructorIfTypeAliased } ?: constructor
         when (val psi = target.psi) {
             is KtClassOrObject -> return symbolForDeclaration(psi)
             is KtConstructor<*> ->
@@ -197,7 +200,16 @@ class SymbolsCache(private val session: KaSession) {
     fun implicitItSymbol(literal: KtFunctionLiteral): Symbol = syntheticLocalSymbol(literal)
 
     /** The SCIP symbol for the target of a resolved reference. */
+    @OptIn(KaExperimentalApi::class)
     fun symbolForReference(session: KaSession, target: KaSymbol): Symbol {
+        // A constructor call through a type alias (`HashMap()`) references the aliased
+        // class's constructor, like javac and scip-kotlinc.
+        if (target is KaConstructorSymbol) {
+            with(session) { target.originalConstructorIfTypeAliased }
+                ?.let {
+                    return symbolForReference(session, it)
+                }
+        }
         val psi = target.psi
         if (psi is KtDeclaration) {
             // A constructor symbol whose PSI is the class itself is an implicit primary.
@@ -244,7 +256,11 @@ class SymbolsCache(private val session: KaSession) {
                 target.containingClassId?.let { classId ->
                     Symbol.createGlobal(
                         classSymbol(classId),
-                        ScipSymbolDescriptor(Kind.METHOD, "<init>"),
+                        ScipSymbolDescriptor(
+                            Kind.METHOD,
+                            "<init>",
+                            externalConstructorDisambiguator(session, classId, target),
+                        ),
                     )
                 } ?: Symbol.NONE
             // Library type aliases are expanded to the aliased class (`AutoCloseable`
@@ -494,6 +510,19 @@ class SymbolsCache(private val session: KaSession) {
                 else -> ScipSymbolDescriptor(Kind.TERM, name)
             }
         return Symbol.createGlobal(owner, descriptor)
+    }
+
+    /** Like javac: constructors in declaration order, private ones included. */
+    private fun externalConstructorDisambiguator(
+        session: KaSession,
+        classId: ClassId,
+        target: KaConstructorSymbol,
+    ): String {
+        val constructors =
+            with(session) { findClass(classId)?.declaredMemberScope?.constructors?.toList() }
+                ?: return "()"
+        val index = constructors.indexOf(target)
+        return if (index <= 0) "()" else "(+$index)"
     }
 
     private fun externalMethodDisambiguator(session: KaSession, target: KaCallableSymbol): String {
