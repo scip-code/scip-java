@@ -104,6 +104,52 @@ class KotlinAnalysisIndexerTest {
         )
     }
 
+    @Test
+    fun `an analysis failure skips the entire file and continues indexing`(@TempDir path: Path) {
+        val sourceroot = path.toRealPath()
+        val src = Files.createDirectories(sourceroot.resolve("src"))
+        val broken = src.resolve("Broken.kt")
+        Files.writeString(
+            broken,
+            """
+            package snapshots
+
+            fun before(): Int = 1
+            val (first, second) = Pair(1, 2)
+            fun after(): Int = before()
+            """
+                .trimIndent(),
+        )
+        val other = src.resolve("Other.kt")
+        Files.writeString(
+            other,
+            """
+            package snapshots
+
+            fun other(): Int = after()
+            """
+                .trimIndent(),
+        )
+        val targetroot = sourceroot.resolve("scip-targetroot")
+        val emitted = mutableListOf<Document>()
+        val documents =
+            KotlinAnalysisIndexer(
+                    sourceroot = sourceroot,
+                    targetroot = targetroot,
+                    sourceRoots = listOf(broken, other),
+                    classpath = listOf(kotlinStdlibJar()),
+                    callback = { emitted.add(it) },
+                )
+                .run()
+
+        assertEquals(listOf("src/Other.kt"), documents.map { it.relativePath })
+        assertEquals(documents, emitted)
+        assertContains(definitions(documents.single()), "snapshots/other().")
+        assertContains(references(documents.single()), "snapshots/after().")
+        assertTrue(Files.notExists(targetroot.resolve("META-INF/scip/src/Broken.kt.scip")))
+        assertTrue(Files.exists(targetroot.resolve("META-INF/scip/src/Other.kt.scip")))
+    }
+
     // Compiled by the test build, so references use classpath symbols rather than source PSI.
     open class Base<T>(open var state: T) {
         open fun find(value: T): T = value
