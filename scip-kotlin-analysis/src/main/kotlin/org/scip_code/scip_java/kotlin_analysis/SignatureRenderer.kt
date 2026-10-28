@@ -97,6 +97,9 @@ internal class SignatureRenderer(private val session: KaSession) {
 
     fun enumGetEntriesSignature(name: String): String = "public static get(): EnumEntries<$name>"
 
+    fun objectFieldSignature(name: String, declaration: KtObjectDeclaration): String =
+        "public final static val $name: ${ownerName(declaration)}"
+
     fun enumEntrySignature(entry: KtEnumEntry): String =
         "${annotationsPrefix(entry)}public final static enum entry ${entry.name.orEmpty()}: " +
             ownerName(entry.containingClassOrObject)

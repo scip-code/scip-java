@@ -8,6 +8,7 @@
   
 //⌄ enclosing_range_start scip-java maven . . snapshots/ObjectKt#
 //⌄ enclosing_range_start scip-java maven . . snapshots/ObjectKt#`<init>`().
+//⌄ enclosing_range_start scip-java maven . . snapshots/ObjectKt#INSTANCE.
   object ObjectKt {
 //       ^^^^^^^^ definition scip-java maven . . snapshots/ObjectKt#
 //                kind Class
@@ -19,6 +20,11 @@
 //                display_name ObjectKt
 //                signature_documentation
 //                > private constructor(): ObjectKt
+//       ^^^^^^^^ definition scip-java maven . . snapshots/ObjectKt#INSTANCE.
+//                kind StaticField
+//                display_name INSTANCE
+//                signature_documentation
+//                > public final static val INSTANCE: ObjectKt
 //  ⌄ enclosing_range_start scip-java maven . . snapshots/ObjectKt#fail().
 //           ⌄ enclosing_range_start scip-java maven . . snapshots/ObjectKt#fail().(message)
     fun fail(message: String?): Nothing {
@@ -43,4 +49,5 @@
   }
 //⌃ enclosing_range_end scip-java maven . . snapshots/ObjectKt#
 //⌃ enclosing_range_end scip-java maven . . snapshots/ObjectKt#`<init>`().
+//⌃ enclosing_range_end scip-java maven . . snapshots/ObjectKt#INSTANCE.
   

@@ -101,6 +101,7 @@
   
 //    ⌄ enclosing_range_start scip-java maven . . snapshots/Suit#Companion#
 //    ⌄ enclosing_range_start scip-java maven . . snapshots/Suit#Companion#`<init>`().
+//    ⌄ enclosing_range_start scip-java maven . . snapshots/Suit#Companion.
       companion object {
 //    ^^^^^^^^^ definition scip-java maven . . snapshots/Suit#Companion#
 //              kind Class
@@ -112,6 +113,11 @@
 //              display_name Companion
 //              signature_documentation
 //              > private constructor(): Suit.Companion
+//    ^^^^^^^^^ definition scip-java maven . . snapshots/Suit#Companion.
+//              kind StaticField
+//              display_name Companion
+//              signature_documentation
+//              > public final static val Companion: Suit.Companion
 //        ⌄ enclosing_range_start scip-java maven . . snapshots/Suit#Companion#fromSymbol().
 //                       ⌄ enclosing_range_start scip-java maven . . snapshots/Suit#Companion#fromSymbol().(symbol)
 //                                                           ⌄ enclosing_range_start local 0
@@ -147,6 +153,7 @@
       }
 //    ⌃ enclosing_range_end scip-java maven . . snapshots/Suit#Companion#
 //    ⌃ enclosing_range_end scip-java maven . . snapshots/Suit#Companion#`<init>`().
+//    ⌃ enclosing_range_end scip-java maven . . snapshots/Suit#Companion.
   }
 //⌃ enclosing_range_end scip-java maven . . snapshots/Suit#
 //⌃ enclosing_range_end scip-java maven . . snapshots/Suit#values().

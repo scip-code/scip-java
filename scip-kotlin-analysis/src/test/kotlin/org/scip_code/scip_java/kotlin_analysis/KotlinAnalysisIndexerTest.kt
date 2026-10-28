@@ -710,6 +710,8 @@ class KotlinAnalysisIndexerTest {
                 },
             )
         assertContainsAll(document.symbolsList, *symbols)
+        // Object expressions have no static instance field.
+        assertTrue(document.symbolsList.none { it.displayName == "INSTANCE" })
     }
 
     @Test
@@ -1724,6 +1726,23 @@ class KotlinAnalysisIndexerTest {
                         endCharacter = 1
                     }
                 },
+                // Java reaches the object through its static INSTANCE field.
+                scipOccurrence {
+                    role = DEFINITION
+                    symbol = "sample/MySingleton#INSTANCE."
+                    range {
+                        startLine = 2
+                        startCharacter = 7
+                        endLine = 2
+                        endCharacter = 18
+                    }
+                    enclosingRange {
+                        startLine = 2
+                        startCharacter = 0
+                        endLine = 4
+                        endCharacter = 1
+                    }
+                },
                 scipOccurrence {
                     role = DEFINITION
                     symbol = "sample/MySingleton#hello()."
@@ -1771,6 +1790,13 @@ class KotlinAnalysisIndexerTest {
                     enclosingSymbol = "sample/"
                     displayName = "MySingleton"
                     signatureText = "public final object MySingleton : Any"
+                },
+                scipSymbol {
+                    symbol = "sample/MySingleton#INSTANCE."
+                    kind = Kind.StaticField
+                    enclosingSymbol = "sample/MySingleton#"
+                    displayName = "INSTANCE"
+                    signatureText = "public final static val INSTANCE: MySingleton"
                 },
                 scipSymbol {
                     symbol = "sample/MySingleton#hello()."
@@ -1899,6 +1925,14 @@ class KotlinAnalysisIndexerTest {
                     displayName = "Factory"
                     signatureText = "public final companion object Factory : Any"
                 },
+                // Java reaches a companion through a static field of its containing class.
+                scipSymbol {
+                    symbol = "sample/Foo#Factory."
+                    kind = Kind.StaticField
+                    enclosingSymbol = "sample/Foo#"
+                    displayName = "Factory"
+                    signatureText = "public final static val Factory: Foo.Factory"
+                },
                 scipSymbol {
                     symbol = "sample/Foo#Factory#create()."
                     kind = Kind.Method
@@ -2015,6 +2049,13 @@ class KotlinAnalysisIndexerTest {
                     enclosingSymbol = "sample/Bar#"
                     displayName = "Companion"
                     signatureText = "public final companion object Companion : Any"
+                },
+                scipSymbol {
+                    symbol = "sample/Bar#Companion."
+                    kind = Kind.StaticField
+                    enclosingSymbol = "sample/Bar#"
+                    displayName = "Companion"
+                    signatureText = "public final static val Companion: Bar.Companion"
                 },
                 scipSymbol {
                     symbol = "sample/Bar#Companion#instance()."

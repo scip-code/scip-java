@@ -16,6 +16,7 @@
 //                     > public constructor(): CompanionOwner
 //  ⌄ enclosing_range_start scip-java maven . . snapshots/CompanionOwner#Companion#
 //  ⌄ enclosing_range_start scip-java maven . . snapshots/CompanionOwner#Companion#`<init>`().
+//  ⌄ enclosing_range_start scip-java maven . . snapshots/CompanionOwner#Companion.
     companion object {
 //  ^^^^^^^^^ definition scip-java maven . . snapshots/CompanionOwner#Companion#
 //            kind Class
@@ -27,6 +28,11 @@
 //            display_name Companion
 //            signature_documentation
 //            > private constructor(): CompanionOwner.Companion
+//  ^^^^^^^^^ definition scip-java maven . . snapshots/CompanionOwner#Companion.
+//            kind StaticField
+//            display_name Companion
+//            signature_documentation
+//            > public final static val Companion: CompanionOwner.Companion
 //    ⌄ enclosing_range_start scip-java maven . . snapshots/CompanionOwner#Companion#create().
       fun create(): CompanionOwner = CompanionOwner()
 //        ^^^^^^ definition scip-java maven . . snapshots/CompanionOwner#Companion#create().
@@ -40,6 +46,7 @@
     }
 //  ⌃ enclosing_range_end scip-java maven . . snapshots/CompanionOwner#Companion#
 //  ⌃ enclosing_range_end scip-java maven . . snapshots/CompanionOwner#Companion#`<init>`().
+//  ⌃ enclosing_range_end scip-java maven . . snapshots/CompanionOwner#Companion.
 //  ⌄ enclosing_range_start scip-java maven . . snapshots/CompanionOwner#create().
     fun create(): Int = CompanionOwner.create().hashCode()
 //      ^^^^^^ definition scip-java maven . . snapshots/CompanionOwner#create().
