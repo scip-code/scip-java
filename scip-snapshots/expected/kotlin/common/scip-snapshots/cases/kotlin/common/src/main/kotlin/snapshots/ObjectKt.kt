@@ -42,7 +42,7 @@
 //                              ^^^^^^^ reference scip-java maven . . kotlin/Nothing#
 //                          ⌃ enclosing_range_end scip-java maven . . snapshots/ObjectKt#fail().(message)
       throw RuntimeException(message)
-//          ^^^^^^^^^^^^^^^^ reference scip-java maven jdk 17 java/lang/RuntimeException#`<init>`().
+//          ^^^^^^^^^^^^^^^^ reference scip-java maven jdk 17 java/lang/RuntimeException#`<init>`(+1).
 //                           ^^^^^^^ reference scip-java maven . . snapshots/ObjectKt#fail().(message)
     }
 //  ⌃ enclosing_range_end scip-java maven . . snapshots/ObjectKt#fail().
