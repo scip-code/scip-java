@@ -117,6 +117,7 @@ This means our SCIP compiler plugin was not attached to one or more JavaCompile 
 
              allprojects {
                project.ext["scipTarget"] = "${targetroot()}"
+               project.ext["scipSourceroot"] = "${index.workingDirectory}"
                project.ext["javacPluginJar"] = "$pluginpath"
                project.ext["dependenciesOut"] = "$dependenciesPath"
                project.ext["scipKotlincJar"] = "$scipKotlincPath"
