@@ -62,6 +62,9 @@ These are the main components of the project.
 | `gradle spotlessApply`                                  | terminal | Format Java and Kotlin sources with Spotless.                            |
 | `gradle spotlessCheck`                                  | terminal | Check Java and Kotlin formatting. Enforced by GitHub Actions.            |
 
+Spotless needs JDK 21 or newer for google-java-format; from the default JDK 17
+shell, run it as `nix develop .#jdk25 --command gradle spotlessApply`.
+
 ## Import the project into IntelliJ
 
 It's recommended to use IntelliJ when editing code in this codebase.
