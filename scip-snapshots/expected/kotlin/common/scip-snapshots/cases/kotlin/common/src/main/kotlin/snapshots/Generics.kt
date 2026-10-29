@@ -6,7 +6,7 @@
 //                ⌄ enclosing_range_start scip-java maven . . snapshots/Container#[T]
 //                                   ⌄ enclosing_range_start scip-java maven . . snapshots/Container#`<init>`().(items)
 //                                   ⌄ enclosing_range_start scip-java maven . . snapshots/Container#items.
-//                                   ⌄ enclosing_range_start scip-java maven . . snapshots/Container#items.get().
+//                                   ⌄ enclosing_range_start scip-java maven . . snapshots/Container#getItems().
   class Container<T : Comparable<T>>(private val items: MutableList<T>) {
 //      ^^^^^^^^^ definition scip-java maven . . snapshots/Container#
 //                kind Class
@@ -36,7 +36,7 @@
 //                                                     signature_documentation
 //                                                     > private final val items: MutableList<T>
 //                                               ^^^^^ reference scip-java maven . . snapshots/Container#`<init>`().(items)
-//                                               ^^^^^ definition scip-java maven . . snapshots/Container#items.get().
+//                                               ^^^^^ definition scip-java maven . . snapshots/Container#getItems().
 //                                                     kind Method
 //                                                     display_name items
 //                                                     signature_documentation
@@ -46,7 +46,7 @@
 //                                ⌃ enclosing_range_end scip-java maven . . snapshots/Container#[T]
 //                                                                   ⌃ enclosing_range_end scip-java maven . . snapshots/Container#`<init>`().(items)
 //                                                                   ⌃ enclosing_range_end scip-java maven . . snapshots/Container#items.
-//                                                                   ⌃ enclosing_range_end scip-java maven . . snapshots/Container#items.get().
+//                                                                   ⌃ enclosing_range_end scip-java maven . . snapshots/Container#getItems().
 //                                                                    ⌃ enclosing_range_end scip-java maven . . snapshots/Container#`<init>`().
 //    ⌄ enclosing_range_start scip-java maven . . snapshots/Container#add().
 //            ⌄ enclosing_range_start scip-java maven . . snapshots/Container#add().(item)
@@ -67,7 +67,7 @@
 //                  ⌃ enclosing_range_end scip-java maven . . snapshots/Container#add().(item)
           items.add(item)
 //        ^^^^^ reference scip-java maven . . snapshots/Container#items.
-//        ^^^^^ reference scip-java maven . . snapshots/Container#items.get().
+//        ^^^^^ reference scip-java maven . . snapshots/Container#getItems().
 //              ^^^ reference scip-java maven . . kotlin/collections/MutableList#add().
 //                  ^^^^ reference scip-java maven . . snapshots/Container#add().(item)
           return this
@@ -99,7 +99,7 @@
 //                                                  ^^^^ reference scip-java maven . . kotlin/collections/List#
 //                                                       ^ reference scip-java maven . . snapshots/Container#mapItems().[R]
 //                                                            ^^^^^ reference scip-java maven . . snapshots/Container#items.
-//                                                            ^^^^^ reference scip-java maven . . snapshots/Container#items.get().
+//                                                            ^^^^^ reference scip-java maven . . snapshots/Container#getItems().
 //                                                                  ^^^^^^^^^^ reference scip-java maven . . kotlin/collections/Iterable#mapNotNull().
 //                                                                             ^^^^^^^^^ reference scip-java maven . . snapshots/Container#mapItems().(transform)
 //               ⌃ enclosing_range_end scip-java maven . . snapshots/Container#mapItems().[R]
@@ -188,21 +188,21 @@
 //                    ^^^ reference scip-java maven . . kotlin/Int#
 //                      ⌃ enclosing_range_end scip-java maven . . snapshots/MyAlias#
 //⌄ enclosing_range_start scip-java maven . . snapshots/aliasValue.
-//⌄ enclosing_range_start scip-java maven . . snapshots/aliasValue.get().
+//⌄ enclosing_range_start scip-java maven . . snapshots/getAliasValue().
   val aliasValue: MyAlias = 42
 //    ^^^^^^^^^^ definition scip-java maven . . snapshots/aliasValue.
 //               kind Property
 //               display_name aliasValue
 //               signature_documentation
 //               > public final val aliasValue: MyAlias
-//    ^^^^^^^^^^ definition scip-java maven . . snapshots/aliasValue.get().
+//    ^^^^^^^^^^ definition scip-java maven . . snapshots/getAliasValue().
 //               kind Method
 //               display_name aliasValue
 //               signature_documentation
 //               > public get(): MyAlias
 //                ^^^^^^^ reference scip-java maven . . kotlin/Int#
 //                           ⌃ enclosing_range_end scip-java maven . . snapshots/aliasValue.
-//                           ⌃ enclosing_range_end scip-java maven . . snapshots/aliasValue.get().
+//                           ⌃ enclosing_range_end scip-java maven . . snapshots/getAliasValue().
   
 //⌄ enclosing_range_start scip-java maven . . snapshots/identity().
 //     ⌄ enclosing_range_start scip-java maven . . snapshots/identity().[T]
@@ -235,7 +235,7 @@
 //          ⌄ enclosing_range_start scip-java maven . . snapshots/Box#[T]
 //             ⌄ enclosing_range_start scip-java maven . . snapshots/Box#`<init>`().(value)
 //             ⌄ enclosing_range_start scip-java maven . . snapshots/Box#value.
-//             ⌄ enclosing_range_start scip-java maven . . snapshots/Box#value.get().
+//             ⌄ enclosing_range_start scip-java maven . . snapshots/Box#getValue().
   class Box<T>(val value: T) {
 //      ^^^ definition scip-java maven . . snapshots/Box#
 //          kind Class
@@ -263,7 +263,7 @@
 //                       signature_documentation
 //                       > public final val value: T
 //                 ^^^^^ reference scip-java maven . . snapshots/Box#`<init>`().(value)
-//                 ^^^^^ definition scip-java maven . . snapshots/Box#value.get().
+//                 ^^^^^ definition scip-java maven . . snapshots/Box#getValue().
 //                       kind Method
 //                       display_name value
 //                       signature_documentation
@@ -272,7 +272,7 @@
 //          ⌃ enclosing_range_end scip-java maven . . snapshots/Box#[T]
 //                        ⌃ enclosing_range_end scip-java maven . . snapshots/Box#`<init>`().(value)
 //                        ⌃ enclosing_range_end scip-java maven . . snapshots/Box#value.
-//                        ⌃ enclosing_range_end scip-java maven . . snapshots/Box#value.get().
+//                        ⌃ enclosing_range_end scip-java maven . . snapshots/Box#getValue().
 //                         ⌃ enclosing_range_end scip-java maven . . snapshots/Box#`<init>`().
 //    ⌄ enclosing_range_start scip-java maven . . snapshots/Box#unwrap().
       fun unwrap(): T = value
@@ -283,7 +283,7 @@
 //               > public final fun unwrap(): T
 //                  ^ reference scip-java maven . . snapshots/Box#[T]
 //                      ^^^^^ reference scip-java maven . . snapshots/Box#value.
-//                      ^^^^^ reference scip-java maven . . snapshots/Box#value.get().
+//                      ^^^^^ reference scip-java maven . . snapshots/Box#getValue().
 //                          ⌃ enclosing_range_end scip-java maven . . snapshots/Box#unwrap().
   }
 //⌃ enclosing_range_end scip-java maven . . snapshots/Box#

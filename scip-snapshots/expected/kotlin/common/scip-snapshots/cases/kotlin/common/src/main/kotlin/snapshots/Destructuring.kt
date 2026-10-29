@@ -10,12 +10,12 @@
 //                ⌄ enclosing_range_start scip-java maven . . snapshots/Point#copy().
 //                 ⌄ enclosing_range_start scip-java maven . . snapshots/Point#`<init>`().(x)
 //                 ⌄ enclosing_range_start scip-java maven . . snapshots/Point#x.
-//                 ⌄ enclosing_range_start scip-java maven . . snapshots/Point#x.get().
+//                 ⌄ enclosing_range_start scip-java maven . . snapshots/Point#getX().
 //                 ⌄ enclosing_range_start scip-java maven . . snapshots/Point#component1().
 //                 ⌄ enclosing_range_start scip-java maven . . snapshots/Point#copy().(x)
 //                             ⌄ enclosing_range_start scip-java maven . . snapshots/Point#`<init>`().(y)
 //                             ⌄ enclosing_range_start scip-java maven . . snapshots/Point#y.
-//                             ⌄ enclosing_range_start scip-java maven . . snapshots/Point#y.get().
+//                             ⌄ enclosing_range_start scip-java maven . . snapshots/Point#getY().
 //                             ⌄ enclosing_range_start scip-java maven . . snapshots/Point#component2().
 //                             ⌄ enclosing_range_start scip-java maven . . snapshots/Point#copy().(y)
   data class Point(val x: Int, val y: Int)
@@ -69,7 +69,7 @@
 //                       signature_documentation
 //                       > public final val x: Int
 //                     ^ reference scip-java maven . . snapshots/Point#`<init>`().(x)
-//                     ^ definition scip-java maven . . snapshots/Point#x.get().
+//                     ^ definition scip-java maven . . snapshots/Point#getX().
 //                       kind Method
 //                       display_name x
 //                       signature_documentation
@@ -86,7 +86,7 @@
 //                       signature_documentation
 //                       > x: Int = ...
 //                     ^ reference scip-java maven . . snapshots/Point#x.
-//                     ^ reference scip-java maven . . snapshots/Point#x.get().
+//                     ^ reference scip-java maven . . snapshots/Point#getX().
 //                        ^^^ reference scip-java maven . . kotlin/Int#
 //                                 ^ definition scip-java maven . . snapshots/Point#`<init>`().(y)
 //                                   kind Parameter
@@ -99,7 +99,7 @@
 //                                   signature_documentation
 //                                   > public final val y: Int
 //                                 ^ reference scip-java maven . . snapshots/Point#`<init>`().(y)
-//                                 ^ definition scip-java maven . . snapshots/Point#y.get().
+//                                 ^ definition scip-java maven . . snapshots/Point#getY().
 //                                   kind Method
 //                                   display_name y
 //                                   signature_documentation
@@ -116,16 +116,16 @@
 //                                   signature_documentation
 //                                   > y: Int = ...
 //                                 ^ reference scip-java maven . . snapshots/Point#y.
-//                                 ^ reference scip-java maven . . snapshots/Point#y.get().
+//                                 ^ reference scip-java maven . . snapshots/Point#getY().
 //                                    ^^^ reference scip-java maven . . kotlin/Int#
 //                          ⌃ enclosing_range_end scip-java maven . . snapshots/Point#`<init>`().(x)
 //                          ⌃ enclosing_range_end scip-java maven . . snapshots/Point#x.
-//                          ⌃ enclosing_range_end scip-java maven . . snapshots/Point#x.get().
+//                          ⌃ enclosing_range_end scip-java maven . . snapshots/Point#getX().
 //                          ⌃ enclosing_range_end scip-java maven . . snapshots/Point#component1().
 //                          ⌃ enclosing_range_end scip-java maven . . snapshots/Point#copy().(x)
 //                                      ⌃ enclosing_range_end scip-java maven . . snapshots/Point#`<init>`().(y)
 //                                      ⌃ enclosing_range_end scip-java maven . . snapshots/Point#y.
-//                                      ⌃ enclosing_range_end scip-java maven . . snapshots/Point#y.get().
+//                                      ⌃ enclosing_range_end scip-java maven . . snapshots/Point#getY().
 //                                      ⌃ enclosing_range_end scip-java maven . . snapshots/Point#component2().
 //                                      ⌃ enclosing_range_end scip-java maven . . snapshots/Point#copy().(y)
 //                                       ⌃ enclosing_range_end scip-java maven . . snapshots/Point#
@@ -215,11 +215,11 @@
 //                                        ^^^^^ reference local 5
 //                                                  ^^^^^ reference local 6
 //                                                        ^ reference scip-java maven . . snapshots/Point#x.
-//                                                        ^ reference scip-java maven . . snapshots/Point#x.get().
+//                                                        ^ reference scip-java maven . . snapshots/Point#getX().
 //                                                          ^ reference scip-java maven . . kotlin/Int#plus(+2).
 //                                                            ^^^^^ reference local 7
 //                                                                  ^^^^^^ reference scip-java maven . . kotlin/String#length.
-//                                                                  ^^^^^^ reference scip-java maven . . kotlin/String#length.get().
+//                                                                  ^^^^^^ reference scip-java maven . . kotlin/String#getLength().
 //                                     ⌃ enclosing_range_end local 6
 //                                            ⌃ enclosing_range_end local 7
 //                                             ⌃ enclosing_range_end local 5

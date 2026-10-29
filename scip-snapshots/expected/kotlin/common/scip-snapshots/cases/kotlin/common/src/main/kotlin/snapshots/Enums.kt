@@ -6,11 +6,11 @@
 //⌄ enclosing_range_start scip-java maven . . snapshots/Suit#valueOf().
 //⌄ enclosing_range_start scip-java maven . . snapshots/Suit#valueOf().(value)
 //⌄ enclosing_range_start scip-java maven . . snapshots/Suit#entries.
-//⌄ enclosing_range_start scip-java maven . . snapshots/Suit#entries.get().
+//⌄ enclosing_range_start scip-java maven . . snapshots/Suit#getEntries().
 //           ⌄ enclosing_range_start scip-java maven . . snapshots/Suit#`<init>`().
 //                ⌄ enclosing_range_start scip-java maven . . snapshots/Suit#`<init>`().(symbol)
 //                ⌄ enclosing_range_start scip-java maven . . snapshots/Suit#symbol.
-//                ⌄ enclosing_range_start scip-java maven . . snapshots/Suit#symbol.get().
+//                ⌄ enclosing_range_start scip-java maven . . snapshots/Suit#getSymbol().
   enum class Suit(val symbol: Char) {
 //           ^^^^ definition scip-java maven . . snapshots/Suit#
 //                kind Class
@@ -43,7 +43,7 @@
 //                display_name entries
 //                signature_documentation
 //                > public final static val entries: EnumEntries<Suit>
-//           ^^^^ definition scip-java maven . . snapshots/Suit#entries.get().
+//           ^^^^ definition scip-java maven . . snapshots/Suit#getEntries().
 //                kind Method
 //                display_name entries
 //                signature_documentation
@@ -59,7 +59,7 @@
 //                           signature_documentation
 //                           > public final val symbol: Char
 //                    ^^^^^^ reference scip-java maven . . snapshots/Suit#`<init>`().(symbol)
-//                    ^^^^^^ definition scip-java maven . . snapshots/Suit#symbol.get().
+//                    ^^^^^^ definition scip-java maven . . snapshots/Suit#getSymbol().
 //                           kind Method
 //                           display_name symbol
 //                           signature_documentation
@@ -67,7 +67,7 @@
 //                            ^^^^ reference scip-java maven . . kotlin/Char#
 //                               ⌃ enclosing_range_end scip-java maven . . snapshots/Suit#`<init>`().(symbol)
 //                               ⌃ enclosing_range_end scip-java maven . . snapshots/Suit#symbol.
-//                               ⌃ enclosing_range_end scip-java maven . . snapshots/Suit#symbol.get().
+//                               ⌃ enclosing_range_end scip-java maven . . snapshots/Suit#getSymbol().
 //                                ⌃ enclosing_range_end scip-java maven . . snapshots/Suit#`<init>`().
 //    ⌄ enclosing_range_start scip-java maven . . snapshots/Suit#HEARTS.
       HEARTS('h'),
@@ -95,7 +95,7 @@
 //              > public final fun isRed(): Boolean
 //                 ^^^^^^^ reference scip-java maven . . kotlin/Boolean#
 //                           ^^^^^^ reference scip-java maven . . snapshots/Suit#symbol.
-//                           ^^^^^^ reference scip-java maven . . snapshots/Suit#symbol.get().
+//                           ^^^^^^ reference scip-java maven . . snapshots/Suit#getSymbol().
 //                                  ^^ reference scip-java maven . . kotlin/Char#equals().
 //                                       ⌃ enclosing_range_end scip-java maven . . snapshots/Suit#isRed().
   
@@ -135,7 +135,7 @@
 //                               ^^^^ reference scip-java maven . . kotlin/Char#
 //                                      ^^^^ reference scip-java maven . . snapshots/Suit#
 //                                              ^^^^^^^ reference scip-java maven . . snapshots/Suit#entries.
-//                                              ^^^^^^^ reference scip-java maven . . snapshots/Suit#entries.get().
+//                                              ^^^^^^^ reference scip-java maven . . snapshots/Suit#getEntries().
 //                                                      ^^^^ reference scip-java maven . . kotlin/collections/Iterable#find().
 //                                                           ^^^^^^^^^^^^^^^^^^^^^^^ definition local 0
 //                                                                                   kind Parameter
@@ -144,7 +144,7 @@
 //                                                                                   > it: Suit
 //                                                             ^^ reference local 0
 //                                                                ^^^^^^ reference scip-java maven . . snapshots/Suit#symbol.
-//                                                                ^^^^^^ reference scip-java maven . . snapshots/Suit#symbol.get().
+//                                                                ^^^^^^ reference scip-java maven . . snapshots/Suit#getSymbol().
 //                                                                       ^^ reference scip-java maven . . kotlin/Char#equals().
 //                                                                          ^^^^^^ reference scip-java maven . . snapshots/Suit#Companion#fromSymbol().(symbol)
 //                                  ⌃ enclosing_range_end scip-java maven . . snapshots/Suit#Companion#fromSymbol().(symbol)
@@ -160,7 +160,7 @@
 //⌃ enclosing_range_end scip-java maven . . snapshots/Suit#valueOf().
 //⌃ enclosing_range_end scip-java maven . . snapshots/Suit#valueOf().(value)
 //⌃ enclosing_range_end scip-java maven . . snapshots/Suit#entries.
-//⌃ enclosing_range_end scip-java maven . . snapshots/Suit#entries.get().
+//⌃ enclosing_range_end scip-java maven . . snapshots/Suit#getEntries().
   
 //⌄ enclosing_range_start scip-java maven . . snapshots/describe().
 //             ⌄ enclosing_range_start scip-java maven . . snapshots/describe().(suit)
@@ -202,7 +202,7 @@
 //⌄ enclosing_range_start scip-java maven . . snapshots/Color#valueOf().
 //⌄ enclosing_range_start scip-java maven . . snapshots/Color#valueOf().(value)
 //⌄ enclosing_range_start scip-java maven . . snapshots/Color#entries.
-//⌄ enclosing_range_start scip-java maven . . snapshots/Color#entries.get().
+//⌄ enclosing_range_start scip-java maven . . snapshots/Color#getEntries().
 //                   ⌄ enclosing_range_start scip-java maven . . snapshots/Color#RED.
 //                        ⌄ enclosing_range_start scip-java maven . . snapshots/Color#GREEN.
 //                               ⌄ enclosing_range_start scip-java maven . . snapshots/Color#BLUE.
@@ -238,7 +238,7 @@
 //                 display_name entries
 //                 signature_documentation
 //                 > public final static val entries: EnumEntries<Color>
-//           ^^^^^ definition scip-java maven . . snapshots/Color#entries.get().
+//           ^^^^^ definition scip-java maven . . snapshots/Color#getEntries().
 //                 kind Method
 //                 display_name entries
 //                 signature_documentation
@@ -267,7 +267,7 @@
 //                                    ⌃ enclosing_range_end scip-java maven . . snapshots/Color#valueOf().
 //                                    ⌃ enclosing_range_end scip-java maven . . snapshots/Color#valueOf().(value)
 //                                    ⌃ enclosing_range_end scip-java maven . . snapshots/Color#entries.
-//                                    ⌃ enclosing_range_end scip-java maven . . snapshots/Color#entries.get().
+//                                    ⌃ enclosing_range_end scip-java maven . . snapshots/Color#getEntries().
   
 //⌄ enclosing_range_start scip-java maven . . snapshots/useEnum().
   fun useEnum(): Color = Color.RED
@@ -287,7 +287,7 @@
 //⌄ enclosing_range_start scip-java maven . . snapshots/Op#valueOf().
 //⌄ enclosing_range_start scip-java maven . . snapshots/Op#valueOf().(value)
 //⌄ enclosing_range_start scip-java maven . . snapshots/Op#entries.
-//⌄ enclosing_range_start scip-java maven . . snapshots/Op#entries.get().
+//⌄ enclosing_range_start scip-java maven . . snapshots/Op#getEntries().
   enum class Op {
 //           ^^ definition scip-java maven . . snapshots/Op#
 //              kind Class
@@ -320,7 +320,7 @@
 //              display_name entries
 //              signature_documentation
 //              > public final static val entries: EnumEntries<Op>
-//           ^^ definition scip-java maven . . snapshots/Op#entries.get().
+//           ^^ definition scip-java maven . . snapshots/Op#getEntries().
 //              kind Method
 //              display_name entries
 //              signature_documentation
@@ -412,5 +412,5 @@
 //⌃ enclosing_range_end scip-java maven . . snapshots/Op#valueOf().
 //⌃ enclosing_range_end scip-java maven . . snapshots/Op#valueOf().(value)
 //⌃ enclosing_range_end scip-java maven . . snapshots/Op#entries.
-//⌃ enclosing_range_end scip-java maven . . snapshots/Op#entries.get().
+//⌃ enclosing_range_end scip-java maven . . snapshots/Op#getEntries().
   

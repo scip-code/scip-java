@@ -236,7 +236,7 @@ class KotlinAnalysisIndexer(
             }
 
             // Property references fan out to the property and its accessors
-            // (`banana` → `Class#banana.`, `Class#banana.get().`, `Class#banana.set().`).
+            // (`banana` → `Class#banana.`, `Class#getBanana().`, `Class#setBanana().`).
             if (target is KaPropertySymbol) {
                 propertyReferenceSymbols(target).forEach { addReference(it, range) }
                 return
@@ -463,7 +463,7 @@ class KotlinAnalysisIndexer(
                 documentation = null,
             )
             emitDefinition(
-                symbol = cache.accessorSymbol(entries, setter = false),
+                symbol = cache.memberMethodSymbol(declaration, "getEntries"),
                 range = range,
                 kind = Kind.Method,
                 enclosingSymbol = entries,

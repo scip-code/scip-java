@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
@@ -42,6 +43,7 @@ import org.jetbrains.kotlin.psi.KtVariableDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.scip_code.scip_java.kotlin_analysis.ScipSymbolDescriptor.Kind
 import org.scip_code.scip_java.shared.LocalSymbolsCache as SharedLocalSymbolsCache
 
@@ -119,18 +121,13 @@ class SymbolsCache(private val session: KaSession) {
 
     /**
      * The synthetic getter/setter of a property (or `val`/`var` constructor parameter) without
-     * explicit accessor PSI (`Class#banana.get().`).
+     * explicit accessor PSI. Owned by the property's container (`Class#getBanana().`), not by the
+     * constructor declaring the parameter.
      */
     fun syntheticAccessorSymbol(property: KtDeclaration, setter: Boolean): Symbol {
-        val propertySymbol =
-            if (property is KtParameter) parameterPropertySymbol(property)
-            else symbolForDeclaration(property)
-        return accessorSymbol(propertySymbol, setter)
+        val name = (property as? KtNamedDeclaration)?.name.orEmpty()
+        return memberSymbol(propertyOwnerSymbol(property), accessorDescriptor(name, setter))
     }
-
-    /** The getter or setter of [property] (`Class#banana.get().`, `Class#banana.set().`). */
-    fun accessorSymbol(property: Symbol, setter: Boolean): Symbol =
-        memberSymbol(property, accessorDescriptor(setter))
 
     /** The property symbol declared by a `val`/`var` constructor parameter (`Class#banana.`). */
     fun parameterPropertySymbol(parameter: KtParameter): Symbol =
@@ -181,10 +178,14 @@ class SymbolsCache(private val session: KaSession) {
      */
     fun syntheticLocalSymbol(key: PsiElement): Symbol = locals.get(key) ?: locals.put(key)
 
-    private fun propertyOwnerSymbol(parameter: KtParameter): Symbol =
-        (ownerDeclarationOfParameter(parameter) as? KtConstructor<*>)
-            ?.containingClassOrObject
-            ?.let { symbolForDeclaration(it) } ?: Symbol.NONE
+    private fun propertyOwnerSymbol(property: KtDeclaration): Symbol =
+        when (property) {
+            is KtParameter ->
+                (ownerDeclarationOfParameter(property) as? KtConstructor<*>)
+                    ?.containingClassOrObject
+                    ?.let { symbolForDeclaration(it) } ?: Symbol.NONE
+            else -> ownerSymbol(property)
+        }
 
     /** The `(value)` parameter symbol of a synthetic setter. */
     fun syntheticSetterValueSymbol(property: KtDeclaration): Symbol =
@@ -278,16 +279,26 @@ class SymbolsCache(private val session: KaSession) {
     /** The getter/setter symbol of an external (classpath) property reference. */
     fun externalAccessorSymbol(
         session: KaSession,
-        target: KaCallableSymbol,
+        resolved: KaCallableSymbol,
         setter: Boolean,
     ): Symbol {
-        val property = externalCallableSymbol(session, target)
-        if (property == Symbol.NONE) return Symbol.NONE
-        return accessorSymbol(property, setter)
+        val target = with(session) { resolved.fakeOverrideOriginal }
+        val callableId = target.callableId ?: return Symbol.NONE
+        val owner =
+            callableId.classId?.let(::classSymbol)
+                ?: receiverClassId(target)?.let { extensionOwnerSymbol(callableId.packageName, it) }
+                ?: packageSymbol(callableId.packageName)
+        return Symbol.createGlobal(
+            owner,
+            accessorDescriptor(callableId.callableName.asString(), setter),
+        )
     }
 
-    private fun accessorDescriptor(setter: Boolean): ScipSymbolDescriptor =
-        ScipSymbolDescriptor(Kind.METHOD, if (setter) "set" else "get")
+    private fun accessorDescriptor(propertyName: String, setter: Boolean): ScipSymbolDescriptor =
+        ScipSymbolDescriptor(
+            Kind.METHOD,
+            (if (setter) "set" else "get") + propertyName.capitalizeAsciiOnly(),
+        )
 
     private fun uncachedSymbol(declaration: KtDeclaration): Symbol {
         // Anonymous functions and lambdas have no symbol of their own, mirroring FIR.
@@ -342,7 +353,7 @@ class SymbolsCache(private val session: KaSession) {
             is KtParameter ->
                 ownerDeclarationOfParameter(declaration)?.let { symbolForDeclaration(it) }
                     ?: Symbol.NONE
-            is KtPropertyAccessor -> symbolForDeclaration(declaration.property)
+            is KtPropertyAccessor -> ownerSymbol(declaration.property)
             else ->
                 declaration.containingClassOrObject?.let {
                     if (it is KtEnumEntry) enumEntryBodySymbol(it) else symbolForDeclaration(it)
@@ -410,7 +421,10 @@ class SymbolsCache(private val session: KaSession) {
                 ScipSymbolDescriptor(Kind.TYPE, declaration.name ?: "Companion")
             declaration is KtClassOrObject ->
                 ScipSymbolDescriptor(Kind.TYPE, declaration.name.orEmpty())
-            declaration is KtPropertyAccessor -> accessorDescriptor(declaration.isSetter)
+            declaration is KtPropertyAccessor && declaration.isSetter ->
+                accessorDescriptor(declaration.property.name.orEmpty(), setter = true)
+            declaration is KtPropertyAccessor ->
+                accessorDescriptor(declaration.property.name.orEmpty(), setter = false)
             declaration is KtConstructor<*> ->
                 ScipSymbolDescriptor(Kind.METHOD, "<init>", constructorDisambiguator(declaration))
             declaration is KtNamedFunction ->
