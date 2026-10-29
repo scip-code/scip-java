@@ -1,7 +1,7 @@
 # SCIP snapshots
 
 This directory contains end-to-end snapshot fixtures for `scip-javac`,
-`scip-kotlinc`, and future mixed Java/Kotlin cases.
+`scip-kotlin-analysis`, and future mixed Java/Kotlin cases.
 
 ## Layout
 

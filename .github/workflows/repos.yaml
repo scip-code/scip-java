@@ -119,6 +119,39 @@ jobs:
             expected_language: kotlin
             covers: Gradle, Kotlin multiplatform JVM target, Kotlin 2.4.0, Java 25 runtime
 
+          - name: gradle-kotlin19-kotlinpoet
+            repository: square/kotlinpoet
+            ref: 1.16.0
+            directory: .
+            build_tool: gradle
+            build_command: ":kotlinpoet:compileKotlinJvm"
+            java: 17
+            bazel_version: ""
+            expected_language: kotlin
+            covers: Gradle, Kotlin multiplatform JVM target, legacy Kotlin 1.9.22, Java 17 runtime
+
+          - name: gradle-kotlin23-turbine
+            repository: cashapp/turbine
+            ref: ab1e9a0acbbbb175081a0c5d94cb4f4cf4da444a
+            directory: .
+            build_tool: gradle
+            build_command: "compileKotlinJvm"
+            java: 17
+            bazel_version: ""
+            expected_language: kotlin
+            covers: Gradle, Kotlin multiplatform JVM target, Kotlin 2.3.21, Java 17 runtime
+
+          - name: gradle-kotlin24-detekt
+            repository: detekt/detekt
+            ref: 04f97401d462e899383156b25d026b7b8c181401
+            directory: .
+            build_tool: gradle
+            build_command: ":detekt-api:compileKotlin"
+            java: 21
+            bazel_version: ""
+            expected_language: kotlin
+            covers: Gradle, Kotlin JVM, Kotlin 2.4.0, settings repositories (FAIL_ON_PROJECT_REPOS), Java 21 runtime
+
           - name: gradle-mixed-kotlinpoet
             repository: square/kotlinpoet
             ref: 0182a25089ee1f4f2378568b497f82a8ebc3017d

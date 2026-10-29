@@ -1,5 +1,9 @@
 package org.scip_code.scip_java.gradle;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -7,6 +11,7 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.initialization.Settings;
 import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.tasks.compile.JavaCompile;
@@ -110,14 +115,13 @@ public class ScipGradlePlugin implements Plugin<Project> {
         triggers.add("compileKotlin");
         triggers.add("compileTestKotlin");
       }
-
-      // The CLI's init script provides the path of the embedded scip-kotlinc jar.
-      Object scipKotlinc = requiredExtra(extraProperties, "scipKotlincJar");
-      project
-          .getTasks()
-          .configureEach(
-              task -> configureKotlinCompileTask(task, scipKotlinc, sourceRoot, targetRoot));
     }
+
+    // Not limited to the plugin checks above: AGP 9's built-in Kotlin adds
+    // Kotlin compile tasks to Android modules without applying a Kotlin plugin.
+    project
+        .getTasks()
+        .configureEach(task -> configureKotlinCompileTask(task, sourceRoot, targetRoot));
 
     project.getTasks().create("scipCompileAll").dependsOn(triggers);
 
@@ -172,39 +176,72 @@ public class ScipGradlePlugin implements Plugin<Project> {
     }
   }
 
-  private static void configureKotlinCompileTask(
-      Task task, Object scipKotlinc, String sourceRoot, String targetRoot) {
+  /**
+   * Kotlin sources are not indexed inside kotlinc: after each Kotlin compile task runs, its sources
+   * and classpath are dumped to {@code <targetroot>/kotlin-configs/<task>.txt} for the scip-java
+   * CLI to index after the build, decoupling indexing from the build's Kotlin compiler version.
+   */
+  private static void configureKotlinCompileTask(Task task, String sourceRoot, String targetRoot) {
     if (!task.getClass().getSimpleName().contains("KotlinCompile")) {
       return;
     }
 
-    // Referring to KotlinCompile directly here triggers NoClassDefFoundError -
-    // the plugin classpath is murky and we deliberately don't bundle the Kotlin
-    // Gradle plugin. So we commit the sins of reflection for our limited needs.
-    try {
-      Object kotlinOptions = task.getClass().getMethod("getKotlinOptions").invoke(task);
+    task.doLast(
+        ignored -> {
+          try {
+            List<String> lines = new ArrayList<>();
+            lines.add("sourceroot " + sourceRoot);
 
-      @SuppressWarnings("unchecked")
-      List<String> freeCompilerArgs =
-          (List<String>)
-              kotlinOptions.getClass().getMethod("getFreeCompilerArgs").invoke(kotlinOptions);
+            // Referring to KotlinCompile directly triggers NoClassDefFoundError -
+            // the plugin classpath is murky and we deliberately don't bundle the
+            // Kotlin Gradle plugin. So we commit the sins of reflection.
+            FileCollection libraries;
+            try {
+              libraries = (FileCollection) task.getClass().getMethod("getLibraries").invoke(task);
+            } catch (ReflectiveOperationException exc) {
+              libraries = (FileCollection) task.getClass().getMethod("getClasspath").invoke(task);
+            }
+            for (File entry : libraries.getFiles()) {
+              lines.add("classpath " + entry.getAbsolutePath());
+            }
 
-      List<String> newArgs = new ArrayList<>(freeCompilerArgs.size() + 5);
-      newArgs.addAll(freeCompilerArgs);
-      newArgs.add("-Xplugin=" + scipKotlinc);
-      newArgs.add("-P");
-      newArgs.add("plugin:scip-kotlinc:sourceroot=" + sourceRoot);
-      newArgs.add("-P");
-      newArgs.add("plugin:scip-kotlinc:targetroot=" + targetRoot);
+            int sources = 0;
+            for (File file : task.getInputs().getSourceFiles().getFiles()) {
+              if (file.getName().endsWith(".kt") || file.getName().endsWith(".kts")) {
+                lines.add("source " + file.getAbsolutePath());
+                sources++;
+              }
+            }
+            // Java sources of the same module are listed too, so Kotlin
+            // references to them resolve. The indexer only emits Kotlin files.
+            try {
+              FileCollection javaSources =
+                  (FileCollection) task.getClass().getMethod("getJavaSources").invoke(task);
+              for (File file : javaSources.getFiles()) {
+                if (file.getName().endsWith(".java")) {
+                  lines.add("source " + file.getAbsolutePath());
+                }
+              }
+            } catch (ReflectiveOperationException exc) {
+              // Kotlin Gradle Plugin without javaSources (pre 1.7).
+            }
+            if (sources == 0) {
+              return;
+            }
 
-      kotlinOptions
-          .getClass()
-          .getMethod("setFreeCompilerArgs", List.class)
-          .invoke(kotlinOptions, newArgs);
-    } catch (ReflectiveOperationException exc) {
-      throw new RuntimeException(
-          "scip-java: failed to configure Kotlin compile task '" + task.getName() + "'", exc);
-    }
+            Path configDir = Paths.get(targetRoot, "kotlin-configs");
+            Files.createDirectories(configDir);
+            String fileName = task.getPath().replaceAll("[^A-Za-z0-9]", "-") + ".txt";
+            Files.write(configDir.resolve(fileName), lines);
+          } catch (Exception exc) {
+            throw new RuntimeException(
+                "scip-java: failed to extract Kotlin compile configuration for task '"
+                    + task.getName()
+                    + "': "
+                    + exc,
+                exc);
+          }
+        });
   }
 
   private static Object requiredExtra(Map<String, Object> extraProperties, String name) {

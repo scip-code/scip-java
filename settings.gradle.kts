@@ -11,6 +11,14 @@ dependencyResolutionManagement {
     repositories {
         mavenCentral()
         gradlePluginPortal()
+        // Kotlin Analysis API (`*-for-ide`) artifacts and the IntelliJ coroutines
+        // fork used by scip-kotlin-analysis.
+        maven("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies") {
+            content {
+                includeGroupAndSubgroups("org.jetbrains.kotlin")
+                includeGroup("com.intellij.platform")
+            }
+        }
     }
 }
 
@@ -19,7 +27,7 @@ rootProject.name = "scip-java"
 include(
     "scip-shared",
     "scip-javac",
-    "scip-kotlinc",
+    "scip-kotlin-analysis",
     "scip-aggregator",
     "scip-maven-plugin",
     "scip-gradle-plugin",
