@@ -1,4 +1,4 @@
-FROM eclipse-temurin:25@sha256:3ab7fc8d0b4ade8fef96903fb36767c1dbb4fd1535dcfad85b59c17afbbb5857
+FROM eclipse-temurin:25@sha256:83f4a7fc27df94dcc7b8de04d14cbbba8da14406f921e966969c3b09000aa507
 
 # ca-certificates is listed so that the base image's copy is upgraded to the
 # latest Ubuntu release, which carries CA distrusts such as the eMudhra one.
