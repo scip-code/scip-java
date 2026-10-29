@@ -14,7 +14,7 @@ spotless {
     java {
         target("scip-*/src/**/*.java")
         targetExclude("scip-java/src/test/resources/fixtures/**")
-        googleJavaFormat("1.28.0")
+        googleJavaFormat("1.36.1")
     }
 
     kotlin {
