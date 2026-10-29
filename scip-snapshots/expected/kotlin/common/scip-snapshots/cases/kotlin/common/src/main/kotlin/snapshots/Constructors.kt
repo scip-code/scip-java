@@ -5,7 +5,7 @@
 //      ⌄ enclosing_range_start scip-java maven . . snapshots/Overloaded#`<init>`().
 //                 ⌄ enclosing_range_start scip-java maven . . snapshots/Overloaded#`<init>`().(s)
 //                 ⌄ enclosing_range_start scip-java maven . . snapshots/Overloaded#s.
-//                 ⌄ enclosing_range_start scip-java maven . . snapshots/Overloaded#s.get().
+//                 ⌄ enclosing_range_start scip-java maven . . snapshots/Overloaded#getS().
   class Overloaded(val s: String) {
 //      ^^^^^^^^^^ definition scip-java maven . . snapshots/Overloaded#
 //                 kind Class
@@ -28,7 +28,7 @@
 //                       signature_documentation
 //                       > public final val s: String
 //                     ^ reference scip-java maven . . snapshots/Overloaded#`<init>`().(s)
-//                     ^ definition scip-java maven . . snapshots/Overloaded#s.get().
+//                     ^ definition scip-java maven . . snapshots/Overloaded#getS().
 //                       kind Method
 //                       display_name s
 //                       signature_documentation
@@ -36,7 +36,7 @@
 //                        ^^^^^^ reference scip-java maven . . kotlin/String#
 //                             ⌃ enclosing_range_end scip-java maven . . snapshots/Overloaded#`<init>`().(s)
 //                             ⌃ enclosing_range_end scip-java maven . . snapshots/Overloaded#s.
-//                             ⌃ enclosing_range_end scip-java maven . . snapshots/Overloaded#s.get().
+//                             ⌃ enclosing_range_end scip-java maven . . snapshots/Overloaded#getS().
 //                              ⌃ enclosing_range_end scip-java maven . . snapshots/Overloaded#`<init>`().
 //  ⌄ enclosing_range_start scip-java maven . . snapshots/Overloaded#`<init>`(+1).
 //              ⌄ enclosing_range_start scip-java maven . . snapshots/Overloaded#`<init>`(+1).(i)

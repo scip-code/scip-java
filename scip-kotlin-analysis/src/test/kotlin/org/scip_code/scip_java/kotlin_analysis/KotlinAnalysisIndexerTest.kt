@@ -82,7 +82,7 @@ class KotlinAnalysisIndexerTest {
             enclosingSymbols["snapshots/Greeter#`<init>`().(name)"],
         )
         assertEquals("snapshots/Greeter#", enclosingSymbols["snapshots/Greeter#name."])
-        assertEquals("snapshots/Greeter#name.", enclosingSymbols["snapshots/Greeter#name.get()."])
+        assertEquals("snapshots/Greeter#name.", enclosingSymbols["snapshots/Greeter#getName()."])
 
         val mainDefinitions = definitions(main)
         assertContains(mainDefinitions, "snapshots/useGreeter().")
@@ -207,16 +207,16 @@ class KotlinAnalysisIndexerTest {
                 "leaf.state" to
                     setOf(
                         "${prefix}Base#state.",
-                        "${prefix}Base#state.get().",
-                        "${prefix}Base#state.set().",
+                        "${prefix}Base#getState().",
+                        "${prefix}Base#setState().",
                     ),
                 "overriding.find(\"value\")" to setOf("${prefix}Overriding#find()."),
                 "overriding.find(1)" to setOf("${prefix}Base#find(+1)."),
                 "overriding.state" to
                     setOf(
                         "${prefix}Overriding#state.",
-                        "${prefix}Overriding#state.get().",
-                        "${prefix}Overriding#state.set().",
+                        "${prefix}Overriding#getState().",
+                        "${prefix}Overriding#setState().",
                     ),
             )
         for ((expression, expected) in expectedReferences) {

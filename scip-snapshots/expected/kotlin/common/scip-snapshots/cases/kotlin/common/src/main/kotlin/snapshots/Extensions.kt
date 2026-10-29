@@ -32,7 +32,7 @@
 //                                    ⌃ enclosing_range_end scip-java maven . . snapshots/useExtension().
   
 //⌄ enclosing_range_start scip-java maven . . snapshots/Int#asString.
-//                         ⌄ enclosing_range_start scip-java maven . . snapshots/Int#asString.get().
+//                         ⌄ enclosing_range_start scip-java maven . . snapshots/Int#getAsString().
   val Int.asString: String get() = this.toString()
 //    ^^^ reference scip-java maven . . kotlin/Int#
 //        ^^^^^^^^ definition scip-java maven . . snapshots/Int#asString.
@@ -41,14 +41,14 @@
 //                 signature_documentation
 //                 > public final val Int.asString: String
 //                  ^^^^^^ reference scip-java maven . . kotlin/String#
-//                         ^^^ definition scip-java maven . . snapshots/Int#asString.get().
+//                         ^^^ definition scip-java maven . . snapshots/Int#getAsString().
 //                             kind Method
 //                             display_name asString
 //                             signature_documentation
 //                             > public get(): String
 //                                      ^^^^^^^^ reference scip-java maven . . kotlin/Int#toString().
 //                                               ⌃ enclosing_range_end scip-java maven . . snapshots/Int#asString.
-//                                               ⌃ enclosing_range_end scip-java maven . . snapshots/Int#asString.get().
+//                                               ⌃ enclosing_range_end scip-java maven . . snapshots/Int#getAsString().
 //⌄ enclosing_range_start scip-java maven . . snapshots/useExtensionProperty().
   fun useExtensionProperty() = 42.asString
 //    ^^^^^^^^^^^^^^^^^^^^ definition scip-java maven . . snapshots/useExtensionProperty().
@@ -57,7 +57,7 @@
 //                         signature_documentation
 //                         > public final fun useExtensionProperty(): String
 //                                ^^^^^^^^ reference scip-java maven . . snapshots/Int#asString.
-//                                ^^^^^^^^ reference scip-java maven . . snapshots/Int#asString.get().
+//                                ^^^^^^^^ reference scip-java maven . . snapshots/Int#getAsString().
 //                                       ⌃ enclosing_range_end scip-java maven . . snapshots/useExtensionProperty().
   
 //⌄ enclosing_range_start scip-java maven . . snapshots/ExtensionReceiver#

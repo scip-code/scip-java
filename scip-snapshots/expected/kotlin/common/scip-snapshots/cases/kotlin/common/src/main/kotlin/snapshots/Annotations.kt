@@ -11,7 +11,7 @@
 //                 ⌄ enclosing_range_start scip-java maven . . snapshots/Tagged#`<init>`().
 //                        ⌄ enclosing_range_start scip-java maven . . snapshots/Tagged#`<init>`().(tag)
 //                        ⌄ enclosing_range_start scip-java maven . . snapshots/Tagged#tag.
-//                        ⌄ enclosing_range_start scip-java maven . . snapshots/Tagged#tag.get().
+//                        ⌄ enclosing_range_start scip-java maven . . snapshots/Tagged#getTag().
   annotation class Tagged(val tag: String)
 //                 ^^^^^^ definition scip-java maven . . snapshots/Tagged#
 //                        kind Class
@@ -35,7 +35,7 @@
 //                                signature_documentation
 //                                > public final val tag: String
 //                            ^^^ reference scip-java maven . . snapshots/Tagged#`<init>`().(tag)
-//                            ^^^ definition scip-java maven . . snapshots/Tagged#tag.get().
+//                            ^^^ definition scip-java maven . . snapshots/Tagged#getTag().
 //                                kind Method
 //                                display_name tag
 //                                signature_documentation
@@ -43,7 +43,7 @@
 //                                 ^^^^^^ reference scip-java maven . . kotlin/String#
 //                                      ⌃ enclosing_range_end scip-java maven . . snapshots/Tagged#`<init>`().(tag)
 //                                      ⌃ enclosing_range_end scip-java maven . . snapshots/Tagged#tag.
-//                                      ⌃ enclosing_range_end scip-java maven . . snapshots/Tagged#tag.get().
+//                                      ⌃ enclosing_range_end scip-java maven . . snapshots/Tagged#getTag().
 //                                       ⌃ enclosing_range_end scip-java maven . . snapshots/Tagged#
 //                                       ⌃ enclosing_range_end scip-java maven . . snapshots/Tagged#`<init>`().
   
