@@ -1,0 +1,13 @@
+plugins {
+    id 'java'
+}
+repositories {
+    mavenCentral()
+}
+// Replaces compilerArgs after the SCIP plugin has configured the task, like
+// Spring Framework's JavaConventions.
+afterEvaluate {
+    tasks.withType(JavaCompile).configureEach {
+        options.compilerArgs = ["-Xlint:serial"]
+    }
+}

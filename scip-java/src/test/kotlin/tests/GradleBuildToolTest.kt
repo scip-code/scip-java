@@ -68,6 +68,15 @@ class GradleBuildToolTest : BuildToolHarness() {
                 expectedScipFiles = 2,
             )
         )
+        // Regression test: processors inherited from another configuration (as
+        // with the Error Prone Gradle plugin) also make Gradle pass -processorpath.
+        add(
+            checkGradleBuild(
+                "inherited-annotation-path",
+                "gradle/inherited-annotation-path",
+                expectedScipFiles = 2,
+            )
+        )
         add(
             checkGradleBuild("build-with-Werror", "gradle/build-with-Werror", expectedScipFiles = 2)
         )
@@ -81,6 +90,20 @@ class GradleBuildToolTest : BuildToolHarness() {
                 "gradle/gstring-compiler-args",
                 expectedScipFiles = 1,
             )
+        )
+        // Regression test: a build that replaces compilerArgs after the plugin
+        // ran must still load the SCIP javac plugin.
+        add(
+            checkGradleBuild(
+                "replaced-compiler-args",
+                "gradle/replaced-compiler-args",
+                expectedScipFiles = 1,
+            )
+        )
+        // Regression test: source sets other than main and test need the SCIP
+        // javac plugin on their classpath too.
+        add(
+            checkGradleBuild("custom-source-set", "gradle/custom-source-set", expectedScipFiles = 2)
         )
         add(
             checkGradleBuild(

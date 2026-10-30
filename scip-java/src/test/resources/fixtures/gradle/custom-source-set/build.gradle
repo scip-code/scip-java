@@ -1,0 +1,14 @@
+plugins {
+    id 'java'
+}
+repositories {
+    mavenCentral()
+}
+// compileJava depends on compileExtraJava, which also needs the SCIP javac
+// plugin on its classpath.
+sourceSets {
+    extra
+}
+dependencies {
+    implementation sourceSets.extra.output
+}
