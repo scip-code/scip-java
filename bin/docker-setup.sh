@@ -3,7 +3,7 @@ set -eux
 # renovate: datasource=github-releases depName=coursier/coursier versioning=semver
 COURSIER_VERSION=2.1.26
 # renovate: datasource=maven depName=org.apache.maven:apache-maven versioning=maven
-MAVEN_VERSION=3.9.16
+MAVEN_VERSION=3.10.0
 # renovate: datasource=gradle-version depName=gradle versioning=gradle
 GRADLE_VERSION=9.8.2
 
