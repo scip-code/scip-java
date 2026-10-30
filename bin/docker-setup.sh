@@ -1,16 +1,23 @@
 #!/usr/bin/env bash
 set -eux
+# renovate: datasource=github-releases depName=coursier/coursier versioning=semver
+COURSIER_VERSION=2.1.26
+# renovate: datasource=maven depName=org.apache.maven:apache-maven versioning=maven
+MAVEN_VERSION=3.9.16
+# renovate: datasource=gradle-version depName=gradle versioning=gradle
+GRADLE_VERSION=9.8.2
+
 # Use the upstream JVM launcher so the configured system trust store applies.
-curl -fLo /usr/local/bin/cs https://github.com/coursier/coursier/releases/download/v2.1.26/coursier
+curl -fLo /usr/local/bin/cs "https://github.com/coursier/coursier/releases/download/v${COURSIER_VERSION}/coursier"
 chmod +x /usr/local/bin/cs
 ln -sf /usr/local/bin/cs /usr/local/bin/coursier
 
-curl -fLo maven.zip https://archive.apache.org/dist/maven/maven-3/3.9.16/binaries/apache-maven-3.9.16-bin.zip
+curl -fLo maven.zip "https://archive.apache.org/dist/maven/maven-${MAVEN_VERSION%%.*}/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.zip"
 unzip -d /opt/maven maven.zip
 rm maven.zip
 mv /opt/maven/*/* /opt/maven
 
-curl -fLo gradle.zip https://services.gradle.org/distributions/gradle-9.8.2-bin.zip
+curl -fLo gradle.zip "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip"
 unzip -d /opt/gradle gradle.zip 
 rm gradle.zip
 mv /opt/gradle/*/* /opt/gradle
