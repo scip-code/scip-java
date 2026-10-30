@@ -1,18 +1,16 @@
 #!/usr/bin/env bash
 set -eux
-curl -fLo /usr/local/bin/cs https://github.com/coursier/coursier/releases/download/v2.1.5/coursier
+# Use the upstream JVM launcher so the configured system trust store applies.
+curl -fLo /usr/local/bin/cs https://github.com/coursier/coursier/releases/download/v2.1.26/coursier
 chmod +x /usr/local/bin/cs
 ln -sf /usr/local/bin/cs /usr/local/bin/coursier
-# Only install the JVM launcher. The native `cs` app embeds the trust store of
-# the GraalVM it was built with, so it ignores the trust store set up below.
-cs setup --yes --apps coursier
 
-curl -fLo maven.zip https://archive.apache.org/dist/maven/maven-3/3.9.1/binaries/apache-maven-3.9.1-bin.zip 
+curl -fLo maven.zip https://archive.apache.org/dist/maven/maven-3/3.9.16/binaries/apache-maven-3.9.16-bin.zip
 unzip -d /opt/maven maven.zip
 rm maven.zip
 mv /opt/maven/*/* /opt/maven
 
-curl -fLo gradle.zip https://services.gradle.org/distributions/gradle-9.4.1-bin.zip
+curl -fLo gradle.zip https://services.gradle.org/distributions/gradle-9.8.2-bin.zip
 unzip -d /opt/gradle gradle.zip 
 rm gradle.zip
 mv /opt/gradle/*/* /opt/gradle
