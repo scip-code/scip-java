@@ -4,5 +4,37 @@
     "config:recommended"
   ],
   "automerge": true,
-  "semanticCommits": false
+  "semanticCommits": "disabled",
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^bin/docker-setup\\.sh$/"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+) versioning=(?<versioning>\\S+)\\n[A-Z_]+_VERSION=(?<currentValue>\\S+)"
+      ]
+    }
+  ],
+  "packageRules": [
+    {
+      "matchManagers": ["custom.regex"],
+      "automerge": false
+    },
+    {
+      "matchDatasources": ["github-releases"],
+      "matchPackageNames": ["coursier/coursier"],
+      "extractVersion": "^v(?<version>\\d+\\.\\d+\\.\\d+)$"
+    },
+    {
+      "matchDatasources": ["gradle-version"],
+      "matchPackageNames": ["gradle", "gradle/gradle"],
+      "groupName": "Gradle runtime",
+      "automerge": false
+    },
+    {
+      "matchManagers": ["dockerfile"],
+      "matchPackageNames": ["eclipse-temurin"],
+      "allowedVersions": "/^25(?:[.-]|$)/",
+      "automerge": false
+    }
+  ]
 }
