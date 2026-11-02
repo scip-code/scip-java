@@ -1,6 +1,7 @@
 package org.scip_code.scip_java.buildtools
 
 import java.io.File
+import java.io.OutputStream
 import java.nio.charset.StandardCharsets
 import java.nio.file.FileSystems
 import java.nio.file.FileVisitResult
@@ -10,6 +11,9 @@ import java.nio.file.Paths
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.StandardOpenOption
 import java.nio.file.attribute.BasicFileAttributes
+import java.security.DigestInputStream
+import java.security.MessageDigest
+import java.util.HexFormat
 import org.scip_code.scip_java.Embedded
 import org.scip_code.scip_java.commands.IndexCommand
 
@@ -70,6 +74,7 @@ class BazelBuildTool(index: IndexCommand) : BuildTool("Bazel", index) {
                 "--output_groups=scip",
                 "--define=java_home=$javaHome",
                 "--define=scip_java_binary=$scipJavaBinary",
+                "--define=scip_java_fingerprint=${scipJavaFingerprint()}",
                 "--verbose_failures",
             ) + targetSpecs
 
@@ -79,6 +84,24 @@ class BazelBuildTool(index: IndexCommand) : BuildTool("Bazel", index) {
             aggregateScipFiles()
             0
         }
+    }
+
+    /**
+     * Hashes the jars of the running scip-java. The aspect can't declare the scip-java binary as an
+     * action input because it lives outside the workspace, so it puts this hash in the action key
+     * instead. Otherwise Bazel would reuse indexes produced by an older scip-java.
+     */
+    private fun scipJavaFingerprint(): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        for (entry in System.getProperty("java.class.path").split(File.pathSeparator)) {
+            val path = Paths.get(entry)
+            if (!Files.isRegularFile(path)) continue
+            digest.update(path.fileName.toString().toByteArray(StandardCharsets.UTF_8))
+            Files.newInputStream(path).use { input ->
+                DigestInputStream(input, digest).transferTo(OutputStream.nullOutputStream())
+            }
+        }
+        return HexFormat.of().formatHex(digest.digest())
     }
 
     private fun runBazelBuild(buildCommand: List<String>): Int {
