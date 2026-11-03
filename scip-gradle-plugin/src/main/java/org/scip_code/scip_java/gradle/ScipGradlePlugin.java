@@ -9,6 +9,7 @@ import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.initialization.Settings;
 import org.gradle.api.internal.GradleInternal;
+import org.gradle.api.invocation.Gradle;
 import org.gradle.api.tasks.compile.JavaCompile;
 
 public class ScipGradlePlugin implements Plugin<Project> {
@@ -47,9 +48,11 @@ public class ScipGradlePlugin implements Plugin<Project> {
         project.getExtensions().getExtraProperties().getProperties();
 
     String targetRoot = requiredExtra(extraProperties, "scipTarget").toString();
-    // The CLI's working directory, not project.getRootDir(): buildSrc and
-    // included builds have their own root directory.
-    String sourceRoot = requiredExtra(extraProperties, "scipSourceroot").toString();
+    // The directory the root build was started in, not project.getRootDir():
+    // buildSrc and included builds have their own root directory.
+    Gradle rootBuild = project.getGradle();
+    while (rootBuild.getParent() != null) rootBuild = rootBuild.getParent();
+    String sourceRoot = rootBuild.getStartParameter().getCurrentDir().toString();
 
     // Compilation tasks we need to trigger to index all the sources we care
     // about. Built up as we detect the java and kotlin plugins.
