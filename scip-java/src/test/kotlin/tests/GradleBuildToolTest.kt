@@ -105,6 +105,16 @@ class GradleBuildToolTest : BuildToolHarness() {
         add(
             checkGradleBuild("custom-source-set", "gradle/custom-source-set", expectedScipFiles = 2)
         )
+        // Regression test: a source set whose configurations were resolved before
+        // the plugin ran is compiled without the SCIP javac plugin, and the other
+        // source sets are still indexed.
+        add(
+            checkGradleBuild(
+                "resolved-source-set",
+                "gradle/resolved-source-set",
+                expectedScipFiles = 1,
+            )
+        )
         add(
             checkGradleBuild(
                 "publishing",

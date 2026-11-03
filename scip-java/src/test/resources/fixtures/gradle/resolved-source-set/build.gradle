@@ -1,0 +1,16 @@
+plugins {
+    id 'java'
+}
+repositories {
+    mavenCentral()
+}
+sourceSets {
+    extra
+}
+dependencies {
+    implementation sourceSets.extra.output
+}
+// Resolving the extra classpath at configuration time locks extraCompileOnly,
+// so the SCIP javac plugin can't be added to it. compileExtraJava must then
+// run without the plugin, and main must still be indexed.
+sourceSets.extra.compileClasspath.files

@@ -1,8 +1,10 @@
 package org.scip_code.scip_java.gradle;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -72,7 +74,10 @@ public class ScipGradlePlugin implements Plugin<Project> {
       }
 
       Object javacPluginDep = project.files(requiredExtra(extraProperties, "javacPluginJar"));
-      boolean pluginAdded = tryAddJavacPlugin(project, javacPluginDep, isAndroid);
+      // Android compile tasks belong to variants rather than source sets, so
+      // there the plugin is added to all of them or to none.
+      boolean androidPluginAdded = isAndroid && tryAddAndroidJavacPlugin(project, javacPluginDep);
+      Set<String> pluginTasks = isAndroid ? Set.of() : addJavacPlugin(project, javacPluginDep);
 
       project
           .getTasks()
@@ -84,7 +89,7 @@ public class ScipGradlePlugin implements Plugin<Project> {
                 // SCIP state.
                 task.getOptions().setIncremental(false);
 
-                if (pluginAdded) {
+                if (androidPluginAdded || pluginTasks.contains(task.getName())) {
                   // An argument provider rather than compilerArgs, because builds
                   // may replace compilerArgs after we run (Spring's conventions
                   // call setCompilerArgs in afterEvaluate), which would silently
@@ -159,27 +164,14 @@ public class ScipGradlePlugin implements Plugin<Project> {
     }
   }
 
-  private static boolean tryAddJavacPlugin(
-      Project project, Object javacPluginDep, boolean isAndroid) {
+  private static boolean tryAddAndroidJavacPlugin(Project project, Object javacPluginDep) {
     try {
-      if (isAndroid) {
-        project.getDependencies().add("compileOnly", javacPluginDep);
-        project.getDependencies().add("testCompileOnly", javacPluginDep);
-        // AGP always passes -processorpath, so javac only finds the plugin there.
-        for (String name : ANDROID_ANNOTATION_PROCESSORS) {
-          if (project.getConfigurations().findByName(name) != null) {
-            project.getDependencies().add(name, javacPluginDep);
-          }
-        }
-        return true;
-      }
-      // Every source set, not just main and test: the plugin argument is added
-      // to every JavaCompile task.
-      for (SourceSet sourceSet : project.getExtensions().getByType(SourceSetContainer.class)) {
-        project.getDependencies().add(sourceSet.getCompileOnlyConfigurationName(), javacPluginDep);
-        String processors = sourceSet.getAnnotationProcessorConfigurationName();
-        if (hasAnnotationProcessors(project, processors)) {
-          project.getDependencies().add(processors, javacPluginDep);
+      project.getDependencies().add("compileOnly", javacPluginDep);
+      project.getDependencies().add("testCompileOnly", javacPluginDep);
+      // AGP always passes -processorpath, so javac only finds the plugin there.
+      for (String name : ANDROID_ANNOTATION_PROCESSORS) {
+        if (project.getConfigurations().findByName(name) != null) {
+          project.getDependencies().add(name, javacPluginDep);
         }
       }
       return true;
@@ -200,6 +192,44 @@ public class ScipGradlePlugin implements Plugin<Project> {
                   + "). This subproject will not be indexed.");
       return false;
     }
+  }
+
+  /**
+   * Adds the SCIP javac plugin to each source set and returns the names of the compile tasks of the
+   * source sets it was added to. A failure only skips that source set, because the other source
+   * sets' configurations may still accept new dependencies.
+   */
+  private static Set<String> addJavacPlugin(Project project, Object javacPluginDep) {
+    Set<String> pluginTasks = new HashSet<>();
+    for (SourceSet sourceSet : project.getExtensions().getByType(SourceSetContainer.class)) {
+      try {
+        project.getDependencies().add(sourceSet.getCompileOnlyConfigurationName(), javacPluginDep);
+        String processors = sourceSet.getAnnotationProcessorConfigurationName();
+        if (hasAnnotationProcessors(project, processors)) {
+          project.getDependencies().add(processors, javacPluginDep);
+        }
+        pluginTasks.add(sourceSet.getCompileJavaTaskName());
+      } catch (Exception exc) {
+        // The source set's configurations have likely already been resolved by
+        // another plugin or buildscript, so we can no longer add new
+        // dependencies to them. The source set will be skipped (no SCIP output)
+        // and, if no source set is indexed, the post-build check in
+        // `GradleBuildTool` will surface a clearer error.
+        project
+            .getLogger()
+            .warn(
+                "scip-java: failed to attach SCIP compiler plugin to source set '"
+                    + sourceSet.getName()
+                    + "' of project '"
+                    + project.getName()
+                    + "' ("
+                    + exc.getClass().getSimpleName()
+                    + ": "
+                    + exc.getMessage()
+                    + "). This source set will not be indexed.");
+      }
+    }
+    return pluginTasks;
   }
 
   private static void configureKotlinCompileTask(
