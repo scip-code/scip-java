@@ -163,6 +163,18 @@ class GradleBuildToolTest : BuildToolHarness() {
                 extraArguments = listOf("--", "compileJava"),
             )
         )
+        // Regression test: Java sources must be indexed again when the second run
+        // reuses the configuration cache entry of the first, which leaves
+        // compileJava up to date.
+        add(
+            checkGradleBuild(
+                "java-configuration-cache",
+                "gradle/build-command",
+                expectedScipFiles = 1,
+                extraArguments = listOf("--", "--configuration-cache", "compileJava"),
+                runs = 2,
+            )
+        )
         add(checkGradleBuild("kotlin2", "gradle/kotlin2", expectedScipFiles = 4))
         // Regression tests: Kotlin sources must be indexed again when the Kotlin
         // compile tasks are restored from the build cache, or are up to date
