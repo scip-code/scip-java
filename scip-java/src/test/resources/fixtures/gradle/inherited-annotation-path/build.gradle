@@ -1,0 +1,16 @@
+plugins {
+    id 'java'
+}
+repositories {
+    mavenCentral()
+}
+// The processor is only inherited by annotationProcessor, like the Error Prone
+// Gradle plugin's 'errorprone' configuration.
+configurations {
+    processors
+    annotationProcessor.extendsFrom(processors)
+}
+dependencies {
+  compileOnly 'org.immutables:value:2.9.2'
+  processors 'org.immutables:value:2.9.2'
+}

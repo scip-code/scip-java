@@ -1,8 +1,10 @@
 package org.scip_code.scip_java.gradle;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -10,7 +12,12 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.initialization.Settings;
 import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.invocation.Gradle;
+import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.SourceSet;
+import org.gradle.api.tasks.SourceSetContainer;
+import org.gradle.api.tasks.compile.CompileOptions;
 import org.gradle.api.tasks.compile.JavaCompile;
+import org.gradle.process.CommandLineArgumentProvider;
 
 public class ScipGradlePlugin implements Plugin<Project> {
 
@@ -67,7 +74,10 @@ public class ScipGradlePlugin implements Plugin<Project> {
       }
 
       Object javacPluginDep = project.files(requiredExtra(extraProperties, "javacPluginJar"));
-      boolean pluginAdded = tryAddJavacPlugin(project, javacPluginDep, isAndroid);
+      // Android compile tasks belong to variants rather than source sets, so
+      // there the plugin is added to all of them or to none.
+      boolean androidPluginAdded = isAndroid && tryAddAndroidJavacPlugin(project, javacPluginDep);
+      Set<String> pluginTasks = isAndroid ? Set.of() : addJavacPlugin(project, javacPluginDep);
 
       project
           .getTasks()
@@ -79,36 +89,27 @@ public class ScipGradlePlugin implements Plugin<Project> {
                 // SCIP state.
                 task.getOptions().setIncremental(false);
 
-                if (pluginAdded) {
-                  // Groovy build scripts can append interpolated strings
-                  // (GString) to compilerArgs, so despite the List<String>
-                  // signature the list may hold non-String elements. Iterate
-                  // through a wildcard reference so elements are not implicitly
-                  // cast to String, which throws ClassCastException (issue
-                  // #801).
-                  List<?> args = task.getOptions().getCompilerArgs();
-
-                  // It's important we don't add the plugin configuration more
-                  // than once, as javac considers that an error.
-                  boolean alreadyAdded =
-                      args.stream()
-                          .anyMatch(arg -> String.valueOf(arg).startsWith("-Xplugin:scip"));
-                  if (!alreadyAdded) {
-                    // The random timestamp ensures the sources are _always_
-                    // recompiled, so Gradle doesn't cache any state.
-                    // TODO: before this plugin is published to Maven Central, we
-                    // will need to revert this change - as it can have
-                    // detrimental effect on people's builds.
-                    task.getOptions()
-                        .getCompilerArgs()
-                        .add(
-                            "-Xplugin:scip -targetroot:"
-                                + targetRoot
-                                + " -sourceroot:"
-                                + sourceRoot
-                                + " -randomtimestamp="
-                                + System.nanoTime());
-                  }
+                if (androidPluginAdded || pluginTasks.contains(task.getName())) {
+                  // An argument provider rather than compilerArgs, because builds
+                  // may replace compilerArgs after we run (Spring's conventions
+                  // call setCompilerArgs in afterEvaluate), which would silently
+                  // drop the plugin.
+                  // The random timestamp ensures the sources are _always_
+                  // recompiled, so Gradle doesn't cache any state.
+                  // TODO: before this plugin is published to Maven Central, we
+                  // will need to revert this change - as it can have
+                  // detrimental effect on people's builds.
+                  task.getOptions()
+                      .getCompilerArgumentProviders()
+                      .add(
+                          new JavacPluginArgument(
+                              task.getOptions(),
+                              "-Xplugin:scip -targetroot:"
+                                  + targetRoot
+                                  + " -sourceroot:"
+                                  + sourceRoot
+                                  + " -randomtimestamp="
+                                  + System.nanoTime()));
                 }
               });
     }
@@ -146,40 +147,32 @@ public class ScipGradlePlugin implements Plugin<Project> {
   /**
    * javac discovers {@code -Xplugin:} plugins from the annotation processor path when {@code
    * -processorpath} is set, and only falls back to the classpath when it isn't. Gradle populates
-   * {@code -processorpath} from the {@code annotationProcessor} (main) and {@code
-   * testAnnotationProcessor} (test) configurations, so whenever one of them declares a processor we
-   * must add the SCIP javac plugin to that same configuration or the corresponding compile task
-   * fails with "plug-in not found: scip". The two configurations are independent (test does not
-   * extend main), so each is checked separately.
+   * {@code -processorpath} from each source set's annotation processor configuration ({@code
+   * annotationProcessor} for main, {@code testAnnotationProcessor} for test), so whenever one of
+   * them declares a processor we must add the SCIP javac plugin to that same configuration or the
+   * corresponding compile task fails with "plug-in not found: scip". The configurations are
+   * independent (test does not extend main), so each is checked separately.
    */
   private static boolean hasAnnotationProcessors(Project project, String configurationName) {
     try {
       Configuration config = project.getConfigurations().getByName(configurationName);
-      return config.isCanBeResolved() && !config.getDependencies().isEmpty();
+      // All dependencies, including inherited ones: the Error Prone Gradle
+      // plugin makes annotationProcessor extend its own configuration.
+      return config.isCanBeResolved() && !config.getAllDependencies().isEmpty();
     } catch (Exception exc) {
       return false;
     }
   }
 
-  private static boolean tryAddJavacPlugin(
-      Project project, Object javacPluginDep, boolean isAndroid) {
+  private static boolean tryAddAndroidJavacPlugin(Project project, Object javacPluginDep) {
     try {
       project.getDependencies().add("compileOnly", javacPluginDep);
       project.getDependencies().add("testCompileOnly", javacPluginDep);
-      if (isAndroid) {
-        // AGP always passes -processorpath, so javac only finds the plugin there.
-        for (String name : ANDROID_ANNOTATION_PROCESSORS) {
-          if (project.getConfigurations().findByName(name) != null) {
-            project.getDependencies().add(name, javacPluginDep);
-          }
+      // AGP always passes -processorpath, so javac only finds the plugin there.
+      for (String name : ANDROID_ANNOTATION_PROCESSORS) {
+        if (project.getConfigurations().findByName(name) != null) {
+          project.getDependencies().add(name, javacPluginDep);
         }
-        return true;
-      }
-      if (hasAnnotationProcessors(project, "annotationProcessor")) {
-        project.getDependencies().add("annotationProcessor", javacPluginDep);
-      }
-      if (hasAnnotationProcessors(project, "testAnnotationProcessor")) {
-        project.getDependencies().add("testAnnotationProcessor", javacPluginDep);
       }
       return true;
     } catch (Exception exc) {
@@ -199,6 +192,44 @@ public class ScipGradlePlugin implements Plugin<Project> {
                   + "). This subproject will not be indexed.");
       return false;
     }
+  }
+
+  /**
+   * Adds the SCIP javac plugin to each source set and returns the names of the compile tasks of the
+   * source sets it was added to. A failure only skips that source set, because the other source
+   * sets' configurations may still accept new dependencies.
+   */
+  private static Set<String> addJavacPlugin(Project project, Object javacPluginDep) {
+    Set<String> pluginTasks = new HashSet<>();
+    for (SourceSet sourceSet : project.getExtensions().getByType(SourceSetContainer.class)) {
+      try {
+        project.getDependencies().add(sourceSet.getCompileOnlyConfigurationName(), javacPluginDep);
+        String processors = sourceSet.getAnnotationProcessorConfigurationName();
+        if (hasAnnotationProcessors(project, processors)) {
+          project.getDependencies().add(processors, javacPluginDep);
+        }
+        pluginTasks.add(sourceSet.getCompileJavaTaskName());
+      } catch (Exception exc) {
+        // The source set's configurations have likely already been resolved by
+        // another plugin or buildscript, so we can no longer add new
+        // dependencies to them. The source set will be skipped (no SCIP output)
+        // and, if no source set is indexed, the post-build check in
+        // `GradleBuildTool` will surface a clearer error.
+        project
+            .getLogger()
+            .warn(
+                "scip-java: failed to attach SCIP compiler plugin to source set '"
+                    + sourceSet.getName()
+                    + "' of project '"
+                    + project.getName()
+                    + "' ("
+                    + exc.getClass().getSimpleName()
+                    + ": "
+                    + exc.getMessage()
+                    + "). This source set will not be indexed.");
+      }
+    }
+    return pluginTasks;
   }
 
   private static void configureKotlinCompileTask(
@@ -243,5 +274,36 @@ public class ScipGradlePlugin implements Plugin<Project> {
           name + " extra property must be set by the scip-java Gradle init script");
     }
     return value;
+  }
+
+  /** Passes the SCIP javac plugin argument, unless the build already passes one itself. */
+  private static class JavacPluginArgument implements CommandLineArgumentProvider {
+    private final CompileOptions options;
+    private final String argument;
+
+    JavacPluginArgument(CompileOptions options, String argument) {
+      this.options = options;
+      this.argument = argument;
+    }
+
+    @Input
+    public String getArgument() {
+      return argument;
+    }
+
+    @Override
+    public Iterable<String> asArguments() {
+      // Groovy build scripts can append interpolated strings (GString) to
+      // compilerArgs, so despite the List<String> signature the list may hold
+      // non-String elements. Iterate through a wildcard reference so elements
+      // are not implicitly cast to String, which throws ClassCastException
+      // (issue #801).
+      List<?> args = options.getCompilerArgs();
+
+      // javac rejects the plugin configuration if it's given more than once.
+      boolean alreadyAdded =
+          args.stream().anyMatch(arg -> String.valueOf(arg).startsWith("-Xplugin:scip"));
+      return alreadyAdded ? List.of() : List.of(argument);
+    }
   }
 }

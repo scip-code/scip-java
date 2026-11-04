@@ -42,6 +42,8 @@ This means our SCIP compiler plugin was not attached to one or more JavaCompile 
 
   1. The 'compileOnly' configuration was already resolved before our init script ran.
      Check the Gradle output above for warnings of the form:
+       "scip-java: failed to attach SCIP compiler plugin to source set '<name>' of project '<name>'"
+     or, for Android projects:
        "scip-java: failed to attach SCIP compiler plugin to project '<name>'"
      Workaround: apply the SCIP plugin earlier (e.g. via a settings plugin),
      or restructure the build so that 'compileOnly' is not resolved at evaluation time.
@@ -49,7 +51,7 @@ This means our SCIP compiler plugin was not attached to one or more JavaCompile 
   2. Another Gradle plugin is replacing the compiler arguments we add (rather than appending).
      Verify with:  ./gradlew compileJava --info | grep -- '-Xplugin:scip'
      If '-Xplugin:scip' is missing from the printed javac command, another plugin
-     is overwriting JavaCompile.options.compilerArgs.
+     is overwriting JavaCompile.options.compilerArgumentProviders.
 """
         )
         return 1
