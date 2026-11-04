@@ -20,7 +20,7 @@ spotless = "8.11.0"
 vanniktech-maven-publish = "0.37.0"
 
 [libraries]
-caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version = "2.9.3" }
+caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version = "3.3.1" }
 clikt-jvm = { module = "com.github.ajalt.clikt:clikt-jvm", version.ref = "clikt" }
 gradle-api = { module = "dev.gradleplugins:gradle-api", version.ref = "gradle-api" }
 gradle-test-kit = { module = "dev.gradleplugins:gradle-test-kit", version.ref = "gradle-api" }
