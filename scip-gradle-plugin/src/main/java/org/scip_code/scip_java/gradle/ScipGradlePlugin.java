@@ -9,9 +9,20 @@ import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.initialization.Settings;
 import org.gradle.api.internal.GradleInternal;
+import org.gradle.api.invocation.Gradle;
 import org.gradle.api.tasks.compile.JavaCompile;
 
 public class ScipGradlePlugin implements Plugin<Project> {
+
+  private static final List<String> ANDROID_PLUGINS =
+      List.of(
+          "com.android.application",
+          "com.android.library",
+          "com.android.test",
+          "com.android.dynamic-feature");
+
+  private static final List<String> ANDROID_ANNOTATION_PROCESSORS =
+      List.of("annotationProcessor", "testAnnotationProcessor", "androidTestAnnotationProcessor");
 
   @Override
   public void apply(Project project) {
@@ -37,18 +48,26 @@ public class ScipGradlePlugin implements Plugin<Project> {
         project.getExtensions().getExtraProperties().getProperties();
 
     String targetRoot = requiredExtra(extraProperties, "scipTarget").toString();
-    String sourceRoot = project.getRootDir().toString();
+    // The directory the root build was started in, not project.getRootDir():
+    // buildSrc and included builds have their own root directory.
+    Gradle rootBuild = project.getGradle();
+    while (rootBuild.getParent() != null) rootBuild = rootBuild.getParent();
+    String sourceRoot = rootBuild.getStartParameter().getCurrentDir().toString();
 
     // Compilation tasks we need to trigger to index all the sources we care
     // about. Built up as we detect the java and kotlin plugins.
     List<String> triggers = new ArrayList<>();
 
-    if (project.getPlugins().hasPlugin("java")) {
-      triggers.add("compileJava");
-      triggers.add("compileTestJava");
+    boolean isAndroid = ANDROID_PLUGINS.stream().anyMatch(id -> project.getPlugins().hasPlugin(id));
+
+    if (project.getPlugins().hasPlugin("java") || isAndroid) {
+      if (!isAndroid) {
+        triggers.add("compileJava");
+        triggers.add("compileTestJava");
+      }
 
       Object javacPluginDep = project.files(requiredExtra(extraProperties, "javacPluginJar"));
-      boolean pluginAdded = tryAddJavacPlugin(project, javacPluginDep);
+      boolean pluginAdded = tryAddJavacPlugin(project, javacPluginDep, isAndroid);
 
       project
           .getTasks()
@@ -142,10 +161,20 @@ public class ScipGradlePlugin implements Plugin<Project> {
     }
   }
 
-  private static boolean tryAddJavacPlugin(Project project, Object javacPluginDep) {
+  private static boolean tryAddJavacPlugin(
+      Project project, Object javacPluginDep, boolean isAndroid) {
     try {
       project.getDependencies().add("compileOnly", javacPluginDep);
       project.getDependencies().add("testCompileOnly", javacPluginDep);
+      if (isAndroid) {
+        // AGP always passes -processorpath, so javac only finds the plugin there.
+        for (String name : ANDROID_ANNOTATION_PROCESSORS) {
+          if (project.getConfigurations().findByName(name) != null) {
+            project.getDependencies().add(name, javacPluginDep);
+          }
+        }
+        return true;
+      }
       if (hasAnnotationProcessors(project, "annotationProcessor")) {
         project.getDependencies().add("annotationProcessor", javacPluginDep);
       }
