@@ -1,0 +1,7 @@
+// A build cache inside the checkout, so every test starts with an empty
+// cache and leaves the user's Gradle home untouched.
+buildCache {
+    local {
+        directory = file('build-cache')
+    }
+}
