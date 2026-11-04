@@ -166,7 +166,8 @@ class GradleBuildToolTest : BuildToolHarness() {
         add(checkGradleBuild("kotlin2", "gradle/kotlin2", expectedScipFiles = 4))
         // Regression tests: Kotlin sources must be indexed again when the Kotlin
         // compile tasks are restored from the build cache, or are up to date
-        // because the build command doesn't clean.
+        // because the build command doesn't clean. The second run of the latter
+        // also reuses the configuration cache entry of the first.
         add(
             checkGradleBuild(
                 "kotlin-build-cache",
@@ -179,8 +180,8 @@ class GradleBuildToolTest : BuildToolHarness() {
             checkGradleBuild(
                 "kotlin-up-to-date",
                 "gradle/kotlin2",
-                expectedScipFiles = 2,
-                extraArguments = listOf("--", "compileKotlin", "compileJava"),
+                expectedScipFiles = 1,
+                extraArguments = listOf("--", "--configuration-cache", "compileKotlin"),
                 runs = 2,
             )
         )
