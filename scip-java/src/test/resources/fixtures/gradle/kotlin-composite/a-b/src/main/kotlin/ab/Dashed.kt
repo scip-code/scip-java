@@ -1,0 +1,2 @@
+package ab
+object Dashed {}
