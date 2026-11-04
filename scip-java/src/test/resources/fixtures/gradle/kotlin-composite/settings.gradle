@@ -1,0 +1,5 @@
+rootProject.name = 'kotlin-composite'
+// `:a-b` and `:a:b` both sanitize to `-a-b-compileKotlin`.
+include 'a-b', 'a:b'
+// Also has a `:compileKotlin` task.
+includeBuild 'included'

@@ -1,11 +1,14 @@
 package org.scip_code.scip_java.gradle;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -271,7 +274,8 @@ public class ScipGradlePlugin implements Plugin<Project> {
   }
 
   /**
-   * Dumps the sources and classpath of a Kotlin compile task to {@code kotlin-configs/<task>.txt}.
+   * Dumps the sources and classpath of a Kotlin compile task to {@code
+   * kotlin-configs/<task>-<hash>.txt}.
    */
   private static void writeKotlinConfig(Task task, String sourceRoot, String targetRoot) {
     try {
@@ -317,7 +321,14 @@ public class ScipGradlePlugin implements Plugin<Project> {
 
       Path configDir = Paths.get(targetRoot, "kotlin-configs");
       Files.createDirectories(configDir);
-      String fileName = task.getPath().replaceAll("[^A-Za-z0-9]", "-") + ".txt";
+      // Task paths are only unique within one build, and every build of a
+      // composite (included builds, buildSrc) writes here, so the build's
+      // root directory is part of the identity. Hashing, unlike sanitizing,
+      // keeps ":a-b:x" and ":a:b:x" apart; NUL cannot occur in a path.
+      String identity = task.getProject().getRootDir().getAbsolutePath() + "\0" + task.getPath();
+      byte[] hash =
+          MessageDigest.getInstance("SHA-256").digest(identity.getBytes(StandardCharsets.UTF_8));
+      String fileName = task.getName() + "-" + HexFormat.of().formatHex(hash, 0, 8) + ".txt";
       Files.write(configDir.resolve(fileName), lines);
     } catch (Exception exc) {
       throw new RuntimeException(

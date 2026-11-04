@@ -204,6 +204,11 @@ class GradleBuildToolTest : BuildToolHarness() {
                 runs = 2,
             )
         )
+        // Regression test: Kotlin compile tasks whose paths are equal in different
+        // builds of a composite (`:compileKotlin` in the root and included build),
+        // or equal after sanitizing (`:a-b` and `:a:b`), overwrote each other's
+        // configs, so only one of their sources was indexed.
+        add(checkGradleBuild("kotlin-composite", "gradle/kotlin-composite", expectedScipFiles = 4))
         add(
             checkGradleBuild(
                 "implementation-deps",

@@ -1,0 +1,12 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '2.4.0'
+}
+allprojects {
+    repositories {
+        mavenCentral()
+    }
+}
+// `scipCompileAll` only runs tasks of the root build.
+tasks.named('compileKotlin') {
+    dependsOn gradle.includedBuild('included').task(':compileKotlin')
+}
