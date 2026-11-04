@@ -146,6 +146,10 @@ def _scip_java(target, ctx):
         env = {
             "JAVA_HOME": ctx.var["java_home"],
             "NO_PROGRESS_BAR": "true",
+            # The scip-java binary is outside the workspace and can't be an action
+            # input. This hash of scip-java is part of the action key instead, so
+            # a new scip-java re-indexes targets instead of reusing cached outputs.
+            "SCIP_JAVA_FINGERPRINT": ctx.var.get("scip_java_fingerprint", ""),
         },
         mnemonic = "ScipJavaIndex",
         inputs = depset([build_config_path] + output_dir, transitive = deps),
