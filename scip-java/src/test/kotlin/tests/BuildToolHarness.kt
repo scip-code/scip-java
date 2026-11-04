@@ -113,6 +113,7 @@ abstract class BuildToolHarness {
         targetRoot: String? = null,
         maxJdk: Int? = null,
         substitutions: Map<String, String> = emptyMap(),
+        runs: Int = 1,
     ): DynamicTest =
         dynamicTest(name) {
             // Some build tools cap the JDK they support; skip rather than fail
@@ -143,21 +144,25 @@ abstract class BuildToolHarness {
                         targetroot.toString(),
                     ) + extraArguments
 
-                val (exit, output) = runScipJava(workingDirectory, arguments)
+                // Later runs reuse the checkout, so they cover state left by
+                // earlier builds (up-to-date tasks, build cache entries).
+                for (run in 1..runs) {
+                    val (exit, output) = runScipJava(workingDirectory, arguments)
 
-                if (expectedError != null) {
-                    assertNotEquals(0, exit, "expected failure, output:\n$output")
-                    expectedError(output)
-                } else {
-                    assertEquals(0, exit, "expected success, output:\n$output")
-                }
+                    if (expectedError != null) {
+                        assertNotEquals(0, exit, "expected failure, output:\n$output")
+                        expectedError(output)
+                    } else {
+                        assertEquals(0, exit, "expected success, output:\n$output")
+                    }
 
-                val shards = listScipShards(targetroot)
-                if (shards.size != expectedScipFiles) {
-                    fail(
-                        "Expected $expectedScipFiles SCIP shard(s), got ${shards.size}: " +
-                            "$shards\noutput:\n$output"
-                    )
+                    val shards = listScipShards(targetroot)
+                    if (shards.size != expectedScipFiles) {
+                        fail(
+                            "Run $run: expected $expectedScipFiles SCIP shard(s), got ${shards.size}: " +
+                                "$shards\noutput:\n$output"
+                        )
+                    }
                 }
 
                 if (expectedPackages.isNotEmpty()) {

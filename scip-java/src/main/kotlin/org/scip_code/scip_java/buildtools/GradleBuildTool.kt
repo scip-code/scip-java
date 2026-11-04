@@ -94,6 +94,10 @@ This means our SCIP compiler plugin was not attached to one or more JavaCompile 
         cmd += script
         cmd += "-Dscip.targetroot=${targetroot()}"
         cmd += index.finalBuildCommand(listOf("clean", "scipPrintDependencies", "scipCompileAll"))
+        // The Gradle plugin isn't compatible with the configuration cache, which
+        // a build can enable in gradle.properties. Last, because the last of
+        // --configuration-cache and --no-configuration-cache wins.
+        cmd += "--no-configuration-cache"
 
         targetroot().toFile().deleteRecursively()
         val result = index.app.runProcess(cmd, env = mapOf("TERM" to "dumb"))

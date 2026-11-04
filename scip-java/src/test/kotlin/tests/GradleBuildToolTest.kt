@@ -20,6 +20,7 @@ class GradleBuildToolTest : BuildToolHarness() {
         expectedPackages: String = "",
         extraArguments: List<String> = emptyList(),
         substitutions: Map<String, String> = emptyMap(),
+        runs: Int = 1,
     ): DynamicTest =
         checkBuild(
             "$name-gradle-$GRADLE_VERSION",
@@ -28,6 +29,7 @@ class GradleBuildToolTest : BuildToolHarness() {
             expectedPackages = expectedPackages,
             extraArguments = extraArguments,
             substitutions = substitutions,
+            runs = runs,
             initCommand = { workingDirectory ->
                 // Gradle needs a build script present to generate the wrapper;
                 // the real one is laid down afterwards from the fixture.
@@ -161,7 +163,47 @@ class GradleBuildToolTest : BuildToolHarness() {
                 extraArguments = listOf("--", "compileJava"),
             )
         )
+        // Regression tests: the configuration cache is disabled, both when the
+        // build enables it and when the build command asks for it. Otherwise
+        // scipPrintDependencies fails, and a second run reuses the configuration
+        // cache entry of the first, which leaves compileJava up to date.
+        add(
+            checkGradleBuild(
+                "configuration-cache",
+                "gradle/configuration-cache",
+                expectedScipFiles = 1,
+            )
+        )
+        add(
+            checkGradleBuild(
+                "java-configuration-cache",
+                "gradle/build-command",
+                expectedScipFiles = 1,
+                extraArguments = listOf("--", "--configuration-cache", "compileJava"),
+                runs = 2,
+            )
+        )
         add(checkGradleBuild("kotlin2", "gradle/kotlin2", expectedScipFiles = 4))
+        // Regression tests: Kotlin sources must be indexed again when the Kotlin
+        // compile tasks are restored from the build cache, or are up to date
+        // because the build command doesn't clean.
+        add(
+            checkGradleBuild(
+                "kotlin-build-cache",
+                "gradle/kotlin-build-cache",
+                expectedScipFiles = 4,
+                runs = 2,
+            )
+        )
+        add(
+            checkGradleBuild(
+                "kotlin-up-to-date",
+                "gradle/kotlin2",
+                expectedScipFiles = 2,
+                extraArguments = listOf("--", "compileKotlin", "compileJava"),
+                runs = 2,
+            )
+        )
         add(
             checkGradleBuild(
                 "implementation-deps",
