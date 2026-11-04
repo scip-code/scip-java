@@ -1,6 +1,7 @@
 package org.scip_code.scip_java
 
 import java.io.PrintStream
+import kotlin.system.exitProcess
 
 /**
  * Public entry point for the scip-java CLI. The single [app] instance is shared across test suites
@@ -17,6 +18,8 @@ object ScipJava {
     @JvmStatic
     fun main(args: Array<String>) {
         app.runAndExitIfNonZero(args.toList())
+        // The Analysis API indexer leaves non-daemon threads behind; exit explicitly.
+        exitProcess(0)
     }
 
     fun printHelp(out: PrintStream) {
