@@ -163,9 +163,17 @@ class GradleBuildToolTest : BuildToolHarness() {
                 extraArguments = listOf("--", "compileJava"),
             )
         )
-        // Regression test: Java sources must be indexed again when the second run
-        // reuses the configuration cache entry of the first, which leaves
-        // compileJava up to date.
+        // Regression tests: the configuration cache is disabled, both when the
+        // build enables it and when the build command asks for it. Otherwise
+        // scipPrintDependencies fails, and a second run reuses the configuration
+        // cache entry of the first, which leaves compileJava up to date.
+        add(
+            checkGradleBuild(
+                "configuration-cache",
+                "gradle/configuration-cache",
+                expectedScipFiles = 1,
+            )
+        )
         add(
             checkGradleBuild(
                 "java-configuration-cache",
