@@ -90,7 +90,7 @@ binary.
 # macOS/Linux
 curl -fLo coursier https://git.io/coursier-cli \
   && chmod +x coursier \
-  && ./coursier bootstrap --standalone -o scip-java org.scip-code:scip-java:@STABLE_VERSION@ --main org.scip_code.scip_java.ScipJava
+  && ./coursier bootstrap --assembly -o scip-java org.scip-code:scip-java:@STABLE_VERSION@ --main org.scip_code.scip_java.ScipJava
 ./scip-java --help
 ```
 
