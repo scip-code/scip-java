@@ -31,7 +31,6 @@ kotlin-analysis-api-k2 = { module = "org.jetbrains.kotlin:analysis-api-k2-for-id
 kotlin-analysis-api-platform-interface = { module = "org.jetbrains.kotlin:analysis-api-platform-interface-for-ide", version.ref = "kotlin-analysis-api" }
 kotlin-analysis-api-standalone = { module = "org.jetbrains.kotlin:analysis-api-standalone-for-ide", version.ref = "kotlin-analysis-api" }
 kotlin-analysis-compiler = { module = "org.jetbrains.kotlin:kotlin-compiler", version.ref = "kotlin-analysis-api" }
-kotlin-analysis-compiler-common = { module = "org.jetbrains.kotlin:kotlin-compiler-common-for-ide", version.ref = "kotlin-analysis-api" }
 kotlin-analysis-low-level-api-fir = { module = "org.jetbrains.kotlin:low-level-api-fir-for-ide", version.ref = "kotlin-analysis-api" }
 kotlin-analysis-symbol-light-classes = { module = "org.jetbrains.kotlin:symbol-light-classes-for-ide", version.ref = "kotlin-analysis-api" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }

@@ -54,7 +54,7 @@ jobs:
           done
 
           cs bootstrap \
-            --standalone \
+            --assembly \
             -o scip-java \
             "$ARTIFACT" \
             --main org.scip_code.scip_java.ScipJava
