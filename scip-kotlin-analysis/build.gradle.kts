@@ -26,8 +26,8 @@ tasks.named<Jar>("jar") {
 // approach used by Dokka's analysis-kotlin-symbols and KSP2. `kotlin-compiler`
 // (the non-embeddable jar) provides the bundled IntelliJ core classes at runtime.
 dependencies {
+    api(libs.scip.kotlin.bindings)
     implementation(project(":scip-shared"))
-    implementation(libs.scip.kotlin.bindings)
     implementation(libs.kotlin.stdlib)
 
     implementation(libs.kotlin.analysis.compiler) { isTransitive = false }
