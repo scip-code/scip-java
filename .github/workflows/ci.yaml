@@ -49,23 +49,21 @@ jobs:
       - name: Build Dockerised CLI
         run: docker build -t ghcr.io/scip-code/scip-java:latest .
 
-      - name: Test repos
+      - name: Test Maven and Gradle fixtures
         shell: bash
         run: |
-          set -eu
-          check_repo() {
-            REPO=$1
-            mkdir -p ".repos/$REPO"
-            git clone "https://github.com/$REPO.git" ".repos/$REPO" && cd ".repos/$REPO" && git submodule update --init
+          set -euo pipefail
+          for fixture in maven/basic gradle/kotlin2; do
+            repo_dir="$(mktemp -d "$RUNNER_TEMP/scip-java-docker.XXXXXX")"
+            cp -R "scip-java/src/test/resources/fixtures/$fixture/." "$repo_dir/"
 
-            docker run -v "$PWD/.repos/$REPO:/sources" -w /sources ghcr.io/scip-code/scip-java:latest scip-java index
-            file ".repos/$REPO/index.scip" || (echo "$REPO SCIP index doesn't exist!"; exit 1)
-          }
-
-          sudo apt install parallel
-          export -f check_repo
-
-          parallel -j4 check_repo ::: circe/circe indeedeng/iwf-java-sdk
+            echo "Indexing $fixture"
+            # Match the Kotlin fixture's JDK 17 toolchain without relying on fallback.
+            docker run --rm --env JVM_VERSION=17 \
+              --mount "type=bind,source=$repo_dir,target=/sources" \
+              -w /sources ghcr.io/scip-code/scip-java:latest scip-java index
+            test -s "$repo_dir/index.scip"
+          done
 
   ci-pass:
     if: always()
