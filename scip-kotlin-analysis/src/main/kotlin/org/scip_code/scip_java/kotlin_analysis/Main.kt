@@ -37,8 +37,8 @@ fun main(args: Array<String>) {
     require(sourceroot != null) { "missing required flag: --sourceroot" }
     require(targetroot != null) { "missing required flag: --targetroot" }
     require(sourceRoots.isNotEmpty()) { "missing source files or directories" }
-    // The Analysis API environment leaves non-daemon threads behind; exit
-    // explicitly, also on failure, so callers are not left waiting on them.
+    // IntelliJ's application thread pool keeps the JVM alive (see KotlinAnalysisIndexer);
+    // exit explicitly, also on failure, so callers are not left waiting on it.
     try {
         KotlinAnalysisIndexer(
                 sourceroot = sourceroot,

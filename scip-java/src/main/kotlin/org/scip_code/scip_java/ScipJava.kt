@@ -18,7 +18,7 @@ object ScipJava {
     @JvmStatic
     fun main(args: Array<String>) {
         app.runAndExitIfNonZero(args.toList())
-        // The Analysis API indexer leaves non-daemon threads behind; exit explicitly.
+        // IntelliJ's application thread pool keeps the JVM alive (see KotlinAnalysisIndexer).
         exitProcess(0)
     }
 

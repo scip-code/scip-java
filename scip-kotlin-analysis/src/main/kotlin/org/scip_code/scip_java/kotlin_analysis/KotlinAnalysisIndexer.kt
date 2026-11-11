@@ -81,6 +81,10 @@ import org.scip_code.scip_java.shared.ScipShardWriter
  * One SCIP shard is written per source file under
  * `<targetroot>/META-INF/scip/<relative-source-path>.scip`, the layout produced by the scip-javac
  * compiler plugin.
+ *
+ * The JVM does not exit on its own after [run]. The Analysis API starts IntelliJ's process-wide
+ * application thread pool, which keeps a non-daemon thread alive and cannot be shut down without
+ * breaking later runs in the same process. Command-line callers must call `exitProcess` when done.
  */
 class KotlinAnalysisIndexer(
     private val sourceroot: Path,
