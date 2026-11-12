@@ -40,6 +40,11 @@ jobs:
       - name: scip-kotlin-analysis tests
         run: gradle :scip-kotlin-analysis:test --no-daemon
 
+      - name: scip-kotlin-analysis consumer smoke test
+        run: |
+          gradle --no-daemon :scip-shared:publishToMavenLocal :scip-kotlin-analysis:publishToMavenLocal
+          gradle --no-daemon -p examples/kotlin-analysis-consumer run
+
   docker_test:
     runs-on: ubuntu-latest
     name: Docker CLI tests
