@@ -45,6 +45,11 @@
       "allowedVersions": "/^\\d+\\.\\d+\\.\\d+$/"
     },
     {
+      "description": "clikt 5.2.0 calls java.util.List.removeLast(), which crashes scip-java on JDK 17 (https://github.com/ajalt/clikt/issues/657).",
+      "matchPackageNames": ["com.github.ajalt.clikt:*"],
+      "allowedVersions": "!/^5\\.2\\.0$/"
+    },
+    {
       "description": "The Analysis API engine pin is managed manually: it lives in the JetBrains intellij-dependencies repository, uses IDE-aligned version schemes, and must move in lockstep with the `kotlin` toolchain version.",
       "matchPackageNames": [
         "org.jetbrains.kotlin:kotlin-compiler",
