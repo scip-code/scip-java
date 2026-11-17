@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import org.gradle.api.DefaultTask;
@@ -106,8 +107,9 @@ public class WriteDependencies extends DefaultTask {
                   + "\"\nContinuing without cross-repository support.");
     }
 
-    project
-        .getConfigurations()
+    // Iterate over a copy: resolving a configuration can add new ones (AGP 9
+    // does), which would otherwise throw ConcurrentModificationException.
+    new ArrayList<>(project.getConfigurations())
         .forEach(
             conf -> {
               if (conf.isCanBeResolved()) {
