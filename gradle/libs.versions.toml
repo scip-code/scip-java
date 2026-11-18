@@ -1,5 +1,5 @@
 [versions]
-clikt = "5.1.0"
+clikt = "5.2.1"
 gradle-api = "8.11.1"
 guava = "33.7.2-jre"
 junit-jupiter = "5.11.4"
