@@ -11,6 +11,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.ArtifactCollection;
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier;
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
 import org.gradle.api.publish.PublishingExtension;
@@ -126,30 +127,49 @@ public class WriteDependencies extends DefaultTask {
                     // variants of other Android modules, and yields .aar files
                     // that the indexer can't read. Ask for the jars AGP
                     // compiles against instead, as AGP itself does.
-                    conf.getIncoming()
-                        .artifactView(
-                            view -> {
-                              view.attributes(
-                                  attributes ->
-                                      attributes.attribute(
-                                          ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE,
-                                          "android-classes-jar"));
-                              view.componentFilter(id -> id instanceof ModuleComponentIdentifier);
-                            })
-                        .getArtifacts()
+                    ArtifactCollection artifacts =
+                        conf.getIncoming()
+                            .artifactView(
+                                view -> {
+                                  view.attributes(
+                                      attributes ->
+                                          attributes.attribute(
+                                              ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE,
+                                              "android-classes-jar"));
+                                  // Unlike the branch below, this leaves out
+                                  // project dependencies on purpose: they have
+                                  // no Maven coordinates of their own, and a
+                                  // published project writes its own line from
+                                  // its own task.
+                                  view.componentFilter(
+                                      id -> id instanceof ModuleComponentIdentifier);
+                                  // So an artifact that can't be transformed
+                                  // only skips itself, not the configuration.
+                                  view.lenient(true);
+                                })
+                            .getArtifacts();
+                    artifacts
+                        .getFailures()
                         .forEach(
-                            artifact -> {
-                              ModuleComponentIdentifier id =
-                                  (ModuleComponentIdentifier)
-                                      artifact.getId().getComponentIdentifier();
-                              deps.add(
-                                  String.join(
-                                      "\t",
-                                      id.getGroup(),
-                                      id.getModule(),
-                                      id.getVersion(),
-                                      artifact.getFile().getAbsolutePath()));
-                            });
+                            failure ->
+                                getLogger()
+                                    .warn(
+                                        "Skipping an artifact of configuration '"
+                                            + conf.getName()
+                                            + "' due to resolution failure: "
+                                            + failure.getMessage()));
+                    artifacts.forEach(
+                        artifact -> {
+                          ModuleComponentIdentifier id =
+                              (ModuleComponentIdentifier) artifact.getId().getComponentIdentifier();
+                          deps.add(
+                              String.join(
+                                  "\t",
+                                  id.getGroup(),
+                                  id.getModule(),
+                                  id.getVersion(),
+                                  artifact.getFile().getAbsolutePath()));
+                        });
                   } else {
                     conf.getResolvedConfiguration()
                         .getResolvedArtifacts()
