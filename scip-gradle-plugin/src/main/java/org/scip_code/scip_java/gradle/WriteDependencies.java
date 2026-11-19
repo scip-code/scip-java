@@ -6,10 +6,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.ArtifactCollection;
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier;
+import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
 import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.tasks.SourceSet;
@@ -23,6 +27,9 @@ public class WriteDependencies extends DefaultTask {
           + "extracted from this project won't be available for cross-repository navigation,\n"
           + "as this project doesn't define any Maven coordinates by which it can be referred back"
           + " to.";
+
+  // Set on the configurations of AGP's build variants, such as debugCompileClasspath.
+  private static final String AGP_BUILD_TYPE = "com.android.build.api.attributes.BuildTypeAttr";
 
   @TaskAction
   public void printResolvedDependencies() throws IOException {
@@ -106,23 +113,76 @@ public class WriteDependencies extends DefaultTask {
                   + "\"\nContinuing without cross-repository support.");
     }
 
-    project
-        .getConfigurations()
+    // Iterate over a copy: resolving a configuration can add new ones (AGP 9
+    // does), which would otherwise throw ConcurrentModificationException.
+    new ArrayList<>(project.getConfigurations())
         .forEach(
             conf -> {
               if (conf.isCanBeResolved()) {
                 try {
-                  conf.getResolvedConfiguration()
-                      .getResolvedArtifacts()
-                      .forEach(
-                          artifact ->
-                              deps.add(
-                                  String.join(
-                                      "\t",
-                                      artifact.getModuleVersion().getId().getGroup(),
-                                      artifact.getModuleVersion().getId().getName(),
-                                      artifact.getModuleVersion().getId().getVersion(),
-                                      artifact.getFile().getAbsolutePath())));
+                  if (conf.getAttributes().keySet().stream()
+                      .anyMatch(attribute -> attribute.getName().equals(AGP_BUILD_TYPE))) {
+                    // AGP's variant classpaths don't request an artifact type,
+                    // so resolving them directly can't choose between the
+                    // variants of other Android modules, and yields .aar files
+                    // that the indexer can't read. Ask for the jars AGP
+                    // compiles against instead, as AGP itself does.
+                    ArtifactCollection artifacts =
+                        conf.getIncoming()
+                            .artifactView(
+                                view -> {
+                                  view.attributes(
+                                      attributes ->
+                                          attributes.attribute(
+                                              ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE,
+                                              "android-classes-jar"));
+                                  // Unlike the branch below, this leaves out
+                                  // project dependencies on purpose: they have
+                                  // no Maven coordinates of their own, and a
+                                  // published project writes its own line from
+                                  // its own task.
+                                  view.componentFilter(
+                                      id -> id instanceof ModuleComponentIdentifier);
+                                  // So an artifact that can't be transformed
+                                  // only skips itself, not the configuration.
+                                  view.lenient(true);
+                                })
+                            .getArtifacts();
+                    artifacts
+                        .getFailures()
+                        .forEach(
+                            failure ->
+                                getLogger()
+                                    .warn(
+                                        "Skipping an artifact of configuration '"
+                                            + conf.getName()
+                                            + "' due to resolution failure: "
+                                            + failure.getMessage()));
+                    artifacts.forEach(
+                        artifact -> {
+                          ModuleComponentIdentifier id =
+                              (ModuleComponentIdentifier) artifact.getId().getComponentIdentifier();
+                          deps.add(
+                              String.join(
+                                  "\t",
+                                  id.getGroup(),
+                                  id.getModule(),
+                                  id.getVersion(),
+                                  artifact.getFile().getAbsolutePath()));
+                        });
+                  } else {
+                    conf.getResolvedConfiguration()
+                        .getResolvedArtifacts()
+                        .forEach(
+                            artifact ->
+                                deps.add(
+                                    String.join(
+                                        "\t",
+                                        artifact.getModuleVersion().getId().getGroup(),
+                                        artifact.getModuleVersion().getId().getName(),
+                                        artifact.getModuleVersion().getId().getVersion(),
+                                        artifact.getFile().getAbsolutePath())));
+                  }
                 } catch (Exception exc) {
                   getLogger()
                       .warn(
