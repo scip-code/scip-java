@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eux
 # renovate: datasource=github-releases depName=coursier/coursier versioning=semver
-COURSIER_VERSION=2.1.26
+COURSIER_VERSION=2.1.27
 # renovate: datasource=maven depName=org.apache.maven:apache-maven versioning=maven
 MAVEN_VERSION=3.10.1
 # renovate: datasource=gradle-version depName=gradle versioning=gradle
