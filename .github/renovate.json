@@ -3,8 +3,11 @@
   "extends": [
     "config:recommended"
   ],
-  "automerge": true,
   "semanticCommits": "disabled",
+  "timezone": "Europe/Warsaw",
+  "schedule": [
+    "before 9am on monday"
+  ],
   "customManagers": [
     {
       "customType": "regex",
@@ -16,6 +19,11 @@
   ],
   "packageRules": [
     {
+      "description": "Merge non-major updates once the required checks pass; major updates need review.",
+      "matchUpdateTypes": ["minor", "patch", "digest", "pin", "pinDigest"],
+      "automerge": true
+    },
+    {
       "matchManagers": ["custom.regex"],
       "automerge": false
     },
@@ -23,6 +31,20 @@
       "matchDatasources": ["github-releases"],
       "matchPackageNames": ["coursier/coursier"],
       "extractVersion": "^v(?<version>\\d+\\.\\d+\\.\\d+)$"
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "matchDepTypes": ["action"],
+      "groupName": "GitHub Actions"
+    },
+    {
+      "matchManagers": ["bazelisk", "bazel-module"],
+      "groupName": "Bazel"
+    },
+    {
+      "description": "Update the Docker image's base image and build tools together.",
+      "matchFileNames": ["Dockerfile", "bin/docker-setup.sh"],
+      "groupName": "Docker image"
     },
     {
       "matchDatasources": ["gradle-version"],
@@ -37,12 +59,22 @@
       "automerge": false
     },
     {
-      "description": "Keep the shared Kotlin toolchain version on stable releases, not IntelliJ-specific builds from the Analysis API repository.",
+      "description": "Keep the shared Kotlin toolchain version on stable releases, not IntelliJ-specific builds from the Analysis API repository, and update the libraries and Gradle plugin that share it in one PR.",
       "matchPackageNames": [
         "org.jetbrains.kotlin:*",
         "org.jetbrains.kotlin.jvm:org.jetbrains.kotlin.jvm.gradle.plugin"
       ],
-      "allowedVersions": "/^\\d+\\.\\d+\\.\\d+$/"
+      "allowedVersions": "/^\\d+\\.\\d+\\.\\d+$/",
+      "groupName": "Kotlin"
+    },
+    {
+      "description": "Kotlin feature releases need review, since the Analysis API pin below moves with the toolchain by hand.",
+      "matchPackageNames": [
+        "org.jetbrains.kotlin:*",
+        "org.jetbrains.kotlin.jvm:org.jetbrains.kotlin.jvm.gradle.plugin"
+      ],
+      "matchUpdateTypes": ["minor"],
+      "automerge": false
     },
     {
       "description": "The Analysis API engine pin is managed manually: it lives in the JetBrains intellij-dependencies repository, uses IDE-aligned version schemes, and must move in lockstep with the `kotlin` toolchain version.",
