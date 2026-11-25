@@ -18,6 +18,8 @@ jobs:
         shell: nix develop --command bash -e {0}
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag }}
 
       - uses: DeterminateSystems/nix-installer-action@v23
         with:
