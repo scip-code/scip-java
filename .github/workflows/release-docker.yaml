@@ -4,10 +4,20 @@ on:
     branches:
       - main
     tags: ["*"]
+  # scheduled-release.yaml calls this for the tags it creates.
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
 
 permissions:
   contents: read
   packages: write
+
+env:
+  # The release tag, or empty for snapshots from main.
+  TAG: ${{ inputs.tag || (github.ref_type == 'tag' && github.ref_name || '') }}
 
 jobs:
   publish:
@@ -22,6 +32,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ inputs.tag || github.ref }}
           fetch-depth: 0
 
       - uses: docker/setup-buildx-action@v4
@@ -40,14 +51,15 @@ jobs:
           set -euo pipefail
 
           image="ghcr.io/scip-code/scip-java"
-          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
-            version="${GITHUB_REF_NAME#v}"
+          if [[ -n "${TAG}" ]]; then
+            version="${TAG#v}"
             tag="${image}:${version}-${{ matrix.arch }}"
           else
             tag="${image}:latest-snapshot-${{ matrix.arch }}"
           fi
 
           echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          echo "revision=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v7
@@ -58,7 +70,7 @@ jobs:
           tags: ${{ steps.tag.outputs.tag }}
           labels: |
             org.opencontainers.image.source=https://github.com/scip-code/scip-java
-            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.revision=${{ steps.tag.outputs.revision }}
 
   publish-manifest:
     needs: publish
@@ -79,8 +91,8 @@ jobs:
           set -euo pipefail
 
           image="ghcr.io/scip-code/scip-java"
-          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
-            version="${GITHUB_REF_NAME#v}"
+          if [[ -n "${TAG}" ]]; then
+            version="${TAG#v}"
             docker buildx imagetools create \
               --tag "${image}:latest" \
               --tag "${image}:${version}" \

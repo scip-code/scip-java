@@ -1,0 +1,84 @@
+name: Scheduled release
+
+# Publishes a patch release every 4 weeks on Monday, even without code changes,
+# so the Docker image is rebuilt with the latest base image and Ubuntu updates.
+# If publishing fails, use "Re-run failed jobs" so steps that already
+# published, such as the Maven Central upload, don't run again.
+on:
+  # Cron can't express "every 4 weeks", so this runs every Monday and skips
+  # weeks that aren't a multiple of 4 after RELEASE_MONDAY. 12:00 UTC leaves
+  # time for Renovate's Monday morning updates to merge and pass CI on main.
+  schedule:
+    - cron: "0 12 * * 1"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to release, such as 0.15.0. Defaults to the next patch version.
+        type: string
+
+env:
+  # Shared by the SCIP indexers so they release in the same week.
+  RELEASE_MONDAY: "2026-11-23"
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      checks: read
+      contents: write
+    outputs:
+      tag: ${{ steps.release.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Create release
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NEW_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "error: releases are published from main, not $GITHUB_REF" >&2
+            exit 1
+          fi
+          if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
+            # Use the run's creation time, so a rerun on a later day still releases.
+            CREATED="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --jq .created_at)"
+            DAYS=$(( ($(date -u -d "$CREATED" +%s) - $(date -u -d "$RELEASE_MONDAY" +%s)) / 86400 ))
+            if (( DAYS % 28 != 0 )); then
+              echo "Not a release week ($DAYS days after $RELEASE_MONDAY)"
+              exit 0
+            fi
+          fi
+          bin/create-release.sh
+
+  # Tags created with GITHUB_TOKEN don't trigger the release workflows' push
+  # events, so call them for the tag here.
+  maven:
+    needs: release
+    if: needs.release.outputs.tag != ''
+    permissions:
+      contents: write
+    uses: ./.github/workflows/release-maven.yaml
+    with:
+      tag: ${{ needs.release.outputs.tag }}
+    secrets: inherit
+
+  docker:
+    needs: release
+    if: needs.release.outputs.tag != ''
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/release-docker.yaml
+    with:
+      tag: ${{ needs.release.outputs.tag }}

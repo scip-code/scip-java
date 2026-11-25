@@ -3,6 +3,16 @@ on:
   push:
     branches: [main]
     tags: ["*"]
+  # scheduled-release.yaml calls this for the tags it creates.
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+
+env:
+  # The release tag, or empty for snapshots from main.
+  TAG: ${{ inputs.tag || (github.ref_type == 'tag' && github.ref_name || '') }}
 
 jobs:
   publish:
@@ -10,21 +20,28 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ inputs.tag || github.ref }}
           fetch-depth: 0
       - uses: DeterminateSystems/nix-installer-action@v23
         with:
           summarize: false
       - uses: DeterminateSystems/magic-nix-cache-action@v15
       - name: Publish snapshot ${{ github.ref }}
-        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        if: env.TAG == ''
         run: nix develop --command gradle --no-daemon publishToMavenCentral
         env:
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_PASSWORD }}
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_USERNAME }}
-      - name: Publish release ${{ github.ref }}
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+      - name: Publish release ${{ env.TAG }}
+        if: env.TAG != ''
         run: |
-          version="${GITHUB_REF_NAME#v}"
+          version="${TAG#v}"
+          # Maven Central rejects a version it already has, so a rerun after
+          # a successful upload skips it and lets release-cli continue.
+          if nix develop --command cs resolve --intransitive "org.scip-code:scip-java:$version" >/dev/null 2>&1; then
+            echo "org.scip-code:scip-java:$version is already on Maven Central; skipping the upload"
+            exit 0
+          fi
           nix develop --command gradle --no-daemon \
             "-PreleaseVersion=$version" publishAndReleaseToMavenCentral
         env:
@@ -33,10 +50,10 @@ jobs:
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
 
   release-cli:
-    if: ${{ startsWith(github.ref, 'refs/tags/') }}
+    if: inputs.tag != '' || github.ref_type == 'tag'
     needs: publish
     permissions:
       contents: write
     uses: ./.github/workflows/release-cli.yaml
     with:
-      tag: ${{ github.ref_name }}
+      tag: ${{ inputs.tag || github.ref_name }}

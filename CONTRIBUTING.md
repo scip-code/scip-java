@@ -95,3 +95,18 @@ Platform support. The snapshot suite is a JUnit `@TestFactory` that emits one
 dynamic test per generated document, comparing it against the committed goldens
 under `scip-snapshots/expected`. Build-tool tests (`scip-java/src/test`) are
 written in Kotlin.
+
+## Releasing
+
+Every 4 weeks on Monday, the [scheduled release](.github/workflows/scheduled-release.yaml)
+workflow publishes a patch release, even without code changes, so the Docker
+image picks up base image and Ubuntu security updates. It releases the newest
+`main` commit that passed the required checks. To release at another time or
+with another version, run the workflow from the Actions tab and optionally give
+it a version such as `0.15.0`.
+
+The workflow creates the GitHub release and tag with generated release notes,
+then runs the Maven Central and Docker release workflows for the tag. If
+publishing fails, use "Re-run failed jobs" on that run, so steps that already
+published don't run again. Creating a release from the GitHub UI still works
+too, since its tag triggers those workflows directly.
