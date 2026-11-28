@@ -5,7 +5,7 @@ COURSIER_VERSION=2.1.27
 # renovate: datasource=maven depName=org.apache.maven:apache-maven versioning=maven
 MAVEN_VERSION=3.10.1
 # renovate: datasource=gradle-version depName=gradle versioning=gradle
-GRADLE_VERSION=9.9.2
+GRADLE_VERSION=9.9.3
 
 # Use the upstream JVM launcher so the configured system trust store applies.
 curl -fLo /usr/local/bin/cs "https://github.com/coursier/coursier/releases/download/v${COURSIER_VERSION}/coursier"
